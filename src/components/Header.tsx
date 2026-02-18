@@ -1,0 +1,113 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { Menu, X, Settings } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+
+interface HeaderProps {
+  siteName: string
+  logoUrl?: string
+  onAdminClick?: () => void
+}
+
+export default function Header({ siteName, logoUrl, onAdminClick }: HeaderProps) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  const menuItems = [
+    { name: 'Home', href: '#home' },
+    { name: 'Chi Siamo', href: '#chi-siamo' },
+    { name: 'Menu', href: '/menu' },
+    { name: 'Specialità', href: '#specialita' },
+    { name: 'Contatti', href: '#contatti' }
+  ]
+
+  return (
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200">
+      <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16 md:h-20">
+          {/* Logo */}
+          <Link href="/" className="flex items-center space-x-2">
+            {logoUrl ? (
+              <img src={logoUrl} alt={siteName} className="h-10 md:h-12 w-auto" />
+            ) : (
+              <div className="h-10 md:h-12 w-10 md:w-12 bg-orange-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xl">{siteName[0]}</span>
+              </div>
+            )}
+            <span className="text-lg md:text-xl font-bold text-gray-900">
+              {siteName}
+            </span>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-6">
+            {menuItems.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className="text-gray-700 hover:text-orange-600 transition-colors font-medium"
+              >
+                {item.name}
+              </Link>
+            ))}
+            <Button className="bg-orange-600 hover:bg-orange-700">
+              Prenota Tavolo
+            </Button>
+            {onAdminClick && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onAdminClick}
+                className="ml-2"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Admin
+              </Button>
+            )}
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden flex items-center gap-2">
+            {onAdminClick && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onAdminClick}
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+            )}
+            <button
+              className="p-2 rounded-lg hover:bg-gray-100"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Navigation */}
+        {isMenuOpen && (
+          <div className="md:hidden py-4 border-t border-gray-200">
+            <div className="flex flex-col space-y-3">
+              {menuItems.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="text-gray-700 hover:text-orange-600 transition-colors font-medium py-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              ))}
+              <Button className="bg-orange-600 hover:bg-orange-700 w-full mt-2">
+                Prenota Tavolo
+              </Button>
+            </div>
+          </div>
+        )}
+      </nav>
+    </header>
+  )
+}

@@ -1,8 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Schema per applicazione Ristorazione
 
 generator client {
   provider = "prisma-client-js"
@@ -13,20 +9,133 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// Allergeni disponibili (lista completa normativa europea)
+model Allergene {
+  id          String            @id @default(cuid())
+  nome        String            @unique
+  descrizione String?
+  icona       String?           // emoji o nome icona
+  articoli    AllergeneArticolo[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 }
 
-model Post {
-  id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// Categorie del menu
+model Categoria {
+  id        String    @id @default(cuid())
+  nome      String
+  ordine    Int       @default(0)
+  attiva    Boolean   @default(true)
+  articoli  Articolo[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// Articoli/Piatti del menu
+model Articolo {
+  id                String           @id @default(cuid())
+  nome              String
+  descrizione       String?
+  categoriaId       String
+  categoria         Categoria        @relation(fields: [categoriaId], references: [id])
+  prezzo            Float
+  prezzoPromozionale Float?
+  scadenzaPromo     DateTime?
+  eSurgelato        Boolean          @default(false)
+  eBestChoice       Boolean          @default(false)
+  attivo            Boolean          @default(true)
+  allergeni         AllergeneArticolo[]
+  immagineUrl       String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+// Relazione molti-a-molti tra Articoli e Allergeni
+model AllergeneArticolo {
+  id         String   @id @default(cuid())
+  articoloId String
+  allergeneId String
+  articolo   Articolo @relation(fields: [articoloId], references: [id], onDelete: Cascade)
+  allergene  Allergene @relation(fields: [allergeneId], references: [id], onDelete: Cascade)
+
+  @@unique([articoloId, allergeneId])
+}
+
+// Informazioni generali del sito
+model SiteInfo {
+  id              String   @id @default(cuid())
+  nomeLocale      String   @default("Il Nostro Ristorante")
+  slogan          String?
+  chiSiamoTitolo  String?
+  chiSiamoTesto   String?
+  logoUrl         String?
+  faviconUrl      String?
+  telefono        String?
+  email           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Immagini del sito
+model SiteImage {
+  id          String   @id @default(cuid())
+  sezione     String   // hero, chi_siamo, gallery, ecc.
+  titolo      String?
+  descrizione String?
+  url         String
+  ordine      Int      @default(0)
+  attiva      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Informazioni footer
+model FooterInfo {
+  id                String   @id @default(cuid())
+  indirizzo         String?
+  citta             String?
+  cap               String?
+  provincia         String?
+  latitudine        Float?
+  longitudine       Float?
+  orariApertura     String?  // JSON con giorni e orari
+  giorniChiusura    String?  // JSON con giorni di chiusura
+  facebookUrl       String?
+  instagramUrl      String?
+  twitterUrl        String?
+  linkedinUrl       String?
+  whatsappUrl       String?
+  tiktokUrl         String?
+  justeatUrl        String?
+  deliverooUrl      String?
+  glovoUrl          String?
+  ubereatsUrl       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// Utenti del sistema
+model User {
+  id        String      @id @default(cuid())
+  email     String      @unique
+  nome      String
+  cognome   String?
+  password  String
+  ruolo     String      @default("admin") // superadmin, admin
+  permessi  Permission?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+// Permessi utente
+model Permission {
+  id                  String     @id @default(cuid())
+  userId              String     @unique
+  user                User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  puoGestireMenu      Boolean    @default(true)
+  puoGestireFooter    Boolean    @default(true)
+  puoGestireTemi      Boolean    @default(true)
+  puoGestireProfili   Boolean    @default(false)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
 }
