@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { db } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
   try {
     // Verifica se il database ha già dati
-    const allergeniCount = await prisma.allergene.count()
-    
+    const allergeniCount = await db.allergene.count()
+
     if (allergeniCount > 0) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         message: 'Database già popolato',
         allergeni: allergeniCount
       })
@@ -17,43 +15,43 @@ export async function POST(request: NextRequest) {
 
     // Crea allergeni
     const allergeni = await Promise.all([
-      prisma.allergene.create({
+      db.allergene.create({
         data: { nome: 'Glutine', descrizione: 'Contiene cereali contenenti glutine', icona: '🌾' }
       }),
-      prisma.allergene.create({
+      db.allergene.create({
         data: { nome: 'Crostacei', descrizione: 'Contiene crostacei', icona: '🦐' }
       }),
-      prisma.allergene.create({
+      db.allergene.create({
         data: { nome: 'Uova', descrizione: 'Contiene uova', icona: '🥚' }
       }),
-      prisma.allergene.create({
+      db.allergene.create({
         data: { nome: 'Pesce', descrizione: 'Contiene pesce', icona: '🐟' }
       }),
-      prisma.allergene.create({
+      db.allergene.create({
         data: { nome: 'Latte', descrizione: 'Contiene latte', icona: '🥛' }
       }),
-      prisma.allergene.create({
+      db.allergene.create({
         data: { nome: 'Frutta a guscio', descrizione: 'Contiene frutta a guscio', icona: '🥜' }
       }),
-      prisma.allergene.create({
+      db.allergene.create({
         data: { nome: 'Soia', descrizione: 'Contiene soia', icona: '🫘' }
       }),
-      prisma.allergene.create({
+      db.allergene.create({
         data: { nome: 'Sedano', descrizione: 'Contiene sedano', icona: '🌿' }
       })
     ])
 
     // Crea categorie
     const categorie = await Promise.all([
-      prisma.categoria.create({ data: { nome: 'Antipasti', ordine: 1 } }),
-      prisma.categoria.create({ data: { nome: 'Primi Piatti', ordine: 2 } }),
-      prisma.categoria.create({ data: { nome: 'Secondi Piatti', ordine: 3 } }),
-      prisma.categoria.create({ data: { nome: 'Dolci', ordine: 4 } }),
-      prisma.categoria.create({ data: { nome: 'Bevande', ordine: 5 } })
+      db.categoria.create({ data: { nome: 'Antipasti', ordine: 1 } }),
+      db.categoria.create({ data: { nome: 'Primi Piatti', ordine: 2 } }),
+      db.categoria.create({ data: { nome: 'Secondi Piatti', ordine: 3 } }),
+      db.categoria.create({ data: { nome: 'Dolci', ordine: 4 } }),
+      db.categoria.create({ data: { nome: 'Bevande', ordine: 5 } })
     ])
 
     // Crea articoli di esempio
-    await prisma.articolo.createMany({
+    await db.articolo.createMany({
       data: [
         {
           nome: 'Spaghetti alla Carbonara',
@@ -84,7 +82,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Crea info sito
-    await prisma.siteInfo.create({
+    await db.siteInfo.create({
       data: {
         nomeLocale: 'La Bella Tavola',
         slogan: 'Autentica Cucina Italiana dal 1985',
@@ -96,7 +94,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Crea info footer
-    await prisma.footerInfo.create({
+    await db.footerInfo.create({
       data: {
         indirizzo: 'Via Roma 123',
         citta: 'Milano',
@@ -116,7 +114,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Crea utente admin
-    const admin = await prisma.user.create({
+    const admin = await db.user.create({
       data: {
         email: 'admin@labellatavola.it',
         nome: 'Mario',
@@ -127,7 +125,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Crea permessi
-    await prisma.permission.create({
+    await db.permission.create({
       data: {
         userId: admin.id,
         puoGestireMenu: true,
@@ -137,7 +135,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
       message: 'Database popolato con successo!',
       allergeni: allergeni.length,
@@ -145,11 +143,10 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Errore seed:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Errore sconosciuto'
     return NextResponse.json(
-      { error: 'Errore nel popolamento del database', details: error.message },
+      { error: 'Errore nel popolamento del database', details: errorMessage },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }
