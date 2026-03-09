@@ -8,6 +8,7 @@ import Specialita from '@/components/Specialita'
 import Footer from '@/components/Footer'
 import SocialSidebar from '@/components/SocialSidebar'
 import AdminPanel from '@/components/AdminPanel'
+import LoginDialog from '@/components/LoginDialog'
 
 interface SiteInfo {
   nomeLocale?: string
@@ -21,6 +22,14 @@ interface SiteInfo {
 export default function Home() {
   const [siteInfo, setSiteInfo] = useState<SiteInfo>({})
   const [showAdminPanel, setShowAdminPanel] = useState(false)
+  const [showLoginDialog, setShowLoginDialog] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    // Inizializza direttamente dal localStorage per evitare render a cascata
+    if (typeof window !== 'undefined') {
+      return !!localStorage.getItem('adminToken')
+    }
+    return false
+  })
 
   useEffect(() => {
     async function fetchSiteInfo() {
@@ -38,12 +47,35 @@ export default function Home() {
     fetchSiteInfo()
   }, [])
 
+  const handleAdminClick = () => {
+    if (isLoggedIn) {
+      setShowAdminPanel(true)
+    } else {
+      setShowLoginDialog(true)
+    }
+  }
+
+  const handleLoginSuccess = () => {
+    setIsLoggedIn(true)
+    setShowLoginDialog(false)
+    setShowAdminPanel(true)
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('adminToken')
+    localStorage.removeItem('adminUser')
+    setIsLoggedIn(false)
+    setShowAdminPanel(false)
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header
         siteName={siteInfo.nomeLocale || 'Il Nostro Ristorante'}
         logoUrl={siteInfo.logoUrl}
-        onAdminClick={() => setShowAdminPanel(true)}
+        onAdminClick={handleAdminClick}
+        isLoggedIn={isLoggedIn}
+        onLogout={handleLogout}
       />
 
       <main className="flex-1">
@@ -62,6 +94,14 @@ export default function Home() {
 
       <Footer />
       <SocialSidebar />
+
+      {/* Login Dialog */}
+      {showLoginDialog && (
+        <LoginDialog
+          onClose={() => setShowLoginDialog(false)}
+          onLoginSuccess={handleLoginSuccess}
+        />
+      )}
 
       {/* Admin Panel */}
       {showAdminPanel && (

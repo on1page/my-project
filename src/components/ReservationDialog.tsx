@@ -1,0 +1,156 @@
+'use client'
+
+import { useState } from 'react'
+import { X, Calendar, Clock, Users } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+
+interface ReservationDialogProps {
+  onClose: () => void
+}
+
+export default function ReservationDialog({ onClose }: ReservationDialogProps) {
+  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    nome: '',
+    cognome: '',
+    email: '',
+    telefono: '',
+    data: '',
+    ora: '',
+    persone: '2'
+  })
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+
+    // Simula l'invio della prenotazione
+    setTimeout(() => {
+      alert(`Grazie ${formData.nome}! La tua prenotazione è stata confermata.\n\nData: ${formData.data}\nOra: ${formData.ora}\nPersone: ${formData.persone}`)
+      setLoading(false)
+      onClose()
+    }, 1000)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Prenota un Tavolo</h2>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="text-gray-600 hover:text-gray-900"
+          >
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="nome">Nome *</Label>
+              <Input
+                id="nome"
+                value={formData.nome}
+                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="cognome">Cognome *</Label>
+              <Input
+                id="cognome"
+                value={formData.cognome}
+                onChange={(e) => setFormData({ ...formData, cognome: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="telefono">Telefono *</Label>
+              <Input
+                id="telefono"
+                type="tel"
+                value={formData.telefono}
+                onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="data">Data *</Label>
+              <Input
+                id="data"
+                type="date"
+                value={formData.data}
+                onChange={(e) => setFormData({ ...formData, data: e.target.value })}
+                min={new Date().toISOString().split('T')[0]}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="ora">Ora *</Label>
+              <Input
+                id="ora"
+                type="time"
+                value={formData.ora}
+                onChange={(e) => setFormData({ ...formData, ora: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="persone">Numero di Persone *</Label>
+            <div className="flex items-center gap-4">
+              <Users className="w-5 h-5 text-gray-500" />
+              <select
+                id="persone"
+                value={formData.persone}
+                onChange={(e) => setFormData({ ...formData, persone: e.target.value })}
+                className="flex-1 p-2 border rounded"
+                required
+              >
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                  <option key={n} value={n}>{n} {n === 1 ? 'persona' : 'persone'}</option>
+                ))}
+                <option value="10+">10+ persone</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <Button type="submit" className="flex-1 bg-orange-600 hover:bg-orange-700" disabled={loading}>
+              {loading ? 'Invio in corso...' : 'Conferma Prenotazione'}
+            </Button>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Annulla
+            </Button>
+          </div>
+
+          <p className="text-sm text-gray-500 text-center">
+            Ti confermeremo la prenotazione via email o telefono
+          </p>
+        </form>
+      </div>
+    </div>
+  )
+}

@@ -2,17 +2,21 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Menu, X, Settings } from 'lucide-react'
+import { Menu, X, Settings, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import ReservationDialog from './ReservationDialog'
 
 interface HeaderProps {
   siteName: string
   logoUrl?: string
   onAdminClick?: () => void
+  isLoggedIn?: boolean
+  onLogout?: () => void
 }
 
-export default function Header({ siteName, logoUrl, onAdminClick }: HeaderProps) {
+export default function Header({ siteName, logoUrl, onAdminClick, isLoggedIn, onLogout }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [showReservationDialog, setShowReservationDialog] = useState(false)
 
   const menuItems = [
     { name: 'Home', href: '#home' },
@@ -51,32 +55,58 @@ export default function Header({ siteName, logoUrl, onAdminClick }: HeaderProps)
                 {item.name}
               </Link>
             ))}
-            <Button className="bg-orange-600 hover:bg-orange-700">
+            <Button
+              className="bg-orange-600 hover:bg-orange-700"
+              onClick={() => setShowReservationDialog(true)}
+            >
               Prenota Tavolo
             </Button>
-            {onAdminClick && (
+            {isLoggedIn && onLogout ? (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={onAdminClick}
+                onClick={onLogout}
                 className="ml-2"
               >
-                <Settings className="w-4 h-4 mr-2" />
-                Admin
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
               </Button>
+            ) : (
+              onAdminClick && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onAdminClick}
+                  className="ml-2"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Admin
+                </Button>
+              )
             )}
           </div>
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center gap-2">
-            {onAdminClick && (
+            {isLoggedIn && onLogout ? (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={onAdminClick}
+                onClick={onLogout}
               >
-                <Settings className="w-4 h-4" />
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
               </Button>
+            ) : (
+              onAdminClick && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onAdminClick}
+                >
+                  <Settings className="w-4 h-4" />
+                </Button>
+              )
             )}
             <button
               className="p-2 rounded-lg hover:bg-gray-100"
@@ -101,13 +131,21 @@ export default function Header({ siteName, logoUrl, onAdminClick }: HeaderProps)
                   {item.name}
                 </Link>
               ))}
-              <Button className="bg-orange-600 hover:bg-orange-700 w-full mt-2">
+              <Button
+                className="bg-orange-600 hover:bg-orange-700 w-full mt-2"
+                onClick={() => setShowReservationDialog(true)}
+              >
                 Prenota Tavolo
               </Button>
             </div>
           </div>
         )}
       </nav>
+
+      {/* Reservation Dialog */}
+      {showReservationDialog && (
+        <ReservationDialog onClose={() => setShowReservationDialog(false)} />
+      )}
     </header>
   )
 }
