@@ -26,17 +26,33 @@ export default function ReservationDialog({ onClose }: ReservationDialogProps) {
     e.preventDefault()
     setLoading(true)
 
-    // Simula l'invio della prenotazione
-    setTimeout(() => {
-      alert(`Grazie ${formData.nome}! La tua prenotazione è stata confermata.\n\nData: ${formData.data}\nOra: ${formData.ora}\nPersone: ${formData.persone}`)
-      setLoading(false)
-      onClose()
-    }, 1000)
+    // Invia la prenotazione al backend
+    fetch('/api/reservations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert(`Grazie ${formData.nome}! La tua prenotazione è stata confermata.\n\nData: ${formData.data}\nOra: ${formData.ora}\nPersone: ${formData.persone}\n\nTi contatteremo presto per confermare.`)
+          onClose()
+        } else {
+          alert(`Errore: ${data.error || 'Impossibile completare la prenotazione'}`)
+        }
+      })
+      .catch(error => {
+        console.error('Errore:', error)
+        alert('Errore di connessione. Riprova più tardi.')
+      })
+      .finally(() => {
+        setLoading(false)
+      })
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto relative m-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Prenota un Tavolo</h2>
           <Button

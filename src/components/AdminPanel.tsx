@@ -1,13 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { X, LayoutDashboard, Utensils, MapPin, ImageIcon, Users } from 'lucide-react'
+import { X, LayoutDashboard, Utensils, MapPin, ImageIcon, Users, Building2, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import AdminMenu from './AdminMenu'
 import AdminFooter from './AdminFooter'
 import AdminTheme from './AdminTheme'
 import AdminUsers from './AdminUsers'
+import AdminCompanyData from './AdminCompanyData'
+import AdminReservations from './AdminReservations'
 
 interface AdminPanelProps {
   onClose: () => void
@@ -33,7 +35,7 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           <Tabs defaultValue="menu" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-6">
+            <TabsList className="grid w-full grid-cols-6 mb-6">
               <TabsTrigger value="menu" className="flex items-center gap-2">
                 <Utensils className="w-4 h-4" />
                 Menu
@@ -44,7 +46,15 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
               </TabsTrigger>
               <TabsTrigger value="theme" className="flex items-center gap-2">
                 <ImageIcon className="w-4 h-4" />
-                Temi & Immagini
+                Temi
+              </TabsTrigger>
+              <TabsTrigger value="company" className="flex items-center gap-2">
+                <Building2 className="w-4 h-4" />
+                Dati Azienda
+              </TabsTrigger>
+              <TabsTrigger value="reservations" className="flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Prenotazioni
               </TabsTrigger>
               <TabsTrigger value="users" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
@@ -62,6 +72,14 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
 
             <TabsContent value="theme">
               <AdminTheme />
+            </TabsContent>
+
+            <TabsContent value="company">
+              <AdminCompanyData />
+            </TabsContent>
+
+            <TabsContent value="reservations">
+              <AdminReservations />
             </TabsContent>
 
             <TabsContent value="users">

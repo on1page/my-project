@@ -139,3 +139,31 @@ model Permission {
   createdAt           DateTime   @default(now())
   updatedAt           DateTime   @updatedAt
 }
+
+// Dati aziendali
+model CompanyData {
+  id              String   @id @default(cuid())
+  ragioneSociale  String?
+  partitaIva      String?
+  privacyPolicy   String?  @db.Text
+  cookiesPolicy   String?  @db.Text
+  terminiServizio String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Prenotazioni tavoli
+model Reservation {
+  id        String   @id @default(cuid())
+  nome      String
+  cognome   String
+  email     String
+  telefono  String
+  data      String   // YYYY-MM-DD
+  ora       String   // HH:MM
+  persone   Int
+  note      String?  @db.Text
+  stato     String   @default("pending") // pending, confirmed, cancelled
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
