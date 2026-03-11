@@ -36,23 +36,40 @@ interface FooterInfo {
   ubereatsUrl?: string | null
 }
 
+interface CompanyData {
+  ragioneSociale?: string | null
+  partitaIva?: string | null
+  privacyPolicy?: string | null
+  cookiesPolicy?: string | null
+}
+
 export default function Footer() {
   const [footerInfo, setFooterInfo] = useState<FooterInfo>({})
+  const [companyData, setCompanyData] = useState<CompanyData>({})
 
   useEffect(() => {
-    async function fetchFooterInfo() {
+    async function fetchData() {
       try {
-        const response = await fetch('/api/admin/footer')
-        if (response.ok) {
-          const data = await response.json()
+        const [footerRes, companyRes] = await Promise.all([
+          fetch('/api/admin/footer'),
+          fetch('/api/admin/company-data')
+        ])
+
+        if (footerRes.ok) {
+          const data = await footerRes.json()
           setFooterInfo(data)
         }
+
+        if (companyRes.ok) {
+          const data = await companyRes.json()
+          setCompanyData(data)
+        }
       } catch (error) {
-        console.error('Errore nel recupero footer info:', error)
+        console.error('Errore nel recupero dati:', error)
       }
     }
 
-    fetchFooterInfo()
+    fetchData()
   }, [])
 
   const getAddressString = () => {
@@ -250,8 +267,70 @@ export default function Footer() {
         </div>
 
         {/* Copyright */}
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
-          <p>&copy; {new Date().getFullYear()} Tutti i diritti riservati.</p>
+        <div className="border-t border-gray-800 mt-8 pt-8">
+          <div className="text-center text-gray-400 text-sm space-y-2">
+            {/* Dati Aziendali */}
+            {(companyData.ragioneSociale || companyData.partitaIva) && (
+              <p className="text-white">
+                {companyData.ragioneSociale && <span className="font-medium">{companyData.ragioneSociale}</span>}
+                {companyData.ragioneSociale && companyData.partitaIva && <span className="mx-2">•</span>}
+                {companyData.partitaIva && <span>P.IVA: {companyData.partitaIva}</span>}
+              </p>
+            )}
+
+            {/* Copyright */}
+            <p>&copy; {new Date().getFullYear()} Tutti i diritti riservati.</p>
+
+            {/* Link Policy */}
+            <div className="flex justify-center gap-4 pt-2">
+              {companyData.privacyPolicy && (
+                <button
+                  onClick={() => {
+                    const modal = document.createElement('div')
+                    modal.className = 'fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4'
+                    modal.innerHTML = `
+                      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6">
+                        <div class="flex justify-between items-center mb-4">
+                          <h2 class="text-2xl font-bold">Privacy Policy</h2>
+                          <button class="text-gray-600 hover:text-gray-900" onclick="this.closest('.fixed').remove()">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                          </button>
+                        </div>
+                        <div class="prose max-w-none text-gray-700 whitespace-pre-wrap">${companyData.privacyPolicy}</div>
+                      </div>
+                    `
+                    document.body.appendChild(modal)
+                  }}
+                  className="text-orange-400 hover:text-orange-300 transition-colors"
+                >
+                  Privacy Policy
+                </button>
+              )}
+              {companyData.cookiesPolicy && (
+                <button
+                  onClick={() => {
+                    const modal = document.createElement('div')
+                    modal.className = 'fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4'
+                    modal.innerHTML = `
+                      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6">
+                        <div class="flex justify-between items-center mb-4">
+                          <h2 class="text-2xl font-bold">Cookies Policy</h2>
+                          <button class="text-gray-600 hover:text-gray-900" onclick="this.closest('.fixed').remove()">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                          </button>
+                        </div>
+                        <div class="prose max-w-none text-gray-700 whitespace-pre-wrap">${companyData.cookiesPolicy}</div>
+                      </div>
+                    `
+                    document.body.appendChild(modal)
+                  }}
+                  className="text-orange-400 hover:text-orange-300 transition-colors"
+                >
+                  Cookies Policy
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </footer>

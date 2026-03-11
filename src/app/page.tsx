@@ -23,15 +23,16 @@ export default function Home() {
   const [siteInfo, setSiteInfo] = useState<SiteInfo>({})
   const [showAdminPanel, setShowAdminPanel] = useState(false)
   const [showLoginDialog, setShowLoginDialog] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    // Inizializza direttamente dal localStorage per evitare render a cascata
-    if (typeof window !== 'undefined') {
-      return !!localStorage.getItem('adminToken')
-    }
-    return false
-  })
+  const [isLoggedIn, setIsLoggedIn] = useState(false) // Inizializza sempre a false per evitare hydration mismatch
 
   useEffect(() => {
+    // Verifica se l'utente è già loggato (solo lato client)
+    const token = localStorage.getItem('adminToken')
+    if (token) {
+      setIsLoggedIn(true)
+    }
+
+    // Recupera le informazioni del sito
     async function fetchSiteInfo() {
       try {
         const response = await fetch('/api/admin/site-info')
