@@ -98,7 +98,7 @@ export default function AdminReservations() {
         alert('Stato aggiornato con successo!')
       } else {
         const errorData = await response.json()
-        alert(`Errore: ${errorData.error || 'Impossibile aggiornare lo stato'}`)
+        alert(`Errore: ${errorData.error || 'Impossibile aggiornare lo stato'}\n\n${errorData.details || ''}`)
       }
     } catch (error) {
       console.error('Errore aggiornamento stato:', error)

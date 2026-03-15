@@ -6,9 +6,13 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  console.log('PUT /api/admin/reservations/[id] - Params:', params)
+
   try {
     const body = await request.json()
     const { stato, note } = body
+
+    console.log('PUT - Body ricevuto:', { id: params.id, stato, note })
 
     const reservation = await db.reservation.update({
       where: { id: params.id },
@@ -18,11 +22,20 @@ export async function PUT(
       }
     })
 
+    console.log('PUT - Prenotazione aggiornata:', reservation)
     return NextResponse.json(reservation)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Errore nell\'aggiornamento prenotazione:', error)
+    console.error('Dettagli errore:', {
+      message: error?.message,
+      code: error?.code,
+      meta: error?.meta
+    })
     return NextResponse.json(
-      { error: 'Errore nell\'aggiornamento della prenotazione' },
+      {
+        error: 'Errore nell\'aggiornamento della prenotazione',
+        details: error?.message || 'Errore sconosciuto'
+      },
       { status: 500 }
     )
   }
