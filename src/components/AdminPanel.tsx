@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, LayoutDashboard, Utensils, MapPin, ImageIcon, Users, Building2, Calendar, Badge } from 'lucide-react'
+import { X, LayoutDashboard, Utensils, MapPin, ImageIcon, Users, Building2, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import AdminMenu from './AdminMenu'
 import AdminFooter from './AdminFooter'
@@ -74,8 +75,10 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
                 <Calendar className="w-4 h-4" />
                 Prenotazioni
                 {pendingCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                    {pendingCount}
+                  <Badge
+                    className="absolute -top-2 -right-2 min-w-[20px] h-5 flex items-center justify-center bg-red-500 text-white text-xs font-bold px-1.5 py-0 rounded-full z-10 overflow-visible border-2 border-white"
+                  >
+                    {pendingCount > 9 ? '9+' : pendingCount}
                   </Badge>
                 )}
               </TabsTrigger>
