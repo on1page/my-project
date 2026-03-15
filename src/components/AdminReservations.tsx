@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Calendar, Clock, Users, Check, X, Trash2 } from 'lucide-react'
+import { Calendar, Clock, Users, Check, X, Trash2, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -35,10 +35,20 @@ interface Reservation {
   createdAt: string
 }
 
+interface Stats {
+  total: number
+  pending: number
+  confirmed: number
+  cancelled: number
+}
+
 export default function AdminReservations() {
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [loading, setLoading] = useState(true)
   const [filterStato, setFilterStato] = useState('all')
+  const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, confirmed: 0, cancelled: 0 })
+  const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set())
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -55,6 +65,17 @@ export default function AdminReservations() {
       if (response.ok) {
         const data = await response.json()
         setReservations(data)
+        
+        // Calcola le statistiche
+        if (filterStato === 'all') {
+          const newStats: Stats = {
+            total: data.length,
+            pending: data.filter((r: Reservation) => r.stato === 'pending').length,
+            confirmed: data.filter((r: Reservation) => r.stato === 'confirmed').length,
+            cancelled: data.filter((r: Reservation) => r.stato === 'cancelled').length
+          }
+          setStats(newStats)
+        }
       }
     } catch (error) {
       console.error('Errore nel recupero prenotazioni:', error)
@@ -64,6 +85,7 @@ export default function AdminReservations() {
   }
 
   async function updateStatus(id: string, stato: string) {
+    setUpdatingIds(prev => new Set([...prev, id]))
     try {
       const response = await fetch(`/api/admin/reservations/${id}`, {
         method: 'PUT',
@@ -74,16 +96,26 @@ export default function AdminReservations() {
       if (response.ok) {
         fetchData()
         alert('Stato aggiornato con successo!')
+      } else {
+        const errorData = await response.json()
+        alert(`Errore: ${errorData.error || 'Impossibile aggiornare lo stato'}`)
       }
     } catch (error) {
       console.error('Errore aggiornamento stato:', error)
-      alert('Errore nell\'aggiornamento dello stato')
+      alert('Errore di connessione. Riprova.')
+    } finally {
+      setUpdatingIds(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(id)
+        return newSet
+      })
     }
   }
 
   async function deleteReservation(id: string) {
     if (!confirm('Sei sicuro di voler eliminare questa prenotazione?')) return
 
+    setDeletingId(id)
     try {
       const response = await fetch(`/api/admin/reservations/${id}`, {
         method: 'DELETE'
@@ -92,10 +124,15 @@ export default function AdminReservations() {
       if (response.ok) {
         fetchData()
         alert('Prenotazione eliminata con successo!')
+      } else {
+        const errorData = await response.json()
+        alert(`Errore: ${errorData.error || 'Impossibile eliminare la prenotazione'}`)
       }
     } catch (error) {
       console.error('Errore eliminazione prenotazione:', error)
-      alert('Errore nell\'eliminazione della prenotazione')
+      alert('Errore di connessione. Riprova.')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -123,8 +160,31 @@ export default function AdminReservations() {
 
   return (
     <div className="space-y-6">
+      {/* Header con contatore */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Prenotazioni</h2>
+        <div>
+          <h2 className="text-2xl font-bold">Prenotazioni</h2>
+          {filterStato === 'all' && (
+            <div className="flex gap-4 mt-2 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-gray-600">Totale:</span>
+                <span className="font-bold text-gray-900">{stats.total}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-yellow-600">In attesa:</span>
+                <span className="font-bold text-yellow-700">{stats.pending}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-green-600">Confermate:</span>
+                <span className="font-bold text-green-700">{stats.confirmed}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-red-600">Cancellate:</span>
+                <span className="font-bold text-red-700">{stats.cancelled}</span>
+              </div>
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <Label>Stato:</Label>
           <Select value={filterStato} onValueChange={setFilterStato}>
@@ -198,17 +258,27 @@ export default function AdminReservations() {
                               size="sm"
                               variant="ghost"
                               onClick={() => updateStatus(res.id, 'confirmed')}
-                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                              disabled={updatingIds.has(res.id)}
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50 disabled:opacity-50"
                             >
-                              <Check className="w-4 h-4" />
+                              {updatingIds.has(res.id) ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Check className="w-4 h-4" />
+                              )}
                             </Button>
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => updateStatus(res.id, 'cancelled')}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              disabled={updatingIds.has(res.id)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
                             >
-                              <X className="w-4 h-4" />
+                              {updatingIds.has(res.id) ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <X className="w-4 h-4" />
+                              )}
                             </Button>
                           </>
                         )}
@@ -216,9 +286,14 @@ export default function AdminReservations() {
                           size="sm"
                           variant="ghost"
                           onClick={() => deleteReservation(res.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          disabled={deletingId === res.id}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          {deletingId === res.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
                         </Button>
                       </div>
                     </TableCell>

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { X, LayoutDashboard, Utensils, MapPin, ImageIcon, Users, Building2, Calendar } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { X, LayoutDashboard, Utensils, MapPin, ImageIcon, Users, Building2, Calendar, Badge } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import AdminMenu from './AdminMenu'
@@ -16,6 +16,24 @@ interface AdminPanelProps {
 }
 
 export default function AdminPanel({ onClose }: AdminPanelProps) {
+  const [pendingCount, setPendingCount] = useState(0)
+
+  useEffect(() => {
+    async function fetchPendingCount() {
+      try {
+        const response = await fetch('/api/admin/reservations?stato=pending')
+        if (response.ok) {
+          const data = await response.json()
+          setPendingCount(data.length)
+        }
+      } catch (error) {
+        console.error('Errore nel recupero conteggio prenotazioni:', error)
+      }
+    }
+
+    fetchPendingCount()
+  }, [])
+
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -52,9 +70,14 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
                 <Building2 className="w-4 h-4" />
                 Dati Azienda
               </TabsTrigger>
-              <TabsTrigger value="reservations" className="flex items-center gap-2">
+              <TabsTrigger value="reservations" className="flex items-center gap-2 relative">
                 <Calendar className="w-4 h-4" />
                 Prenotazioni
+                {pendingCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                    {pendingCount}
+                  </Badge>
+                )}
               </TabsTrigger>
               <TabsTrigger value="users" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
