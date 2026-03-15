@@ -4,8 +4,10 @@ import { db } from '@/lib/db';
 // PUT - Aggiorna un articolo
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
+
   try {
     const body = await request.json();
     const {
@@ -24,7 +26,7 @@ export async function PUT(
 
     // Aggiorna l'articolo
     const articolo = await db.articolo.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         nome,
         descrizione,
@@ -42,14 +44,14 @@ export async function PUT(
     // Gestisci gli allergeni
     // Prima elimina tutti gli allergeni esistenti
     await db.allergeneArticolo.deleteMany({
-      where: { articoloId: params.id }
+      where: { articoloId: id }
     });
 
     // Poi aggiungi i nuovi allergeni
     if (allergeni && allergeni.length > 0) {
       await db.allergeneArticolo.createMany({
         data: allergeni.map((allergeneId: string) => ({
-          articoloId: params.id,
+          articoloId: id,
           allergeneId
         }))
       });
@@ -57,7 +59,7 @@ export async function PUT(
 
     // Recupera l'articolo completo con gli allergeni
     const articoloCompleto = await db.articolo.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         categoria: true,
         allergeni: {
@@ -86,11 +88,13 @@ export async function PUT(
 // DELETE - Elimina un articolo
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
+
   try {
     await db.articolo.delete({
-      where: { id: params.id }
+      where: { id }
     });
 
     return NextResponse.json({ success: true });

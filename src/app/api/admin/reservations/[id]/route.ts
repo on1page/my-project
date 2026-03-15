@@ -4,18 +4,21 @@ import { db } from '@/lib/db'
 // PUT - Aggiorna una prenotazione
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  console.log('PUT /api/admin/reservations/[id] - Params:', params)
+  // Next.js 16: params è una Promise, deve essere awaitata
+  const { id } = await params
+
+  console.log('PUT /api/admin/reservations/[id] - ID:', id)
 
   try {
     const body = await request.json()
     const { stato, note } = body
 
-    console.log('PUT - Body ricevuto:', { id: params.id, stato, note })
+    console.log('PUT - Body ricevuto:', { id, stato, note })
 
     const reservation = await db.reservation.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(stato && { stato }),
         ...(note !== undefined && { note })
@@ -44,18 +47,32 @@ export async function PUT(
 // DELETE - Elimina una prenotazione
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  // Next.js 16: params è una Promise, deve essere awaitata
+  const { id } = await params
+
+  console.log('DELETE /api/admin/reservations/[id] - ID:', id)
+
   try {
     await db.reservation.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
+    console.log('DELETE - Prenotazione eliminata con successo:', id)
     return NextResponse.json({ success: true })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Errore nell\'eliminazione prenotazione:', error)
+    console.error('Dettagli errore:', {
+      message: error?.message,
+      code: error?.code,
+      meta: error?.meta
+    })
     return NextResponse.json(
-      { error: 'Errore nell\'eliminazione della prenotazione' },
+      {
+        error: 'Errore nell\'eliminazione della prenotazione',
+        details: error?.message || 'Errore sconosciuto'
+      },
       { status: 500 }
     )
   }

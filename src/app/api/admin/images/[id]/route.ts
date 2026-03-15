@@ -4,14 +4,16 @@ import { db } from '@/lib/db';
 // PUT - Aggiorna un'immagine
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
+
   try {
     const body = await request.json();
     const { sezione, titolo, descrizione, url, ordine, attiva } = body;
 
     const image = await db.siteImage.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         sezione,
         titolo,
@@ -35,11 +37,13 @@ export async function PUT(
 // DELETE - Elimina un'immagine
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
+
   try {
     await db.siteImage.delete({
-      where: { id: params.id }
+      where: { id }
     });
 
     return NextResponse.json({ success: true });

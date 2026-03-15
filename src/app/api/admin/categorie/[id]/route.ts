@@ -4,14 +4,16 @@ import { db } from '@/lib/db';
 // PUT - Aggiorna una categoria
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
+
   try {
     const body = await request.json();
     const { nome, ordine, attiva } = body;
 
     const categoria = await db.categoria.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         nome,
         ordine,
@@ -32,11 +34,13 @@ export async function PUT(
 // DELETE - Elimina una categoria
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
+
   try {
     await db.categoria.delete({
-      where: { id: params.id }
+      where: { id }
     });
 
     return NextResponse.json({ success: true });
