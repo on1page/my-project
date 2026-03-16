@@ -37,6 +37,10 @@ export default function LoginDialog({ onClose, onLoginSuccess }: LoginDialogProp
         onLoginSuccess()
       } else {
         setError(data.error || 'Login fallito')
+        if (data.details) {
+          console.error('Error details:', data.details)
+          setError(`${data.error}: ${data.details}`)
+        }
       }
     } catch (error) {
       console.error('Errore login:', error)
