@@ -95,11 +95,12 @@ export default function AdminUsers() {
         fetchUsers()
         alert('Utente salvato con successo!')
       } else {
-        alert('Errore nel salvataggio dell\'utente')
+        const errorData = await response.json()
+        alert(`Errore nel salvataggio dell'utente:\n\n${errorData.error || 'Errore sconosciuto'}\n\n${errorData.details || ''}`)
       }
     } catch (error) {
       console.error('Errore salvataggio utente:', error)
-      alert('Errore nel salvataggio dell\'utente')
+      alert('Errore di connessione. Riprova.')
     }
   }
 
