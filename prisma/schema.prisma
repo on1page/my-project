@@ -129,15 +129,17 @@ model User {
 
 // Permessi utente
 model Permission {
-  id                  String     @id @default(cuid())
-  userId              String     @unique
-  user                User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  puoGestireMenu      Boolean    @default(true)
-  puoGestireFooter    Boolean    @default(true)
-  puoGestireTemi      Boolean    @default(true)
-  puoGestireProfili   Boolean    @default(false)
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
+  id                    String     @id @default(cuid())
+  userId                String     @unique
+  user                  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  puoGestireMenu        Boolean    @default(true)
+  puoGestireFooter      Boolean    @default(true)
+  puoGestireTemi        Boolean    @default(true)
+  puoGestirePrenotazioni Boolean   @default(true)
+  puoGestireDatiAzienda Boolean    @default(true)
+  puoGestireProfili     Boolean    @default(false)
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
 }
 
 // Dati aziendali

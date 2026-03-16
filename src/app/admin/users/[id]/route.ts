@@ -51,6 +51,8 @@ export async function PUT(
             puoGestireMenu: permessi.puoGestireMenu,
             puoGestireFooter: permessi.puoGestireFooter,
             puoGestireTemi: permessi.puoGestireTemi,
+            puoGestirePrenotazioni: permessi.puoGestirePrenotazioni,
+            puoGestireDatiAzienda: permessi.puoGestireDatiAzienda,
             puoGestireProfili: permessi.puoGestireProfili
           }
         });
@@ -61,6 +63,8 @@ export async function PUT(
             puoGestireMenu: permessi.puoGestireMenu ?? true,
             puoGestireFooter: permessi.puoGestireFooter ?? true,
             puoGestireTemi: permessi.puoGestireTemi ?? true,
+            puoGestirePrenotazioni: permessi.puoGestirePrenotazioni ?? true,
+            puoGestireDatiAzienda: permessi.puoGestireDatiAzienda ?? true,
             puoGestireProfili: permessi.puoGestireProfili ?? false
           }
         });
