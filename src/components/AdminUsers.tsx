@@ -44,10 +44,13 @@ interface CurrentUser {
   ruolo: string
 }
 
-export default function AdminUsers() {
+interface AdminUsersProps {
+  currentUser?: CurrentUser | null
+}
+
+export default function AdminUsers({ currentUser }: AdminUsersProps = {}) {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
-  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
 
   // User form
   const [userForm, setUserForm] = useState({
@@ -69,21 +72,6 @@ export default function AdminUsers() {
   const [showUserDialog, setShowUserDialog] = useState(false)
 
   useEffect(() => {
-    // Recupera l'utente corrente dal token
-    const token = localStorage.getItem('adminToken')
-    if (token) {
-      try {
-        const userData = JSON.parse(atob(token.split('.')[1]))
-        setCurrentUser({
-          id: userData.userId,
-          email: userData.email,
-          ruolo: userData.ruolo
-        })
-      } catch (error) {
-        console.error('Errore nel parsing del token:', error)
-      }
-    }
-
     fetchUsers()
   }, [])
 
