@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Facebook, Instagram, Twitter, Linkedin, MessageCircle, X } from 'lucide-react'
+import { Facebook, Instagram, Twitter, Linkedin, MessageCircle, X, Share2 } from 'lucide-react'
 
 interface SocialSidebarProps {
   facebookUrl?: string | null
@@ -13,7 +13,7 @@ interface SocialSidebarProps {
 
 export default function SocialSidebar() {
   const [footerInfo, setFooterInfo] = useState<SocialSidebarProps>({})
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(true)
 
   useEffect(() => {
     async function fetchFooterInfo() {
@@ -32,11 +32,11 @@ export default function SocialSidebar() {
   }, [])
 
   const socialLinks = [
-    { name: 'Facebook', url: footerInfo.facebookUrl, icon: Facebook, color: 'bg-blue-600' },
-    { name: 'Instagram', url: footerInfo.instagramUrl, icon: Instagram, color: 'bg-pink-600' },
-    { name: 'Twitter', url: footerInfo.twitterUrl, icon: Twitter, color: 'bg-sky-500' },
-    { name: 'LinkedIn', url: footerInfo.linkedinUrl, icon: Linkedin, color: 'bg-blue-700' },
-    { name: 'WhatsApp', url: footerInfo.whatsappUrl, icon: MessageCircle, color: 'bg-green-600' }
+    { name: 'Facebook', url: footerInfo.facebookUrl, icon: Facebook, color: 'bg-blue-600 hover:bg-blue-700' },
+    { name: 'Instagram', url: footerInfo.instagramUrl, icon: Instagram, color: 'bg-pink-600 hover:bg-pink-700' },
+    { name: 'Twitter', url: footerInfo.twitterUrl, icon: Twitter, color: 'bg-sky-500 hover:bg-sky-600' },
+    { name: 'LinkedIn', url: footerInfo.linkedinUrl, icon: Linkedin, color: 'bg-blue-700 hover:bg-blue-800' },
+    { name: 'WhatsApp', url: footerInfo.whatsappUrl, icon: MessageCircle, color: 'bg-green-600 hover:bg-green-700' }
   ].filter(social => social.url)
 
   if (socialLinks.length === 0) {
@@ -45,40 +45,63 @@ export default function SocialSidebar() {
 
   return (
     <>
-      {/* Toggle Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`fixed left-4 bottom-24 z-50 bg-orange-600 hover:bg-orange-700 text-white p-3 rounded-full shadow-lg transition-all duration-300 ${
-          isOpen ? 'rotate-45' : ''
-        }`}
-        aria-label="Toggle social menu"
-      >
-        <X className="w-6 h-6" />
-      </button>
-
-      {/* Social Links Container */}
+      {/* Container Principale - Tendina attaccata a sinistra */}
       <div
-        className={`fixed left-4 bottom-28 z-50 flex flex-col gap-3 transition-all duration-300 ${
-          isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-[-100px] pointer-events-none'
+        className={`fixed left-0 top-1/2 -translate-y-1/2 z-50 bg-white shadow-xl transition-all duration-300 ${
+          isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-[100%] pointer-events-none'
         }`}
+        style={{ 
+          maxHeight: '70vh',
+          borderTopRightRadius: '1rem',
+          borderBottomRightRadius: '1rem',
+          borderTopLeftRadius: '0',
+          borderBottomLeftRadius: '0'
+        }}
       >
-        {socialLinks.map((social) => {
-          const Icon = social.icon
-          return (
-            <a
-              key={social.name}
-              href={social.url!}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`${social.color} text-white p-3 rounded-full shadow-lg hover:scale-110 transition-transform duration-200`}
-              aria-label={social.name}
-              title={social.name}
-            >
-              <Icon className="w-5 h-5" />
-            </a>
-          )
-        })}
+        {/* Header della Tendina con solo X di chiusura */}
+        <div className="flex justify-end items-center p-2 border-r border-gray-200 bg-gray-50">
+          <button
+            onClick={() => setIsOpen(false)}
+            className="p-1.5 rounded-lg hover:bg-gray-200 transition-colors group"
+            aria-label="Chiudi"
+          >
+            <X className="w-3.5 h-3.5 text-gray-500 group-hover:text-gray-700 transition-colors" />
+          </button>
+        </div>
+
+        {/* Lista Social - Solo icone senza nomi */}
+        <div className="p-2 space-y-2 border-r border-gray-200 overflow-y-auto" style={{ maxHeight: 'calc(70vh - 48px)' }}>
+          {socialLinks.map((social) => {
+            const Icon = social.icon
+            return (
+              <a
+                key={social.name}
+                href={social.url!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex justify-center items-center w-12 h-12 rounded-full ${social.color} text-white hover:scale-105 hover:shadow-md transition-all duration-200`}
+                aria-label={social.name}
+                title={social.name}
+              >
+                <Icon className="w-6 h-6" />
+              </a>
+            )
+          })}
+        </div>
       </div>
+
+      {/* Pulsante per riaprire la tendina */}
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed left-0 top-1/2 -translate-y-1/2 z-50 bg-orange-600 hover:bg-orange-700 text-white p-3 rounded-r-lg shadow-lg hover:scale-110 transition-all duration-300"
+          aria-label="Apri menu social"
+          title="Apri social"
+          style={{ borderTopRightRadius: '0.5rem', borderBottomRightRadius: '0.5rem', borderTopLeftRadius: '0', borderBottomLeftRadius: '0' }}
+        >
+          <Share2 className="w-5 h-5" />
+        </button>
+      )}
     </>
   )
 }
