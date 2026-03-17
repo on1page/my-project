@@ -31,13 +31,80 @@ export default function SocialSidebar() {
     fetchFooterInfo()
   }, [])
 
+  // Ottieni l'URL corrente della pagina per la condivisione
+  const currentUrl = typeof window !== 'undefined' ? window.location.href : ''
+
+  // Testo predefinito per la condivisione
+  const shareText = 'Te lo consiglio ! 🍽️'
+
+  // Genera URL di sharing per ogni social
+  const generateShareUrl = (platform: string) => {
+    const encodedUrl = encodeURIComponent(currentUrl)
+    const encodedText = encodeURIComponent(shareText)
+
+    switch (platform) {
+      case 'facebook':
+        return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`
+      case 'twitter':
+        return `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`
+      case 'linkedin':
+        return `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`
+      case 'whatsapp':
+        return `https://wa.me/?text=${encodedText} ${encodedUrl}`
+      case 'instagram':
+        // Instagram NON supporta sharing via web
+        return footerInfo.instagramUrl || '#'
+      default:
+        return '#'
+    }
+  }
+
   const socialLinks = [
-    { name: 'Facebook', url: footerInfo.facebookUrl, icon: Facebook, color: 'bg-blue-600 hover:bg-blue-700' },
-    { name: 'Instagram', url: footerInfo.instagramUrl, icon: Instagram, color: 'bg-pink-600 hover:bg-pink-700' },
-    { name: 'Twitter', url: footerInfo.twitterUrl, icon: Twitter, color: 'bg-sky-500 hover:bg-sky-600' },
-    { name: 'LinkedIn', url: footerInfo.linkedinUrl, icon: Linkedin, color: 'bg-blue-700 hover:bg-blue-800' },
-    { name: 'WhatsApp', url: footerInfo.whatsappUrl, icon: MessageCircle, color: 'bg-green-600 hover:bg-green-700' }
-  ].filter(social => social.url)
+    {
+      name: 'Facebook',
+      url: generateShareUrl('facebook'),
+      icon: Facebook,
+      color: 'bg-blue-600 hover:bg-blue-700',
+      isShare: true
+    },
+    {
+      name: 'Instagram',
+      url: generateShareUrl('instagram'),
+      icon: Instagram,
+      color: 'bg-pink-600 hover:bg-pink-700',
+      isShare: false
+    },
+    {
+      name: 'WhatsApp',
+      url: generateShareUrl('whatsapp'),
+      icon: MessageCircle,
+      color: 'bg-green-600 hover:bg-green-700',
+      isShare: true
+    }
+  ].filter(social => social.url && social.url !== '#')
+
+  const handleSocialClick = (social: any, e: React.MouseEvent) => {
+    if (social.name === 'Instagram') {
+      // Instagram non supporta sharing via web
+      e.preventDefault()
+      alert('Per condividere su Instagram:\n\n1. Apri Instagram\n2. Carica una foto del ristorante\n3. Aggiungi il link del sito nella didascalia')
+      if (social.url !== '#') {
+        window.open(social.url, '_blank')
+      }
+    } else {
+      // Apri la finestra di condivisione
+      const width = 600
+      const height = 400
+      const left = (window.screen.width - width) / 2
+      const top = (window.screen.height - height) / 2
+      window.open(
+        social.url,
+        'Condividi',
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+      )
+      e.preventDefault()
+    }
+  }
 
   if (socialLinks.length === 0) {
     return null
@@ -48,9 +115,9 @@ export default function SocialSidebar() {
       {/* Container Principale - Tendina attaccata a sinistra */}
       <div
         className={`fixed left-0 top-1/2 -translate-y-1/2 z-50 bg-white shadow-xl transition-all duration-300 ${
-          isOpen ? 'opacity-60 translate-x-0' : 'opacity-0 -translate-x-[100%] pointer-events-none'
+          isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-[100%] pointer-events-none'
         }`}
-        style={{ 
+        style={{
           maxHeight: '70vh',
           borderTopRightRadius: '1rem',
           borderBottomRightRadius: '1rem',
@@ -76,12 +143,13 @@ export default function SocialSidebar() {
             return (
               <a
                 key={social.name}
-                href={social.url!}
-                target="_blank"
+                href={social.url}
+                onClick={(e) => handleSocialClick(social, e)}
+                target={social.name === 'Instagram' ? '_blank' : undefined}
                 rel="noopener noreferrer"
                 className={`flex justify-center items-center w-12 h-12 rounded-full ${social.color} text-white hover:scale-105 hover:shadow-md transition-all duration-200`}
-                aria-label={social.name}
-                title={social.name}
+                aria-label={`Condividi su ${social.name}`}
+                title={`Condividi su ${social.name}`}
               >
                 <Icon className="w-6 h-6" />
               </a>
@@ -96,7 +164,7 @@ export default function SocialSidebar() {
           onClick={() => setIsOpen(true)}
           className="fixed left-0 top-1/2 -translate-y-1/2 z-50 bg-orange-600 hover:bg-orange-700 text-white p-3 rounded-r-lg shadow-lg hover:scale-110 transition-all duration-300"
           aria-label="Apri menu social"
-          title="Apri social"
+          title="Condividi"
           style={{ borderTopRightRadius: '0.5rem', borderBottomRightRadius: '0.5rem', borderTopLeftRadius: '0', borderBottomLeftRadius: '0' }}
         >
           <Share2 className="w-5 h-5" />
