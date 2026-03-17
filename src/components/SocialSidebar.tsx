@@ -48,7 +48,7 @@ export default function SocialSidebar() {
       {/* Container Principale - Tendina attaccata a sinistra */}
       <div
         className={`fixed left-0 top-1/2 -translate-y-1/2 z-50 bg-white shadow-xl transition-all duration-300 ${
-          isOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-[100%] pointer-events-none'
+          isOpen ? 'opacity-60 translate-x-0' : 'opacity-0 -translate-x-[100%] pointer-events-none'
         }`}
         style={{ 
           maxHeight: '70vh',
