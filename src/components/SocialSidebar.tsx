@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Facebook, Instagram, Twitter, Linkedin, MessageCircle, X, Share2, Link as LinkIcon, Check } from 'lucide-react'
+import { Facebook, X as XIcon, MessageCircle, X, Share2 } from 'lucide-react'
 
 interface SocialSidebarProps {
   facebookUrl?: string | null
@@ -14,7 +14,6 @@ interface SocialSidebarProps {
 export default function SocialSidebar() {
   const [footerInfo, setFooterInfo] = useState<SocialSidebarProps>({})
   const [isOpen, setIsOpen] = useState(true)
-  const [linkCopied, setLinkCopied] = useState(false)
 
   useEffect(() => {
     async function fetchFooterInfo() {
@@ -46,15 +45,13 @@ export default function SocialSidebar() {
     switch (platform) {
       case 'facebook':
         return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`
-      case 'twitter':
+      case 'x':
         return `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`
-      case 'linkedin':
-        return `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`
       case 'whatsapp':
         return `https://wa.me/?text=${encodedText} ${encodedUrl}`
       case 'instagram':
-        // Instagram non supporta sharing via web
-        return footerInfo.instagramUrl || '#'
+        // Instagram.com (non la pagina del locale)
+        return 'https://www.instagram.com'
       default:
         return '#'
     }
@@ -69,26 +66,19 @@ export default function SocialSidebar() {
       isShare: true
     },
     {
+      name: 'X',
+      url: generateShareUrl('x'),
+      icon: XIcon,
+      color: 'bg-black hover:bg-gray-800',
+      isShare: true
+    },
+    {
       name: 'Instagram',
       url: generateShareUrl('instagram'),
-      icon: Instagram,
+      icon: MessageCircle,
       color: 'bg-pink-600 hover:bg-pink-700',
       isShare: false,
       action: 'copy-and-open'
-    },
-    {
-      name: 'Twitter',
-      url: generateShareUrl('twitter'),
-      icon: Twitter,
-      color: 'bg-sky-500 hover:bg-sky-600',
-      isShare: true
-    },
-    {
-      name: 'LinkedIn',
-      url: generateShareUrl('linkedin'),
-      icon: Linkedin,
-      color: 'bg-blue-700 hover:bg-blue-800',
-      isShare: true
     },
     {
       name: 'WhatsApp',
@@ -103,28 +93,15 @@ export default function SocialSidebar() {
     if (social.name === 'Instagram') {
       e.preventDefault()
       
-      // Copia il link negli appunti
+      // Copia il link negli appunti in silenzio
       try {
         await navigator.clipboard.writeText(currentUrl)
-        setLinkCopied(true)
-        
-        // Mostra messaggio e apri Instagram
-        setTimeout(() => {
-          if (social.url !== '#') {
-            window.open(social.url, '_blank')
-          }
-          // Reset dopo 2 secondi
-          setTimeout(() => setLinkCopied(false), 2000)
-        }, 500)
-        
-        alert('✅ Link copiato negli appunti!\n\nOra apriamo Instagram. Incolla il link in una DM o nei tuoi post!')
       } catch (err) {
         console.error('Errore nella copia:', err)
-        alert('Impossibile copiare il link automaticamente.\n\nCopia questo link:\n' + currentUrl)
-        if (social.url !== '#') {
-          window.open(social.url, '_blank')
-        }
       }
+      
+      // Apri Instagram dell'utente
+      window.open(social.url, '_blank')
     } else {
       // Apri la finestra di condivisione
       const width = 600
@@ -138,22 +115,6 @@ export default function SocialSidebar() {
       )
       e.preventDefault()
     }
-  }
-
-  const handleCopyLink = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    try {
-      await navigator.clipboard.writeText(currentUrl)
-      setLinkCopied(true)
-      setTimeout(() => setLinkCopied(false), 2000)
-    } catch (err) {
-      console.error('Errore nella copia:', err)
-      alert('Impossibile copiare il link automaticamente.')
-    }
-  }
-
-  if (socialLinks.length === 0) {
-    return null
   }
 
   return (
@@ -184,16 +145,6 @@ export default function SocialSidebar() {
 
         {/* Lista Social - Solo icone senza nomi */}
         <div className="p-2 space-y-2 border-r border-gray-200 overflow-y-auto" style={{ maxHeight: 'calc(70vh - 48px)' }}>
-          {/* Pulsante Copia Link */}
-          <button
-            onClick={handleCopyLink}
-            className="flex justify-center items-center w-12 h-12 rounded-full bg-gray-600 hover:bg-gray-700 text-white hover:scale-105 hover:shadow-md transition-all duration-200 relative"
-            title={linkCopied ? 'Link copiato!' : 'Copia link'}
-            aria-label="Copia link"
-          >
-            {linkCopied ? <Check className="w-6 h-6" /> : <LinkIcon className="w-6 h-6" />}
-          </button>
-
           {socialLinks.map((social) => {
             const Icon = social.icon
             return (
