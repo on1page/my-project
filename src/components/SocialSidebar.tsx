@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Facebook, Instagram, Twitter, Linkedin, MessageCircle, X, Share2 } from 'lucide-react'
+import { Facebook, Instagram, Twitter, Linkedin, MessageCircle, X, Share2, Link as LinkIcon, Check } from 'lucide-react'
 
 interface SocialSidebarProps {
   facebookUrl?: string | null
@@ -14,6 +14,7 @@ interface SocialSidebarProps {
 export default function SocialSidebar() {
   const [footerInfo, setFooterInfo] = useState<SocialSidebarProps>({})
   const [isOpen, setIsOpen] = useState(true)
+  const [linkCopied, setLinkCopied] = useState(false)
 
   useEffect(() => {
     async function fetchFooterInfo() {
@@ -35,7 +36,7 @@ export default function SocialSidebar() {
   const currentUrl = typeof window !== 'undefined' ? window.location.href : ''
 
   // Testo predefinito per la condivisione
-  const shareText = 'Te lo consiglio ! 🍽️'
+  const shareText = 'Vieni a trovarci al nostro ristorante! 🍽️'
 
   // Genera URL di sharing per ogni social
   const generateShareUrl = (platform: string) => {
@@ -52,7 +53,7 @@ export default function SocialSidebar() {
       case 'whatsapp':
         return `https://wa.me/?text=${encodedText} ${encodedUrl}`
       case 'instagram':
-        // Instagram NON supporta sharing via web
+        // Instagram non supporta sharing via web
         return footerInfo.instagramUrl || '#'
       default:
         return '#'
@@ -72,7 +73,22 @@ export default function SocialSidebar() {
       url: generateShareUrl('instagram'),
       icon: Instagram,
       color: 'bg-pink-600 hover:bg-pink-700',
-      isShare: false
+      isShare: false,
+      action: 'copy-and-open'
+    },
+    {
+      name: 'Twitter',
+      url: generateShareUrl('twitter'),
+      icon: Twitter,
+      color: 'bg-sky-500 hover:bg-sky-600',
+      isShare: true
+    },
+    {
+      name: 'LinkedIn',
+      url: generateShareUrl('linkedin'),
+      icon: Linkedin,
+      color: 'bg-blue-700 hover:bg-blue-800',
+      isShare: true
     },
     {
       name: 'WhatsApp',
@@ -83,13 +99,31 @@ export default function SocialSidebar() {
     }
   ].filter(social => social.url && social.url !== '#')
 
-  const handleSocialClick = (social: any, e: React.MouseEvent) => {
+  const handleSocialClick = async (social: any, e: React.MouseEvent) => {
     if (social.name === 'Instagram') {
-      // Instagram non supporta sharing via web
       e.preventDefault()
-      alert('Per condividere su Instagram:\n\n1. Apri Instagram\n2. Carica una foto del ristorante\n3. Aggiungi il link del sito nella didascalia')
-      if (social.url !== '#') {
-        window.open(social.url, '_blank')
+      
+      // Copia il link negli appunti
+      try {
+        await navigator.clipboard.writeText(currentUrl)
+        setLinkCopied(true)
+        
+        // Mostra messaggio e apri Instagram
+        setTimeout(() => {
+          if (social.url !== '#') {
+            window.open(social.url, '_blank')
+          }
+          // Reset dopo 2 secondi
+          setTimeout(() => setLinkCopied(false), 2000)
+        }, 500)
+        
+        alert('✅ Link copiato negli appunti!\n\nOra apriamo Instagram. Incolla il link in una DM o nei tuoi post!')
+      } catch (err) {
+        console.error('Errore nella copia:', err)
+        alert('Impossibile copiare il link automaticamente.\n\nCopia questo link:\n' + currentUrl)
+        if (social.url !== '#') {
+          window.open(social.url, '_blank')
+        }
       }
     } else {
       // Apri la finestra di condivisione
@@ -103,6 +137,18 @@ export default function SocialSidebar() {
         `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
       )
       e.preventDefault()
+    }
+  }
+
+  const handleCopyLink = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    try {
+      await navigator.clipboard.writeText(currentUrl)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    } catch (err) {
+      console.error('Errore nella copia:', err)
+      alert('Impossibile copiare il link automaticamente.')
     }
   }
 
@@ -138,6 +184,16 @@ export default function SocialSidebar() {
 
         {/* Lista Social - Solo icone senza nomi */}
         <div className="p-2 space-y-2 border-r border-gray-200 overflow-y-auto" style={{ maxHeight: 'calc(70vh - 48px)' }}>
+          {/* Pulsante Copia Link */}
+          <button
+            onClick={handleCopyLink}
+            className="flex justify-center items-center w-12 h-12 rounded-full bg-gray-600 hover:bg-gray-700 text-white hover:scale-105 hover:shadow-md transition-all duration-200 relative"
+            title={linkCopied ? 'Link copiato!' : 'Copia link'}
+            aria-label="Copia link"
+          >
+            {linkCopied ? <Check className="w-6 h-6" /> : <LinkIcon className="w-6 h-6" />}
+          </button>
+
           {socialLinks.map((social) => {
             const Icon = social.icon
             return (
