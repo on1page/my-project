@@ -50,8 +50,8 @@ export default function SocialSidebar() {
       case 'whatsapp':
         return `https://wa.me/?text=${encodedText} ${encodedUrl}`
       case 'instagram':
-        // Instagram.com (non la pagina del locale)
-        return 'https://www.instagram.com'
+        // Instagram URL scheme per aprire i DM (funziona solo su mobile)
+        return 'instagram://direct/new/'
       default:
         return '#'
     }
@@ -78,7 +78,7 @@ export default function SocialSidebar() {
       icon: MessageCircle,
       color: 'bg-pink-600 hover:bg-pink-700',
       isShare: false,
-      action: 'copy-and-open'
+      action: 'open-dm'
     },
     {
       name: 'WhatsApp',
@@ -100,8 +100,19 @@ export default function SocialSidebar() {
         console.error('Errore nella copia:', err)
       }
       
-      // Apri Instagram dell'utente
-      window.open(social.url, '_blank')
+      // Apre Instagram usando l'URL scheme (apre i DM su mobile)
+      const instagramUrl = 'instagram://direct/new/'
+      
+      // Crea un iframe nascosto per tentare l'URL scheme
+      const iframe = document.createElement('iframe')
+      iframe.style.display = 'none'
+      iframe.src = instagramUrl
+      document.body.appendChild(iframe)
+      
+      // Rimuovi l'iframe dopo un breve periodo
+      setTimeout(() => {
+        document.body.removeChild(iframe)
+      }, 1000)
     } else {
       // Apri la finestra di condivisione
       const width = 600
@@ -152,7 +163,7 @@ export default function SocialSidebar() {
                 key={social.name}
                 href={social.url}
                 onClick={(e) => handleSocialClick(social, e)}
-                target={social.name === 'Instagram' ? '_blank' : undefined}
+                target={social.name === 'Instagram' ? undefined : undefined}
                 rel="noopener noreferrer"
                 className={`flex justify-center items-center w-12 h-12 rounded-full ${social.color} text-white hover:scale-105 hover:shadow-md transition-all duration-200`}
                 aria-label={`Condividi su ${social.name}`}
