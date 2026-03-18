@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Facebook, X as XIcon, MessageCircle, X, Share2 } from 'lucide-react'
+import { Facebook, Instagram, X as XIcon, MessageCircle, X, Share2 } from 'lucide-react'
 
 interface SocialSidebarProps {
   facebookUrl?: string | null
@@ -34,8 +34,8 @@ export default function SocialSidebar() {
   // Ottieni l'URL corrente della pagina per la condivisione
   const currentUrl = typeof window !== 'undefined' ? window.location.href : ''
 
-  // Testo predefinito per la condivisione
-  const shareText = 'Vieni a trovarci al nostro ristorante! 🍽️'
+  // Testo personalizzato per la condivisione
+  const shareText = 'TE LO CONSIGLIO !'
 
   // Genera URL di sharing per ogni social
   const generateShareUrl = (platform: string) => {
@@ -50,8 +50,7 @@ export default function SocialSidebar() {
       case 'whatsapp':
         return `https://wa.me/?text=${encodedText} ${encodedUrl}`
       case 'instagram':
-        // Instagram URL scheme per aprire i DM (funziona solo su mobile)
-        return 'instagram://direct/new/'
+        return 'https://www.instagram.com'
       default:
         return '#'
     }
@@ -75,10 +74,10 @@ export default function SocialSidebar() {
     {
       name: 'Instagram',
       url: generateShareUrl('instagram'),
-      icon: MessageCircle,
-      color: 'bg-pink-600 hover:bg-pink-700',
+      icon: Instagram,
+      color: 'bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 hover:from-purple-700 hover:via-pink-700 hover:to-orange-600',
       isShare: false,
-      action: 'open-dm'
+      action: 'copy-and-open'
     },
     {
       name: 'WhatsApp',
@@ -101,9 +100,8 @@ export default function SocialSidebar() {
         console.error('Errore nella copia:', err)
       }
       
-      // Apre Instagram usando l'URL scheme per i DM
-      const instagramUrl = 'instagram://direct/new/'
-      window.open(instagramUrl, '_blank')
+      // Apre Instagram.com
+      window.open(social.url, '_blank')
     } else {
       // Apri la finestra di condivisione
       const width = 600
@@ -154,7 +152,7 @@ export default function SocialSidebar() {
                 key={social.name}
                 href={social.url}
                 onClick={(e) => handleSocialClick(social, e)}
-                target={social.name === 'Instagram' ? undefined : undefined}
+                target={social.name === 'Instagram' ? '_blank' : undefined}
                 rel="noopener noreferrer"
                 className={`flex justify-center items-center w-12 h-12 rounded-full ${social.color} text-white hover:scale-105 hover:shadow-md transition-all duration-200`}
                 aria-label={`Condividi su ${social.name}`}
