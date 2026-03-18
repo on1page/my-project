@@ -35,7 +35,7 @@ export default function SocialSidebar() {
   const currentUrl = typeof window !== 'undefined' ? window.location.href : ''
 
   // Testo predefinito per la condivisione
-  const shareText = 'Vieni a trovarci al nostro ristorante! 🍽️'
+  const shareText = 'TE LO CONSIGLIO! 🍽️'
 
   // Genera URL di sharing per ogni social
   const generateShareUrl = (platform: string) => {
