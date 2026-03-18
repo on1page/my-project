@@ -35,7 +35,7 @@ export default function SocialSidebar() {
   const currentUrl = typeof window !== 'undefined' ? window.location.href : ''
 
   // Testo predefinito per la condivisione
-  const shareText = 'TE LO CONSIGLIO! 🍽️'
+  const shareText = 'Vieni a trovarci al nostro ristorante! 🍽️'
 
   // Genera URL di sharing per ogni social
   const generateShareUrl = (platform: string) => {
@@ -96,23 +96,14 @@ export default function SocialSidebar() {
       // Copia il link negli appunti in silenzio
       try {
         await navigator.clipboard.writeText(currentUrl)
+        console.log('Link copiato negli appunti')
       } catch (err) {
         console.error('Errore nella copia:', err)
       }
       
-      // Apre Instagram usando l'URL scheme (apre i DM su mobile)
+      // Apre Instagram usando l'URL scheme per i DM
       const instagramUrl = 'instagram://direct/new/'
-      
-      // Crea un iframe nascosto per tentare l'URL scheme
-      const iframe = document.createElement('iframe')
-      iframe.style.display = 'none'
-      iframe.src = instagramUrl
-      document.body.appendChild(iframe)
-      
-      // Rimuovi l'iframe dopo un breve periodo
-      setTimeout(() => {
-        document.body.removeChild(iframe)
-      }, 1000)
+      window.open(instagramUrl, '_blank')
     } else {
       // Apri la finestra di condivisione
       const width = 600
