@@ -13,9 +13,14 @@ interface SocialSidebarProps {
 
 export default function SocialSidebar() {
   const [footerInfo, setFooterInfo] = useState<SocialSidebarProps>({})
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(true)
+  const [currentUrl, setCurrentUrl] = useState('')
 
   useEffect(() => {
+    // Imposta l'URL solo sul client per evitare problemi di idratazione
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCurrentUrl(window.location.href)
+
     async function fetchFooterInfo() {
       try {
         const response = await fetch('/api/admin/footer')
@@ -30,9 +35,6 @@ export default function SocialSidebar() {
 
     fetchFooterInfo()
   }, [])
-
-  // Ottieni l'URL corrente della pagina per la condivisione
-  const currentUrl = typeof window !== 'undefined' ? window.location.href : ''
 
   // Testo personalizzato per la condivisione
   const shareText = 'TE LO CONSIGLIO !'

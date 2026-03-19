@@ -74,23 +74,17 @@ export default function AdminReservations() {
     setUpdatingPrenotazioni(true)
     try {
       const newValue = !prenotazioniAttive
-      console.log('Tentativo di aggiornare prenotazioniAttive a:', newValue)
-
       const response = await fetch('/api/admin/site-info', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prenotazioniAttive: newValue })
       })
 
-      console.log('Risposta status:', response.status)
-      const responseData = await response.json()
-      console.log('Risposta data:', responseData)
-
       if (response.ok) {
         setPrenotazioniAttive(newValue)
       } else {
-        console.error('Errore API:', responseData)
-        alert(`Errore: ${responseData.error || 'Impossibile aggiornare lo stato delle prenotazioni'}`)
+        const errorData = await response.json()
+        alert(`Errore: ${errorData.error || 'Impossibile aggiornare lo stato delle prenotazioni'}`)
       }
     } catch (error) {
       console.error('Errore aggiornamento stato:', error)
@@ -376,4 +370,3 @@ export default function AdminReservations() {
     </div>
   )
 }
-
