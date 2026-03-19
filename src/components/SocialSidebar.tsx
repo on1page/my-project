@@ -13,7 +13,7 @@ interface SocialSidebarProps {
 
 export default function SocialSidebar() {
   const [footerInfo, setFooterInfo] = useState<SocialSidebarProps>({})
-  const [isOpen, setIsOpen] = useState(true)
+  const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
     async function fetchFooterInfo() {

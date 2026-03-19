@@ -61,53 +61,10 @@ export default function Header({ siteName, logoUrl, onAdminClick, isLoggedIn, on
             >
               Prenota Tavolo
             </Button>
-            {isLoggedIn && onLogout ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onLogout}
-                className="ml-2"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            ) : (
-              onAdminClick && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onAdminClick}
-                  className="ml-2"
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Admin
-                </Button>
-              )
-            )}
           </div>
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center gap-2">
-            {isLoggedIn && onLogout ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onLogout}
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            ) : (
-              onAdminClick && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onAdminClick}
-                >
-                  <Settings className="w-4 h-4" />
-                </Button>
-              )
-            )}
             <button
               className="p-2 rounded-lg hover:bg-gray-100"
               onClick={() => setIsMenuOpen(!isMenuOpen)}

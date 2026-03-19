@@ -29,7 +29,7 @@ export default function Home() {
     // Verifica se l'utente è già loggato (solo lato client)
     const token = localStorage.getItem('adminToken')
     if (token) {
-      setIsLoggedIn(true)
+      setIsLoggedIn(true) // eslint-disable-line react-hooks/set-state-in-effect
     }
 
     // Recupera le informazioni del sito
@@ -93,7 +93,7 @@ export default function Home() {
         <Specialita showBestChoice={true} showPromo={true} limit={6} />
       </main>
 
-      <Footer />
+      <Footer onAdminClick={handleAdminClick} />
       <SocialSidebar />
 
       {/* Login Dialog */}
