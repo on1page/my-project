@@ -12,9 +12,10 @@ interface HeaderProps {
   onAdminClick?: () => void
   isLoggedIn?: boolean
   onLogout?: () => void
+  prenotazioniAttive?: boolean
 }
 
-export default function Header({ siteName, logoUrl, onAdminClick, isLoggedIn, onLogout }: HeaderProps) {
+export default function Header({ siteName, logoUrl, onAdminClick, isLoggedIn, onLogout, prenotazioniAttive = true }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [showReservationDialog, setShowReservationDialog] = useState(false)
 
@@ -55,12 +56,14 @@ export default function Header({ siteName, logoUrl, onAdminClick, isLoggedIn, on
                 {item.name}
               </Link>
             ))}
-            <Button
-              className="bg-orange-600 hover:bg-orange-700"
-              onClick={() => setShowReservationDialog(true)}
-            >
-              Prenota Tavolo
-            </Button>
+            {prenotazioniAttive && (
+              <Button
+                className="bg-orange-600 hover:bg-orange-700"
+                onClick={() => setShowReservationDialog(true)}
+              >
+                Prenota Tavolo
+              </Button>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -88,12 +91,14 @@ export default function Header({ siteName, logoUrl, onAdminClick, isLoggedIn, on
                   {item.name}
                 </Link>
               ))}
-              <Button
-                className="bg-orange-600 hover:bg-orange-700 w-full mt-2"
-                onClick={() => setShowReservationDialog(true)}
-              >
-                Prenota Tavolo
-              </Button>
+              {prenotazioniAttive && (
+                <Button
+                  className="bg-orange-600 hover:bg-orange-700 w-full mt-2"
+                  onClick={() => setShowReservationDialog(true)}
+                >
+                  Prenota Tavolo
+                </Button>
+              )}
             </div>
           </div>
         )}
@@ -106,3 +111,4 @@ export default function Header({ siteName, logoUrl, onAdminClick, isLoggedIn, on
     </header>
   )
 }
+

@@ -17,6 +17,7 @@ interface SiteInfo {
   chiSiamoTesto?: string
   logoUrl?: string
   faviconUrl?: string
+  prenotazioniAttive?: boolean
 }
 
 export default function Home() {
@@ -77,6 +78,7 @@ export default function Home() {
         onAdminClick={handleAdminClick}
         isLoggedIn={isLoggedIn}
         onLogout={handleLogout}
+        prenotazioniAttive={siteInfo.prenotazioniAttive ?? true}
       />
 
       <main className="flex-1">
@@ -111,3 +113,4 @@ export default function Home() {
     </div>
   )
 }
+

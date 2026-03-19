@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Calendar, Clock, Users, Check, X, Trash2, Loader2 } from 'lucide-react'
+import { Calendar, Clock, Users, Check, X, Trash2, Loader2, ToggleLeft, ToggleRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Switch } from '@/components/ui/switch'
 import {
   Table,
   TableBody,
@@ -49,10 +50,48 @@ export default function AdminReservations() {
   const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, confirmed: 0, cancelled: 0 })
   const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set())
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [prenotazioniAttive, setPrenotazioniAttive] = useState(true)
+  const [updatingPrenotazioni, setUpdatingPrenotazioni] = useState(false)
 
   useEffect(() => {
     fetchData()
+    fetchPrenotazioniAttive()
   }, [filterStato])
+
+  async function fetchPrenotazioniAttive() {
+    try {
+      const response = await fetch('/api/admin/site-info')
+      if (response.ok) {
+        const data = await response.json()
+        setPrenotazioniAttive(data.prenotazioniAttive ?? true)
+      }
+    } catch (error) {
+      console.error('Errore nel recupero stato prenotazioni:', error)
+    }
+  }
+
+  async function togglePrenotazioniAttive() {
+    setUpdatingPrenotazioni(true)
+    try {
+      const newValue = !prenotazioniAttive
+      const response = await fetch('/api/admin/site-info', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prenotazioniAttive: newValue })
+      })
+
+      if (response.ok) {
+        setPrenotazioniAttive(newValue)
+      } else {
+        alert('Errore nell\'aggiornamento dello stato delle prenotazioni')
+      }
+    } catch (error) {
+      console.error('Errore aggiornamento stato:', error)
+      alert('Errore di connessione. Riprova.')
+    } finally {
+      setUpdatingPrenotazioni(false)
+    }
+  }
 
   async function fetchData() {
     setLoading(true)
@@ -98,7 +137,7 @@ export default function AdminReservations() {
         alert('Stato aggiornato con successo!')
       } else {
         const errorData = await response.json()
-        alert(`Errore: ${errorData.error || 'Impossibile aggiornare lo stato'}\n\n${errorData.details || ''}`)
+        alert(`Errore: ${errorData.error || 'Impossibile aggiornare lo stato'}`)
       }
     } catch (error) {
       console.error('Errore aggiornamento stato:', error)
@@ -160,8 +199,8 @@ export default function AdminReservations() {
 
   return (
     <div className="space-y-6">
-      {/* Header con contatore */}
-      <div className="flex justify-between items-center">
+      {/* Header con contatore e switch */}
+      <div className="flex justify-between items-start">
         <div>
           <h2 className="text-2xl font-bold">Prenotazioni</h2>
           {filterStato === 'all' && (
@@ -185,19 +224,38 @@ export default function AdminReservations() {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <Label>Stato:</Label>
-          <Select value={filterStato} onValueChange={setFilterStato}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tutte</SelectItem>
-              <SelectItem value="pending">In Attesa</SelectItem>
-              <SelectItem value="confirmed">Confermate</SelectItem>
-              <SelectItem value="cancelled">Cancellate</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-4">
+          {/* Switch Prenotazioni Attive */}
+          <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-2">
+              {prenotazioniAttive ? (
+                <ToggleRight className="w-5 h-5 text-green-600" />
+              ) : (
+                <ToggleLeft className="w-5 h-5 text-gray-400" />
+              )}
+              <Label className="text-sm font-medium cursor-pointer">Pulsante Prenota</Label>
+            </div>
+            <Switch
+              checked={prenotazioniAttive}
+              onCheckedChange={togglePrenotazioniAttive}
+              disabled={updatingPrenotazioni}
+            />
+          </div>
+          {/* Filtro Stato */}
+          <div className="flex items-center gap-2">
+            <Label>Stato:</Label>
+            <Select value={filterStato} onValueChange={setFilterStato}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tutte</SelectItem>
+                <SelectItem value="pending">In Attesa</SelectItem>
+                <SelectItem value="confirmed">Confermate</SelectItem>
+                <SelectItem value="cancelled">Cancellate</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 

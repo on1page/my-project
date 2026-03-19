@@ -37,40 +37,51 @@ export async function PUT(request: NextRequest) {
       logoUrl,
       faviconUrl,
       telefono,
-      email
+      email,
+      prenotazioniAttive
     } = body;
 
     // Cerca se esiste già un record
     let siteInfo = await db.siteInfo.findFirst();
 
+    const updateData: any = {}
+    if (nomeLocale !== undefined) updateData.nomeLocale = nomeLocale
+    if (slogan !== undefined) updateData.slogan = slogan
+    if (chiSiamoTitolo !== undefined) updateData.chiSiamoTitolo = chiSiamoTitolo
+    if (chiSiamoTesto !== undefined) updateData.chiSiamoTesto = chiSiamoTesto
+    if (logoUrl !== undefined) updateData.logoUrl = logoUrl
+    if (faviconUrl !== undefined) updateData.faviconUrl = faviconUrl
+    if (telefono !== undefined) updateData.telefono = telefono
+    if (email !== undefined) updateData.email = email
+    if (prenotazioniAttive !== undefined) updateData.prenotazioniAttive = prenotazioniAttive
+
     if (siteInfo) {
       // Aggiorna il record esistente
       siteInfo = await db.siteInfo.update({
         where: { id: siteInfo.id },
-        data: {
-          nomeLocale,
-          slogan,
-          chiSiamoTitolo,
-          chiSiamoTesto,
-          logoUrl,
-          faviconUrl,
-          telefono,
-          email
-        }
+        data: updateData
       });
     } else {
       // Crea un nuovo record
+      const createData: any = {
+        nomeLocale: nomeLocale || 'Il Nostro Ristorante',
+        slogan,
+        chiSiamoTitolo,
+        chiSiamoTesto,
+        logoUrl,
+        faviconUrl,
+        telefono,
+        email
+      }
+
+      if (prenotazioniAttive !== undefined) {
+        createData.prenotazioniAttive = prenotazioniAttive
+      } else {
+        createData.prenotazioniAttive = true
+      }
+
       siteInfo = await db.siteInfo.create({
-        data: {
-          nomeLocale: nomeLocale || 'Il Nostro Ristorante',
-          slogan,
-          chiSiamoTitolo,
-          chiSiamoTesto,
-          logoUrl,
-          faviconUrl,
-          telefono,
-          email
-        }
+        data: createData
       });
     }
 

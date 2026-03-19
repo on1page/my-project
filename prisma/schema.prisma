@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -63,17 +63,18 @@ model AllergeneArticolo {
 
 // Informazioni generali del sito
 model SiteInfo {
-  id              String   @id @default(cuid())
-  nomeLocale      String   @default("Il Nostro Ristorante")
-  slogan          String?
-  chiSiamoTitolo  String?
-  chiSiamoTesto   String?
-  logoUrl         String?
-  faviconUrl      String?
-  telefono        String?
-  email           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  nomeLocale         String   @default("Il Nostro Ristorante")
+  slogan             String?
+  chiSiamoTitolo     String?
+  chiSiamoTesto      String?
+  logoUrl            String?
+  faviconUrl         String?
+  telefono           String?
+  email              String?
+  prenotazioniAttive Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 
 // Immagini del sito
@@ -147,9 +148,9 @@ model CompanyData {
   id              String   @id @default(cuid())
   ragioneSociale  String?
   partitaIva      String?
-  privacyPolicy   String?  @db.Text
-  cookiesPolicy   String?  @db.Text
-  terminiServizio String?  @db.Text
+  privacyPolicy   String?
+  cookiesPolicy   String?
+  terminiServizio String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -164,7 +165,7 @@ model Reservation {
   data      String   // YYYY-MM-DD
   ora       String   // HH:MM
   persone   Int
-  note      String?  @db.Text
+  note      String?
   stato     String   @default("pending") // pending, confirmed, cancelled
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
