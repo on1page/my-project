@@ -105,7 +105,7 @@ export default function AdminReservations() {
       if (response.ok) {
         const data = await response.json()
         setReservations(data)
-        
+
         // Calcola le statistiche
         if (filterStato === 'all') {
           const newStats: Stats = {
@@ -124,9 +124,76 @@ export default function AdminReservations() {
     }
   }
 
+  // Funzione per formattare il numero di telefono con prefisso internazionale
+  function formatPhoneNumber(phone: string): string {
+    // Rimuove tutti i caratteri non numerici
+    let cleaned = phone.replace(/\D/g, '')
+
+    // Se non inizia con 39 (prefisso Italia), lo aggiunge
+    if (!cleaned.startsWith('39')) {
+      cleaned = '39' + cleaned
+    }
+
+    return cleaned
+  }
+
+  // Funzione per creare il messaggio in italiano informale
+  function createMessage(reservation: Reservation, status: string): string {
+    const dataFormattata = new Date(reservation.data).toLocaleDateString('it-IT', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long'
+    })
+
+    const nomeCliente = reservation.nome
+
+    if (status === 'confirmed') {
+      return `Ciao ${nomeCliente}! 👋
+
+Ottima notizia! La tua prenotazione è confermata! 🎉
+
+📅 Data: ${dataFormattata}
+🕐 Ora: ${reservation.ora}
+👥 Persone: ${reservation.persone}
+${reservation.note ? `📝 Note: ${reservation.note}` : ''}
+
+Ti aspettiamo presto da noi! A presto! 😊`
+    } else {
+      return `Ciao ${nomeCliente}! 👋
+
+Al momento per il 📅 Data: ${dataFormattata} alle 🕐 Ora: ${reservation.ora} siamo al completo.
+
+Se gradisci prenotare per un'altra data, contattaci pure! 
+Ci farebbe piacerebbe poter ospitare 👥 ${reservation.persone} clienti come voi 
+A presto! 😊`
+    }
+  }
+
+  // Funzione per aprire WhatsApp e Email con il messaggio precompilato
+  function openCommunicationChannels(reservation: Reservation, status: string) {
+    const message = createMessage(reservation, status)
+    const encodedMessage = encodeURIComponent(message)
+
+    // Formatta il numero di telefono per WhatsApp
+    const formattedPhone = formatPhoneNumber(reservation.telefono)
+
+    // Apre WhatsApp
+    const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodedMessage}`
+    window.open(whatsappUrl, '_blank')
+
+    // Apre il client email con messaggio precompilato
+    const emailSubject = status === 'confirmed' ? 'Prenotazione confermata! 🎉' : 'Prenotazione cancellata'
+    const encodedSubject = encodeURIComponent(emailSubject)
+    const emailUrl = `mailto:${reservation.email}?subject=${encodedSubject}&body=${encodedMessage}`
+    window.open(emailUrl, '_blank')
+  }
+
   async function updateStatus(id: string, stato: string) {
     setUpdatingIds(prev => new Set([...prev, id]))
     try {
+      // Recupera i dettagli della prenotazione prima dell'aggiornamento
+      const reservation = reservations.find(r => r.id === id)
+
       const response = await fetch(`/api/admin/reservations/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -135,7 +202,11 @@ export default function AdminReservations() {
 
       if (response.ok) {
         fetchData()
-        alert('Stato aggiornato con successo!')
+
+        // Se abbiamo i dettagli della prenotazione, apri i canali di comunicazione
+        if (reservation && (stato === 'confirmed' || stato === 'cancelled')) {
+          openCommunicationChannels(reservation, stato)
+        }
       } else {
         const errorData = await response.json()
         alert(`Errore: ${errorData.error || 'Impossibile aggiornare lo stato'}`)
