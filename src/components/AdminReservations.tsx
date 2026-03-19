@@ -161,13 +161,12 @@ Ti aspettiamo presto da noi! A presto! 😊`
     } else {
       return `Ciao ${nomeCliente}! 👋
 
-Mi dispiace comunicarti che la tua prenotazione è stata cancellata.
+Il ${dataFormattata} alle ${reservation.ora} siamo al completo.
 
-📅 Data: ${dataFormattata}
-🕐 Ora: ${reservation.ora}
-👥 Persone: ${reservation.persone}
+Se vuoi prenotare per un'altra data, contattaci pure!
+Ci piacerebbe ospitare ${reservation.persone} clienti come voi.
 
-Se vuoi prenotare per un'altra data, contattaci pure! Ci piacerebbe averti con noi. A presto! 😊`
+  A presto! 😊`
     }
   }
 
