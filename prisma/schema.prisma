@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -148,9 +148,9 @@ model CompanyData {
   id              String   @id @default(cuid())
   ragioneSociale  String?
   partitaIva      String?
-  privacyPolicy   String?
-  cookiesPolicy   String?
-  terminiServizio String?
+  privacyPolicy   String?  @db.Text
+  cookiesPolicy   String?  @db.Text
+  terminiServizio String?  @db.Text
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -165,7 +165,7 @@ model Reservation {
   data      String   // YYYY-MM-DD
   ora       String   // HH:MM
   persone   Int
-  note      String?
+  note      String?  @db.Text
   stato     String   @default("pending") // pending, confirmed, cancelled
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
