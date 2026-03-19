@@ -161,16 +161,17 @@ Ti aspettiamo presto da noi! A presto! 😊`
     } else {
       return `Ciao ${nomeCliente}! 👋
 
-Al momento per il ${dataFormattata} alle  ${reservation.ora} siamo al completo.
+Mi dispiace comunicarti che la tua prenotazione è stata cancellata.
 
-Se gradisci prenotare per un'altra data, contattaci pure!
+📅 Data: ${dataFormattata}
+🕐 Ora: ${reservation.ora}
+👥 Persone: ${reservation.persone}
 
-Ci farebbe piacerebbe poter ospitare  ${reservation.persone} clienti come voi 
-A presto! 😊`
+Se vuoi prenotare per un'altra data, contattaci pure! Ci piacerebbe averti con noi. A presto! 😊`
     }
   }
 
-  // Funzione per aprire WhatsApp e Email con il messaggio precompilato
+  // Funzione per aprire WhatsApp con il messaggio precompilato
   function openCommunicationChannels(reservation: Reservation, status: string) {
     const message = createMessage(reservation, status)
     const encodedMessage = encodeURIComponent(message)
@@ -181,12 +182,6 @@ A presto! 😊`
     // Apre WhatsApp
     const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodedMessage}`
     window.open(whatsappUrl, '_blank')
-
-    // Apre il client email con messaggio precompilato
-    const emailSubject = status === 'confirmed' ? 'Prenotazione confermata! 🎉' : 'Prenotazione cancellata'
-    const encodedSubject = encodeURIComponent(emailSubject)
-    const emailUrl = `mailto:${reservation.email}?subject=${encodedSubject}&body=${encodedMessage}`
-    window.open(emailUrl, '_blank')
   }
 
   async function updateStatus(id: string, stato: string) {

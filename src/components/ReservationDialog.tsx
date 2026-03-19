@@ -163,7 +163,7 @@ export default function ReservationDialog({ onClose }: ReservationDialogProps) {
           </div>
 
           <p className="text-sm text-gray-500 text-center">
-            Ti confermeremo la prenotazione via whatsapp, o telefono
+            Ti confermeremo la prenotazione via whatsapp, o telefonicamente.
           </p>
         </form>
       </div>
