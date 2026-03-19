@@ -35,7 +35,7 @@ export default function ReservationDialog({ onClose }: ReservationDialogProps) {
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          alert(`Grazie ${formData.nome}! La tua prenotazione è stata confermata.\n\nData: ${formData.data}\nOra: ${formData.ora}\nPersone: ${formData.persone}\n\nTi contatteremo presto per confermare.`)
+          alert(`Grazie ${formData.nome}! La tua richiesta è stata inserita.\n\nData: ${formData.data}\nOra: ${formData.ora}\nPersone: ${formData.persone}\n\nTi contatteremo presto per confermare.`)
           onClose()
         } else {
           alert(`Errore: ${data.error || 'Impossibile completare la prenotazione'}`)
@@ -163,7 +163,7 @@ export default function ReservationDialog({ onClose }: ReservationDialogProps) {
           </div>
 
           <p className="text-sm text-gray-500 text-center">
-            Ti confermeremo la prenotazione via email o telefono
+            Ti confermeremo la prenotazione via whatsapp, o telefono
           </p>
         </form>
       </div>

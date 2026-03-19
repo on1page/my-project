@@ -161,10 +161,11 @@ Ti aspettiamo presto da noi! A presto! 😊`
     } else {
       return `Ciao ${nomeCliente}! 👋
 
-Al momento per il 📅 Data: ${dataFormattata} alle 🕐 Ora: ${reservation.ora} siamo al completo.
+Al momento per il ${dataFormattata} alle  ${reservation.ora} siamo al completo.
 
-Se gradisci prenotare per un'altra data, contattaci pure! 
-Ci farebbe piacerebbe poter ospitare 👥 ${reservation.persone} clienti come voi 
+Se gradisci prenotare per un'altra data, contattaci pure!
+
+Ci farebbe piacerebbe poter ospitare  ${reservation.persone} clienti come voi 
 A presto! 😊`
     }
   }
