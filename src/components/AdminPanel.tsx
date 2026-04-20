@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Utensils, MapPin, ImageIcon, Users, Building2, Calendar, LogOut, Menu as MenuIcon } from 'lucide-react'
+import { X, Utensils, MapPin, ImageIcon, Users, Building2, Calendar, BarChart3, LogOut, Menu as MenuIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -23,6 +23,7 @@ interface Permission {
   puoGestirePrenotazioni: boolean
   puoGestireDatiAzienda: boolean
   puoGestireProfili: boolean
+  puoGestireAnalytics: boolean
 }
 
 interface CurrentUser {
@@ -47,6 +48,7 @@ const menuItems: MenuItem[] = [
   { id: 'theme', label: 'Temi', icon: ImageIcon, permission: 'puoGestireTemi' },
   { id: 'company', label: 'Dati Azienda', icon: Building2, permission: 'puoGestireDatiAzienda' },
   { id: 'reservations', label: 'Prenotazioni', icon: Calendar, permission: 'puoGestirePrenotazioni' },
+  { id: 'analytics', label: 'Analytics', icon: BarChart3, permission: 'puoGestireAnalytics' },
   { id: 'users', label: 'Profili', icon: Users, permission: 'puoGestireProfili' },
 ]
 
@@ -106,9 +108,8 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
   // Trova il primo menu visibile come default
   useEffect(() => {
     if (visibleMenus.length > 0 && !visibleMenus.find(m => m.id === activeTab)) {
-      setActiveTab(visibleMenus[0].id)
+      setActiveTab(visibleMenus[0].id) // eslint-disable-line react-hooks/set-state-in-effect
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visibleMenus.length]) // Usiamo solo la lunghezza per evitare loop infiniti quando cambia activeTab
 
   // Funzione per il logout
@@ -131,6 +132,8 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
         return <AdminCompanyData />
       case 'reservations':
         return <AdminReservations />
+      case 'analytics':
+        return <div className="p-6">Modulo Analytics - Coming soon (Fase 2)</div>
       case 'users':
         return <AdminUsers currentUser={currentUser} />
       default:

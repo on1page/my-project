@@ -139,6 +139,7 @@ model Permission {
   puoGestirePrenotazioni Boolean   @default(true)
   puoGestireDatiAzienda Boolean    @default(true)
   puoGestireProfili     Boolean    @default(false)
+  puoGestireAnalytics   Boolean    @default(true)
   createdAt             DateTime   @default(now())
   updatedAt             DateTime   @updatedAt
 }
@@ -169,4 +170,84 @@ model Reservation {
   stato     String   @default("pending") // pending, confirmed, cancelled
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ==================== ANALYTICS ====================
+
+// Eventi grezzi - Dati di basso livello (trattenuti 15 giorni)
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  sessionId   String   // Per tracciare sessioni
+  eventType   String   // page_view, product_view, add_to_cart, event_view, scroll, etc.
+  pageUrl     String   // URL della pagina
+  productId   String?  // Se interazione con prodotto
+  duration    Int?     // Durata in millisecondi
+  referrer    String?  // Da dove viene l'utente
+  userAgent   String?  // Device info (anonimizzato)
+  ipHash      String?  // Hash dell'IP (anonimo, non IP reale)
+  country     String?  // Paese (da IP)
+  city        String?  // Città (da IP)
+  timestamp   DateTime @default(now())
+}
+
+// Aggregazione giornaliera
+model AnalyticsDaily {
+  id                  String   @id @default(cuid())
+  date                DateTime @unique
+  totalVisits         Int      @default(0)
+  uniqueVisitors      Int      @default(0)
+  pageViews           String?  // JSON: {"/": 100, "/menu": 50}
+  avgSessionDuration  Int      @default(0) // In secondi
+  hourlyBreakdown     String?  // JSON: {0: 5, 1: 2, ..., 23: 45}
+  topPages            String?  // JSON: [{"page": "/menu", "views": 50}]
+  productViews        String?  // JSON: {productId: {views: 10, avgDuration: 30000}}
+  conversionData      String?  // JSON: {viewed: 100, cart: 20, checkout: 10}
+  createdAt           DateTime @default(now())
+}
+
+// Aggregazione settimanale
+model AnalyticsWeekly {
+  id                 String   @id @default(cuid())
+  weekStartDate      DateTime
+  weekEndDate        DateTime
+  totalVisits        Int      @default(0)
+  uniqueVisitors     Int      @default(0)
+  avgDailyVisits     Float    @default(0)
+  bestDayOfWeek      String?  // "lunedi", "martedi", etc.
+  bestHourOfDay      Int?     // 0-23
+  topProducts        String?  // JSON
+  conversionInsights String?  // JSON: prodotti con alta visualizzazione ma bassa conversione
+  priceInsights      String?  // JSON: badge colori per prodotti
+  createdAt          DateTime @default(now())
+}
+
+// Aggregazione mensile
+model AnalyticsMonthly {
+  id              String   @id @default(cuid())
+  month           String   // "2025-01"
+  year            Int
+  totalVisits     Int      @default(0)
+  uniqueVisitors  Int      @default(0)
+  avgDailyVisits  Float    @default(0)
+  bestDayOfWeek   String?
+  bestHourOfDay   Int?
+  avgWeeklyVisits Float    @default(0)
+  growthRate      Float    @default(0) // % rispetto al mese precedente
+  productInsights String?  // JSON: analisi prodotti
+  priceInsights   String?  // JSON: badge colori per prodotti
+  createdAt       DateTime @default(now())
+}
+
+// Aggregazione annuale
+model AnalyticsYearly {
+  id               String   @id @default(cuid())
+  year             Int      @unique
+  totalVisits      Int      @default(0)
+  uniqueVisitors   Int      @default(0)
+  avgMonthlyVisits Float   @default(0)
+  bestMonth        String?
+  overallTrend     String?  // "in_crescita", "stabile", "in_calo"
+  productInsights  String?  // JSON
+  priceInsights    String?  // JSON
+  createdAt        DateTime @default(now())
 }
