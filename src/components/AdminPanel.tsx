@@ -11,6 +11,7 @@ import AdminTheme from './AdminTheme'
 import AdminUsers from './AdminUsers'
 import AdminCompanyData from './AdminCompanyData'
 import AdminReservations from './AdminReservations'
+import AdminAnalytics from './AdminAnalytics'
 
 interface AdminPanelProps {
   onClose: () => void
@@ -133,7 +134,7 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
       case 'reservations':
         return <AdminReservations />
       case 'analytics':
-        return <div className="p-6">Modulo Analytics - Coming soon (Fase 2)</div>
+        return <AdminAnalytics />
       case 'users':
         return <AdminUsers currentUser={currentUser} />
       default:
