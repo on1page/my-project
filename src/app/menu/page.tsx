@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Star, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Badge } from '@/components/ui/badge'
 import Footer from '@/components/Footer'
 import SocialSidebar from '@/components/SocialSidebar'
+import { useAnalytics } from '@/hooks/useAnalytics'
 
 interface Allergene {
   id: string
@@ -47,6 +48,8 @@ export default function MenuPage() {
   const [articoli, setArticoli] = useState<Articolo[]>([])
   const [categorie, setCategorie] = useState<Categoria[]>([])
   const [loading, setLoading] = useState(true)
+  const { trackProductView, isInitialized } = useAnalytics()
+  const trackedProducts = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     async function fetchData() {
@@ -136,7 +139,13 @@ export default function MenuPage() {
                       {articoliCategoria.map((articolo) => (
                         <Card
                           key={articolo.id}
-                          className="overflow-hidden hover:shadow-xl transition-shadow duration-300"
+                          className="overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+                          onClick={() => {
+                            if (isInitialized && !trackedProducts.current.has(articolo.id)) {
+                              trackProductView(articolo.id)
+                              trackedProducts.current.add(articolo.id)
+                            }
+                          }}
                         >
                           {/* Immagine */}
                           {articolo.immagineUrl && (
