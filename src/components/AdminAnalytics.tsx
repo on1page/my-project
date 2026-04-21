@@ -13,7 +13,8 @@ import {
   Globe,
   ShoppingCart,
   Target,
-  AlertTriangle
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -33,6 +34,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts'
 
@@ -94,6 +96,7 @@ interface Product {
 export default function AdminAnalytics() {
   const [data, setData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [aggregating, setAggregating] = useState(false)
   const [period, setPeriod] = useState('daily')
   const [days, setDays] = useState(30)
   const [products, setProducts] = useState<Product[]>([])
@@ -128,6 +131,29 @@ export default function AdminAnalytics() {
       }
     } catch (error) {
       console.error('Errore nel recupero prodotti:', error)
+    }
+  }
+
+  async function forceAggregation() {
+    setAggregating(true)
+    try {
+      const response = await fetch('/api/admin/analytics/aggregate', {
+        method: 'POST'
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        alert(result.message || 'Aggregazione completata!')
+        fetchData()
+      } else {
+        const error = await response.json()
+        alert(`Errore: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Errore nell\'aggregazione:', error)
+      alert('Errore nell\'aggregazione dei dati')
+    } finally {
+      setAggregating(false)
     }
   }
 
@@ -196,10 +222,53 @@ export default function AdminAnalytics() {
     return product?.nome || productId
   }
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
         <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      </div>
+    )
+  }
+
+  if (!data || data.summary.totalVisits === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-start gap-4">
+          <div>
+            <h2 className="text-2xl font-bold">Analytics</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Analisi dell'utilizzo del sito (anonima)
+            </p>
+          </div>
+          <Button
+            onClick={forceAggregation}
+            disabled={aggregating}
+            variant="outline"
+            className="gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${aggregating ? 'animate-spin' : ''}`} />
+            {aggregating ? 'Aggregazione in corso...' : 'Aggrega Dati'}
+          </Button>
+        </div>
+
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+          <AlertTriangle className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-yellow-900 mb-2">Nessun dato disponibile</h3>
+          <p className="text-sm text-yellow-800 mb-4">
+            Non ci sono ancora dati aggregati per questo periodo.
+          </p>
+          <p className="text-sm text-gray-600">
+            Clicca il pulsante <strong>"Aggrega Dati"</strong> per generare le statistiche dalle visite registrate.
+          </p>
+          <p className="text-xs text-gray-500 mt-4">
+            ℹ️ Naviga sul sito per raccogliere i dati di utilizzo.
+          </p>
+        </div>
+
+        <div className="text-sm text-gray-500 space-y-1">
+          <p>ℹ️ I dati sono aggregati automaticamente e rimossi dopo 15 giorni per la privacy.</p>
+          <p>📊 Gli insight sui prezzi aiutano a identificare prodotti con molte visualizzazioni ma bassa conversione.</p>
+        </div>
       </div>
     )
   }
@@ -213,45 +282,56 @@ export default function AdminAnalytics() {
   return (
     <div className="space-y-6">
       {/* Header con filtri */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col md:flex-row justify-between items-start gap-4">
         <div>
           <h2 className="text-2xl font-bold">Analytics</h2>
           <p className="text-sm text-gray-500 mt-1">
             Analisi dell'utilizzo del sito (anonima)
           </p>
         </div>
-        <div className="flex gap-4">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium">Periodo:</label>
-            <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="daily">Giornaliero</SelectItem>
-                <SelectItem value="weekly">Settimanale</SelectItem>
-                <SelectItem value="monthly">Mensile</SelectItem>
-                <SelectItem value="yearly">Annuale</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          {period === 'daily' && (
+        <div className="flex flex-col md:flex-row gap-4">
+          <Button
+            onClick={forceAggregation}
+            disabled={aggregating}
+            variant="outline"
+            className="gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${aggregating ? 'animate-spin' : ''}`} />
+            {aggregating ? 'Aggregazione in corso...' : 'Aggrega Dati'}
+          </Button>
+          <div className="flex gap-4">
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium">Giorni:</label>
-              <Select value={days.toString()} onValueChange={(v) => setDays(parseInt(v))}>
-                <SelectTrigger className="w-[100px]">
+              <label className="text-sm font-medium">Periodo:</label>
+              <Select value={period} onValueChange={setPeriod}>
+                <SelectTrigger className="w-[140px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="7">7</SelectItem>
-                  <SelectItem value="14">14</SelectItem>
-                  <SelectItem value="30">30</SelectItem>
-                  <SelectItem value="60">60</SelectItem>
-                  <SelectItem value="90">90</SelectItem>
+                  <SelectItem value="daily">Giornaliero</SelectItem>
+                  <SelectItem value="weekly">Settimanale</SelectItem>
+                  <SelectItem value="monthly">Mensile</SelectItem>
+                  <SelectItem value="yearly">Annuale</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          )}
+            {period === 'daily' && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium">Giorni:</label>
+                <Select value={days.toString()} onValueChange={(v) => setDays(parseInt(v))}>
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">7</SelectItem>
+                    <SelectItem value="14">14</SelectItem>
+                    <SelectItem value="30">30</SelectItem>
+                    <SelectItem value="60">60</SelectItem>
+                    <SelectItem value="90">90</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -265,7 +345,7 @@ export default function AdminAnalytics() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data.summary.totalVisits.toLocaleString()}</div>
-            {data.summary.growthRate !== undefined && (
+            {data.summary.growthRate !== undefined && data.summary.growthRate !== 0 && (
               <div className={`flex items-center gap-1 text-sm mt-1 ${getTrendColor(data.summary.growthRate)}`}>
                 {getTrendIcon(data.summary.growthRate)}
                 <span className="font-medium">
