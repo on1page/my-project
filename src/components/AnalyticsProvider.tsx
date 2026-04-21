@@ -1,6 +1,6 @@
 'use client'
 
-import { useAnalytics } from '../hooks/useAnalytics'
+import { useAnalytics } from './useAnalytics'
 
 interface AnalyticsProviderProps {
   children: React.ReactNode
