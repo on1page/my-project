@@ -42,7 +42,11 @@ export function useAnalytics() {
   // Funzione per tracciare un evento
   const trackEvent = useCallback(async (event: AnalyticsEvent) => {
     if (!sessionId || !isInitialized) {
-      console.warn('Analytics non inizializzato, evento non tracciato')
+      console.warn('Analytics non inizializzato, evento non tracciato', {
+        sessionId,
+        isInitialized,
+        event
+      })
       return
     }
 
@@ -58,14 +62,22 @@ export function useAnalytics() {
         ip: ipAddress
       }
 
+      console.log('Analytics: Tracciamento evento:', event.eventType, payload)
+
       // Invia all'API di tracking
-      await fetch('/api/analytics/track', {
+      const response = await fetch('/api/analytics/track', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
       })
+
+      if (response.ok) {
+        console.log('Analytics: Evento tracciato con successo')
+      } else {
+        console.error('Analytics: Errore nel tracciamento evento - Status:', response.status)
+      }
     } catch (error) {
       console.error('Errore nel tracciamento evento:', error)
     }
@@ -73,22 +85,45 @@ export function useAnalytics() {
 
   // Inizializza la sessione
   useEffect(() => {
+    console.log('Analytics: Inizializzazione in corso...')
+
     // Genera o recupera sessionId
     let storedSessionId = localStorage.getItem('analytics_session_id')
 
     if (!storedSessionId) {
-      storedSessionId = crypto.randomUUID()
+      try {
+        storedSessionId = crypto.randomUUID()
+      } catch (error) {
+        // Fallback per ambienti dove crypto.randomUUID non è disponibile
+        storedSessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
+      }
       localStorage.setItem('analytics_session_id', storedSessionId)
+      console.log('Analytics: Nuova session ID generata:', storedSessionId)
+    } else {
+      console.log('Analytics: Session ID esistente recuperata:', storedSessionId)
     }
 
     setSessionId(storedSessionId)
 
     // Ottieni l'indirizzo IP
     fetchIpAddress().then(ip => {
+      console.log('Analytics: IP ottenuto:', ip)
       setIpAddress(ip)
       setIsInitialized(true)
+      console.log('Analytics: Inizializzazione completata')
 
       // Traccia la prima page view dopo aver ottenuto l'IP
+      trackEvent({
+        eventType: 'page_view',
+        pageUrl: window.location.pathname,
+        referrer: document.referrer || ''
+      })
+    }).catch(err => {
+      console.error('Analytics: Errore nel recupero IP:', err)
+      // Inizializza comunque anche se IP fallisce
+      setIsInitialized(true)
+      console.log('Analytics: Inizializzazione completata (senza IP)')
+
       trackEvent({
         eventType: 'page_view',
         pageUrl: window.location.pathname,

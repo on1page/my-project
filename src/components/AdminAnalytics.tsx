@@ -124,7 +124,7 @@ export default function AdminAnalytics() {
 
   async function fetchProducts() {
     try {
-      const response = await fetch('/api/admin/menu')
+      const response = await fetch('/api/admin/articoli')
       if (response.ok) {
         const result = await response.json()
         setProducts(result)
