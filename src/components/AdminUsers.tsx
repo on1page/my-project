@@ -26,6 +26,7 @@ interface Permission {
   puoGestirePrenotazioni: boolean
   puoGestireDatiAzienda: boolean
   puoGestireProfili: boolean
+  puoGestireAnalytics: boolean
 }
 
 interface User {
@@ -66,7 +67,8 @@ export default function AdminUsers({ currentUser }: AdminUsersProps = {}) {
       puoGestireTemi: true,
       puoGestirePrenotazioni: true,
       puoGestireDatiAzienda: true,
-      puoGestireProfili: false
+      puoGestireProfili: false,
+      puoGestireAnalytics: false
     }
   })
   const [showUserDialog, setShowUserDialog] = useState(false)
@@ -149,7 +151,8 @@ export default function AdminUsers({ currentUser }: AdminUsersProps = {}) {
         puoGestireTemi: true,
         puoGestirePrenotazioni: true,
         puoGestireDatiAzienda: true,
-        puoGestireProfili: false
+        puoGestireProfili: false,
+        puoGestireAnalytics: false
       }
     })
     setShowUserDialog(true)
@@ -169,7 +172,8 @@ export default function AdminUsers({ currentUser }: AdminUsersProps = {}) {
         puoGestireTemi: true,
         puoGestirePrenotazioni: true,
         puoGestireDatiAzienda: true,
-        puoGestireProfili: false
+        puoGestireProfili: false,
+        puoGestireAnalytics: false
       }
     })
   }
@@ -345,6 +349,22 @@ export default function AdminUsers({ currentUser }: AdminUsersProps = {}) {
                           <div className="text-sm text-gray-500">Può creare, modificare ed eliminare utenti e permessi</div>
                         </div>
                       </label>
+
+                      <label className="flex items-center gap-3 p-3 border rounded hover:bg-gray-50 cursor-pointer">
+                        <Checkbox
+                          checked={userForm.permessi.puoGestireAnalytics}
+                          onCheckedChange={(checked) =>
+                            setUserForm({
+                              ...userForm,
+                              permessi: { ...userForm.permessi, puoGestireAnalytics: checked as boolean }
+                            })
+                          }
+                        />
+                        <div>
+                          <div className="font-medium">Gestione Analytics</div>
+                          <div className="text-sm text-gray-500">Può visualizzare le statistiche di utilizzo del sito</div>
+                        </div>
+                      </label>
                     </div>
                   </div>
                 )}
@@ -398,6 +418,7 @@ export default function AdminUsers({ currentUser }: AdminUsersProps = {}) {
                     {user.permessi?.puoGestirePrenotazioni && <Badge variant="outline" className="text-xs">Prenotazioni</Badge>}
                     {user.permessi?.puoGestireDatiAzienda && <Badge variant="outline" className="text-xs">Dati Azienda</Badge>}
                     {user.permessi?.puoGestireProfili && <Badge variant="outline" className="text-xs">Profili</Badge>}
+                    {user.permessi?.puoGestireAnalytics && <Badge variant="outline" className="text-xs">Analytics</Badge>}
                   </div>
                 </TableCell>
                 <TableCell>
