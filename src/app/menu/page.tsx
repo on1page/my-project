@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Badge } from '@/components/ui/badge'
 import Footer from '@/components/Footer'
 import SocialSidebar from '@/components/SocialSidebar'
-import { useAnalytics } from '@/hooks/useAnalytics'
+import { useAnalytics } from '../../components/useAnalytics'
 
 interface Allergene {
   id: string
