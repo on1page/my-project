@@ -138,7 +138,11 @@ export default function AdminAnalytics() {
     setAggregating(true)
     try {
       const response = await fetch('/api/admin/analytics/aggregate', {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
       })
 
       if (response.ok) {

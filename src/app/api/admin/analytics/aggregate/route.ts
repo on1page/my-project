@@ -6,7 +6,16 @@ import { createHash } from 'crypto'
 export async function POST(request: NextRequest) {
   console.log('=== Aggregazione Analytics iniziata ===')
   try {
-    const body = await request.json()
+    let body = {}
+    try {
+      const text = await request.text()
+      if (text.trim()) {
+        body = JSON.parse(text)
+      }
+    } catch (e) {
+      console.log('Body vuoto o non valido, uso defaults')
+    }
+
     const { type = 'all' } = body
     console.log('Tipo aggregazione:', type)
 
