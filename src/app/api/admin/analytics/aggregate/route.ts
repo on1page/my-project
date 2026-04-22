@@ -4,46 +4,85 @@ import { createHash } from 'crypto'
 
 // POST - Forza l'aggregazione dei dati analytics
 export async function POST(request: NextRequest) {
+  console.log('=== Aggregazione Analytics iniziata ===')
   try {
     const body = await request.json()
     const { type = 'all' } = body
+    console.log('Tipo aggregazione:', type)
 
     const results: any = {}
 
     // Esegui aggregazione giornaliera
     if (type === 'all' || type === 'daily') {
-      results.daily = await aggregateDaily()
+      console.log('Iniziando aggregazione giornaliera...')
+      try {
+        results.daily = await aggregateDaily()
+        console.log('Aggregazione giornaliera completata:', results.daily)
+      } catch (error: any) {
+        console.error('Errore in aggregazione giornaliera:', error)
+        results.daily = { error: error?.message || 'Errore sconosciuto' }
+      }
     }
 
     // Esegui aggregazione settimanale
     if (type === 'all' || type === 'weekly') {
-      results.weekly = await aggregateWeekly()
+      console.log('Iniziando aggregazione settimanale...')
+      try {
+        results.weekly = await aggregateWeekly()
+        console.log('Aggregazione settimanale completata:', results.weekly)
+      } catch (error: any) {
+        console.error('Errore in aggregazione settimanale:', error)
+        results.weekly = { error: error?.message || 'Errore sconosciuto' }
+      }
     }
 
     // Esegui aggregazione mensile
     if (type === 'all' || type === 'monthly') {
-      results.monthly = await aggregateMonthly()
+      console.log('Iniziando aggregazione mensile...')
+      try {
+        results.monthly = await aggregateMonthly()
+        console.log('Aggregazione mensile completata:', results.monthly)
+      } catch (error: any) {
+        console.error('Errore in aggregazione mensile:', error)
+        results.monthly = { error: error?.message || 'Errore sconosciuto' }
+      }
     }
 
     // Esegui aggregazione annuale
     if (type === 'all' || type === 'yearly') {
-      results.yearly = await aggregateYearly()
+      console.log('Iniziando aggregazione annuale...')
+      try {
+        results.yearly = await aggregateYearly()
+        console.log('Aggregazione annuale completata:', results.yearly)
+      } catch (error: any) {
+        console.error('Errore in aggregazione annuale:', error)
+        results.yearly = { error: error?.message || 'Errore sconosciuto' }
+      }
     }
 
     // Pulisci eventi vecchi (più di 15 giorni)
     if (type === 'all') {
-      await cleanupOldEvents()
+      try {
+        const cleanup = await cleanupOldEvents()
+        console.log('Cleanup completato:', cleanup)
+        results.cleanup = cleanup
+      } catch (error: any) {
+        console.error('Errore in cleanup:', error)
+        results.cleanup = { error: error?.message || 'Errore sconosciuto' }
+      }
     }
 
+    console.log('=== Aggregazione Analytics completata ===', results)
     return NextResponse.json({
       success: true,
       message: 'Aggregazione completata con successo',
       results
     })
   } catch (error: any) {
-    console.error('Errore nell\'aggregazione:', error)
+    console.error('=== Errore nell\'aggregazione ===', error)
+    console.error('Stack trace:', error?.stack)
     return NextResponse.json(
-      { error: error?.message || 'Errore nell\'aggregazione dei dati' },
+      { error: error?.message || 'Errore nell\'aggregazione dei dati', stack: error?.stack },
       { status: 500 }
     )
   }
@@ -51,110 +90,126 @@ export async function POST(request: NextRequest) {
 
 // Aggregazione giornaliera - Eventi to AnalyticsDaily
 async function aggregateDaily() {
+  console.log('--- aggregateDaily iniziato ---')
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
   const yesterday = new Date(today)
   yesterday.setDate(yesterday.getDate() - 1)
 
-  // Recupera tutti gli eventi di ieri
-  const events = await db.analyticsEvent.findMany({
-    where: {
-      timestamp: {
-        gte: yesterday,
-        lt: today
+  console.log('Yesterday:', yesterday.toISOString(), 'Today:', today.toISOString())
+
+  try {
+    // Recupera tutti gli eventi di ieri
+    const events = await db.analyticsEvent.findMany({
+      where: {
+        timestamp: {
+          gte: yesterday,
+          lt: today
+        }
       }
-    }
-  })
+    })
 
-  if (events.length === 0) {
-    return { message: 'Nessun evento da aggregare per ieri' }
+    console.log('Eventi trovati:', events.length)
+
+    if (events.length === 0) {
+      console.log('Nessun evento da aggregare per ieri')
+      return { message: 'Nessun evento da aggregare per ieri' }
+    }
+
+    // Calcola le metriche
+    const uniqueSessions = new Set(events.map(e => e.sessionId))
+    const totalVisits = uniqueSessions.size
+    const totalPageViews = events.filter(e => e.eventType === 'page_view').length
+
+    console.log('Total visits:', totalVisits, 'Page views:', totalPageViews)
+
+    // Page views per URL
+    const pageViews: Record<string, number> = {}
+    events.filter(e => e.eventType === 'page_view').forEach(e => {
+      pageViews[e.pageUrl] = (pageViews[e.pageUrl] || 0) + 1
+    })
+
+    // Durata media sessione (in secondi)
+    const pageViewEvents = events.filter(e => e.eventType === 'page_view' && e.duration)
+    const avgSessionDuration = pageViewEvents.length > 0
+      ? Math.round(pageViewEvents.reduce((sum, e) => sum + (e.duration || 0), 0) / pageViewEvents.length / 1000)
+      : 0
+
+    // Breakdown orario
+    const hourlyBreakdown: Record<number, number> = {}
+    events.forEach(e => {
+      const hour = e.timestamp.getHours()
+      hourlyBreakdown[hour] = (hourlyBreakdown[hour] || 0) + 1
+    })
+
+    // Top pages
+    const topPages = Object.entries(pageViews)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10)
+      .map(([page, views]) => ({ page, views }))
+
+    // Product views
+    const productViews: Record<string, { views: number; totalDuration: number }> = {}
+    events.filter(e => e.eventType === 'product_view').forEach(e => {
+      if (!e.productId) return
+      if (!productViews[e.productId]) {
+        productViews[e.productId] = { views: 0, totalDuration: 0 }
+      }
+      productViews[e.productId].views++
+      if (e.duration) {
+        productViews[e.productId].totalDuration += e.duration
+      }
+    })
+
+    const productViewsFormatted = Object.entries(productViews).reduce((acc, [id, data]) => {
+      acc[id] = {
+        views: data.views,
+        avgDuration: data.views > 0 ? Math.round(data.totalDuration / data.views) : 0
+      }
+      return acc
+    }, {} as Record<string, any>)
+
+    // Conversion data
+    const conversionData = {
+      viewed: events.filter(e => e.eventType === 'product_view').length,
+      cart: events.filter(e => e.eventType === 'add_to_cart').length
+    }
+
+    console.log('Upserting AnalyticsDaily...')
+    // Crea o aggiorna AnalyticsDaily
+    const daily = await db.analyticsDaily.upsert({
+      where: { date: yesterday },
+      update: {
+        totalVisits,
+        uniqueVisitors: totalVisits,
+        pageViews: JSON.stringify(pageViews),
+        avgSessionDuration,
+        hourlyBreakdown: JSON.stringify(hourlyBreakdown),
+        topPages: JSON.stringify(topPages),
+        productViews: JSON.stringify(productViewsFormatted),
+        conversionData: JSON.stringify(conversionData)
+      },
+      create: {
+        date: yesterday,
+        totalVisits,
+        uniqueVisitors: totalVisits,
+        pageViews: JSON.stringify(pageViews),
+        avgSessionDuration,
+        hourlyBreakdown: JSON.stringify(hourlyBreakdown),
+        topPages: JSON.stringify(topPages),
+        productViews: JSON.stringify(productViewsFormatted),
+        conversionData: JSON.stringify(conversionData)
+      }
+    })
+
+    console.log('--- aggregateDaily completato ---')
+    return { daily, eventsProcessed: events.length }
+  } catch (error: any) {
+    console.error('Errore in aggregateDaily:', error)
+    console.error('Stack:', error?.stack)
+    throw error
   }
-
-  // Calcola le metriche
-  const uniqueSessions = new Set(events.map(e => e.sessionId))
-  const totalVisits = uniqueSessions.size
-  const totalPageViews = events.filter(e => e.eventType === 'page_view').length
-
-  // Page views per URL
-  const pageViews: Record<string, number> = {}
-  events.filter(e => e.eventType === 'page_view').forEach(e => {
-    pageViews[e.pageUrl] = (pageViews[e.pageUrl] || 0) + 1
-  })
-
-  // Durata media sessione (in secondi)
-  const pageViewEvents = events.filter(e => e.eventType === 'page_view' && e.duration)
-  const avgSessionDuration = pageViewEvents.length > 0
-    ? Math.round(pageViewEvents.reduce((sum, e) => sum + (e.duration || 0), 0) / pageViewEvents.length / 1000)
-    : 0
-
-  // Breakdown orario
-  const hourlyBreakdown: Record<number, number> = {}
-  events.forEach(e => {
-    const hour = e.timestamp.getHours()
-    hourlyBreakdown[hour] = (hourlyBreakdown[hour] || 0) + 1
-  })
-
-  // Top pages
-  const topPages = Object.entries(pageViews)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 10)
-    .map(([page, views]) => ({ page, views }))
-
-  // Product views
-  const productViews: Record<string, { views: number; totalDuration: number }> = {}
-  events.filter(e => e.eventType === 'product_view').forEach(e => {
-    if (!e.productId) return
-    if (!productViews[e.productId]) {
-      productViews[e.productId] = { views: 0, totalDuration: 0 }
-    }
-    productViews[e.productId].views++
-    if (e.duration) {
-      productViews[e.productId].totalDuration += e.duration
-    }
-  })
-
-  const productViewsFormatted = Object.entries(productViews).reduce((acc, [id, data]) => {
-    acc[id] = {
-      views: data.views,
-      avgDuration: data.views > 0 ? Math.round(data.totalDuration / data.views) : 0
-    }
-    return acc
-  }, {} as Record<string, any>)
-
-  // Conversion data
-  const conversionData = {
-    viewed: events.filter(e => e.eventType === 'product_view').length,
-    cart: events.filter(e => e.eventType === 'add_to_cart').length
-  }
-
-  // Crea o aggiorna AnalyticsDaily
-  const daily = await db.analyticsDaily.upsert({
-    where: { date: yesterday },
-    update: {
-      totalVisits,
-      uniqueVisitors: totalVisits,
-      pageViews: JSON.stringify(pageViews),
-      avgSessionDuration,
-      hourlyBreakdown: JSON.stringify(hourlyBreakdown),
-      topPages: JSON.stringify(topPages),
-      productViews: JSON.stringify(productViewsFormatted),
-      conversionData: JSON.stringify(conversionData)
-    },
-    create: {
-      date: yesterday,
-      totalVisits,
-      uniqueVisitors: totalVisits,
-      pageViews: JSON.stringify(pageViews),
-      avgSessionDuration,
-      hourlyBreakdown: JSON.stringify(hourlyBreakdown),
-      topPages: JSON.stringify(topPages),
-      productViews: JSON.stringify(productViewsFormatted),
-      conversionData: JSON.stringify(conversionData)
-    }
-  })
-
-  return { daily, eventsProcessed: events.length }
 }
 
 // Aggregazione settimanale - AnalyticsDaily to AnalyticsWeekly
