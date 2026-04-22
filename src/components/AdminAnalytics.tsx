@@ -423,7 +423,11 @@ export default function AdminAnalytics() {
                     </defs>
                     <XAxis
                       dataKey="date"
-                      tickFormatter={(value) => value ? new Date(value).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }) : ''}
+                      tickFormatter={(value) => {
+                        if (!value) return ''
+                        const date = new Date(value)
+                        return isNaN(date.getTime()) ? '' : date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })
+                      }}
                       tick={{ fontSize: 12 }}
                     />
                     <YAxis tick={{ fontSize: 12 }} />
@@ -440,7 +444,11 @@ export default function AdminAnalytics() {
                   <BarChart data={data.weeklyData}>
                     <XAxis
                       dataKey="weekStart"
-                      tickFormatter={(value) => value ? new Date(value).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }) : ''}
+                      tickFormatter={(value) => {
+                        if (!value) return ''
+                        const date = new Date(value)
+                        return isNaN(date.getTime()) ? '' : date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })
+                      }}
                       tick={{ fontSize: 12 }}
                     />
                     <YAxis tick={{ fontSize: 12 }} />
@@ -451,7 +459,11 @@ export default function AdminAnalytics() {
                   <LineChart data={data.monthlyData}>
                     <XAxis
                       dataKey="month"
-                      tickFormatter={(value) => value ? new Date(value + '-01').toLocaleDateString('it-IT', { month: 'short' }) : ''}
+                      tickFormatter={(value) => {
+                        if (!value) return ''
+                        const date = new Date(value + '-01')
+                        return isNaN(date.getTime()) ? '' : date.toLocaleDateString('it-IT', { month: 'short' })
+                      }}
                       tick={{ fontSize: 12 }}
                     />
                     <YAxis tick={{ fontSize: 12 }} />

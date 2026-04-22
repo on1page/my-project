@@ -370,7 +370,18 @@ async function aggregateWeekly(force = false) {
   // Crea o aggiorna AnalyticsWeekly
   const weekly = await db.analyticsWeekly.upsert({
     where: { id: `week_${weekStart.getTime()}` },
-    update: {},
+    update: {
+      weekStartDate: weekStart,
+      weekEndDate: weekEnd,
+      totalVisits,
+      uniqueVisitors,
+      avgDailyVisits,
+      bestDayOfWeek,
+      bestHourOfDay: bestHourOfDay ? parseInt(bestHourOfDay) : null,
+      topProducts: JSON.stringify(topProducts),
+      conversionInsights: JSON.stringify(conversionInsights),
+      priceInsights: JSON.stringify(priceInsights)
+    },
     create: {
       id: `week_${weekStart.getTime()}`,
       weekStartDate: weekStart,
@@ -447,6 +458,7 @@ async function aggregateMonthly(force = false) {
   // Aggrega le metriche mensili
   const totalVisits = weeklyData.reduce((sum, w) => sum + w.totalVisits, 0)
   const uniqueVisitors = weeklyData.reduce((sum, w) => sum + w.uniqueVisitors, 0)
+  const lastDayOfMonth = new Date(year, month + 1, 0).getDate()
   const avgDailyVisits = totalVisits / lastDayOfMonth
 
   // Best day of week (più frequente nei dati settimanali)
