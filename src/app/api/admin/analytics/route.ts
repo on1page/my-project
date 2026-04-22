@@ -115,7 +115,8 @@ async function getDailyData(days: number) {
       totalVisits,
       uniqueVisitors: totalUniqueVisitors,
       avgSessionDuration,
-      bestHour: bestHour ? parseInt(bestHour) : null,
+      bestHourOfDay: bestHour ? parseInt(bestHour) : null,
+      bestDayOfWeek: null,
       conversionRate
     },
     dailyData: dailyData.map(d => ({

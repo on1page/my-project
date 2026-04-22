@@ -223,19 +223,48 @@ async function aggregateDaily(force = false) {
 
 // Aggregazione settimanale - AnalyticsDaily to AnalyticsWeekly
 async function aggregateWeekly(force = false) {
-  const today = new Date()
-  const dayOfWeek = today.getDay() // 0 = domenica
+  let weekStart: Date
+  let weekEnd: Date
 
-  // Se non è domenica e non è forzato, non fare nulla
-  if (dayOfWeek !== 0 && !force) {
-    return { message: 'Oggi non è domenica, aggregazione settimanale saltata' }
+  if (!force) {
+    // Non forzato: usa la settimana corrente
+    const today = new Date()
+    const dayOfWeek = today.getDay() // 0 = domenica
+
+    // Se non è domenica, non fare nulla
+    if (dayOfWeek !== 0) {
+      return { message: 'Oggi non è domenica, aggregazione settimanale saltata' }
+    }
+
+    weekEnd = new Date(today)
+    weekEnd.setHours(0, 0, 0, 0)
+
+    weekStart = new Date(weekEnd)
+    weekStart.setDate(weekStart.getDate() - 6)
+  } else {
+    // Forzato: trova l'ultimo dato giornaliero e aggrega la sua settimana
+    const lastDaily = await db.analyticsDaily.findFirst({
+      orderBy: { date: 'desc' }
+    })
+
+    if (!lastDaily) {
+      return { message: 'Nessun dato giornaliero disponibile', daysProcessed: 0 }
+    }
+
+    const lastDailyDate = new Date(lastDaily.date)
+    const dayOfWeek = lastDailyDate.getDay() // 0 = domenica
+
+    // Calcola la fine della settimana (domenica)
+    weekEnd = new Date(lastDailyDate)
+    weekEnd.setDate(lastDailyDate.getDate() + (7 - dayOfWeek))
+    weekEnd.setHours(0, 0, 0, 0)
+
+    // Calcola l'inizio della settimana (domenica precedente)
+    weekStart = new Date(weekEnd)
+    weekStart.setDate(weekStart.getDate() - 6)
+
+    console.log('Aggregazione settimanale forzata: basata sull\'ultimo dato giornaliero del', lastDailyDate.toISOString())
   }
-
-  const weekEnd = new Date(today)
-  weekEnd.setHours(0, 0, 0, 0)
-
-  const weekStart = new Date(weekEnd)
-  weekStart.setDate(weekStart.getDate() - 6)
 
   console.log('Aggregazione settimanale: dal', weekStart.toISOString(), 'al', weekEnd.toISOString())
 
@@ -362,20 +391,40 @@ async function aggregateWeekly(force = false) {
 
 // Aggregazione mensile - AnalyticsWeekly to AnalyticsMonthly
 async function aggregateMonthly(force = false) {
-  const today = new Date()
-  const dayOfMonth = today.getDate()
+  let month: number
+  let year: number
 
-  // Se non è l'ultimo giorno del mese e non è forzato, non fare nulla
-  const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
-  if (dayOfMonth !== lastDayOfMonth && !force) {
-    return { message: 'Oggi non è l\'ultimo del mese, aggregazione mensile saltata' }
+  if (!force) {
+    // Non forzato: usa il mese corrente
+    const today = new Date()
+    const dayOfMonth = today.getDate()
+
+    // Se non è l'ultimo giorno del mese, non fare nulla
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
+    if (dayOfMonth !== lastDayOfMonth) {
+      return { message: 'Oggi non è l\'ultimo del mese, aggregazione mensile saltata' }
+    }
+
+    month = today.getMonth()
+    year = today.getFullYear()
+  } else {
+    // Forzato: trova l'ultimo dato settimanale e aggrega il suo mese
+    const lastWeekly = await db.analyticsWeekly.findFirst({
+      orderBy: { weekStartDate: 'desc' }
+    })
+
+    if (!lastWeekly) {
+      return { message: 'Nessun dato settimanale disponibile', weeksProcessed: 0 }
+    }
+
+    const lastWeeklyDate = new Date(lastWeekly.weekStartDate)
+    month = lastWeeklyDate.getMonth()
+    year = lastWeeklyDate.getFullYear()
+
+    console.log('Aggregazione mensile forzata: basata sull\'ultimo dato settimanale del', lastWeeklyDate.toISOString())
   }
 
-  const month = today.getMonth()
-  const year = today.getFullYear()
-
   const monthString = `${year}-${String(month + 1).padStart(2, '0')}`
-
   console.log('Aggregazione mensile:', monthString, 'Force:', force)
 
   // Recupera i dati settimanali del mese
@@ -486,18 +535,31 @@ async function aggregateMonthly(force = false) {
 
 // Aggregazione annuale - AnalyticsMonthly to AnalyticsYearly
 async function aggregateYearly(force = false) {
-  const today = new Date()
+  let year: number
 
-  // Se non è 31 dicembre e non è forzato, non fare nulla
-  if (today.getMonth() !== 11 || today.getDate() !== 31) {
-    if (!force) {
+  if (!force) {
+    // Non forzato: usa l'anno corrente
+    const today = new Date()
+
+    // Se non è 31 dicembre, non fare nulla
+    if (today.getMonth() !== 11 || today.getDate() !== 31) {
       return { message: 'Oggi non è il 31 dicembre, aggregazione annuale saltata' }
-    } else {
-      console.log('Aggregazione annuale forzata fuori dal 31 dicembre')
     }
-  }
 
-  const year = today.getFullYear()
+    year = today.getFullYear()
+  } else {
+    // Forzato: trova l'ultimo dato mensile e aggrega il suo anno
+    const lastMonthly = await db.analyticsMonthly.findFirst({
+      orderBy: [{ year: 'desc' }, { month: 'desc' }]
+    })
+
+    if (!lastMonthly) {
+      return { message: 'Nessun dato mensile disponibile', monthsProcessed: 0 }
+    }
+
+    year = lastMonthly.year
+    console.log('Aggregazione annuale forzata: basata sull\'ultimo dato mensile dell\'anno', year)
+  }
 
   console.log('Aggregazione annuale:', year, 'Force:', force)
 
@@ -600,4 +662,3 @@ async function cleanupOldEvents() {
 
   return { deletedEvents: result.count }
 }
-
