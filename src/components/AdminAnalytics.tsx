@@ -142,7 +142,7 @@ export default function AdminAnalytics() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({})
+        body: JSON.stringify({ type: period, force: true })
       })
 
       if (response.ok) {
@@ -234,48 +234,12 @@ export default function AdminAnalytics() {
     )
   }
 
-  if (!data || data.summary.totalVisits === 0) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-start gap-4">
-          <div>
-            <h2 className="text-2xl font-bold">Analytics</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Analisi dell'utilizzo del sito (anonima)
-            </p>
-          </div>
-          <Button
-            onClick={forceAggregation}
-            disabled={aggregating}
-            variant="outline"
-            className="gap-2"
-          >
-            <RefreshCw className={`w-4 h-4 ${aggregating ? 'animate-spin' : ''}`} />
-            {aggregating ? 'Aggregazione in corso...' : 'Aggrega Dati'}
-          </Button>
-        </div>
-
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-          <AlertTriangle className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-yellow-900 mb-2">Nessun dato disponibile</h3>
-          <p className="text-sm text-yellow-800 mb-4">
-            Non ci sono ancora dati aggregati per questo periodo.
-          </p>
-          <p className="text-sm text-gray-600">
-            Clicca il pulsante <strong>"Aggrega Dati"</strong> per generare le statistiche dalle visite registrate.
-          </p>
-          <p className="text-xs text-gray-500 mt-4">
-            ℹ️ Naviga sul sito per raccogliere i dati di utilizzo.
-          </p>
-        </div>
-
-        <div className="text-sm text-gray-500 space-y-1">
-          <p>ℹ️ I dati sono aggregati automaticamente e rimossi dopo 15 giorni per la privacy.</p>
-          <p>📊 Gli insight sui prezzi aiutano a identificare prodotti con molte visualizzazioni ma bassa conversione.</p>
-        </div>
-      </div>
-    )
-  }
+  // Controlla se ci sono dati per il periodo selezionato
+  const hasNoData =
+    (period === 'daily' && (!data.dailyData || data.dailyData.length === 0)) ||
+    (period === 'weekly' && (!data.weeklyData || data.weeklyData.length === 0)) ||
+    (period === 'monthly' && (!data.monthlyData || data.monthlyData.length === 0)) ||
+    (period === 'yearly' && (!data.yearlyData || data.yearlyData.length === 0))
 
   const chartConfig = {
     visits: { label: 'Visite' },
@@ -405,17 +369,16 @@ export default function AdminAnalytics() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {data.summary.bestHourOfDay !== null
+              {data.summary.bestHourOfDay !== null && data.summary.bestHourOfDay !== undefined
                 ? `${data.summary.bestHourOfDay}:00`
                 : data.summary.bestDayOfWeek || '-'}
             </div>
             <div className="text-sm text-gray-500 mt-1">
-              {data.summary.bestHourOfDay !== null
+              {data.summary.bestHourOfDay !== null && data.summary.bestHourOfDay !== undefined
                 ? 'Miglior orario'
                 : data.summary.bestDayOfWeek
                   ? 'Miglior giorno'
-                  : 'Dati insufficienti'
-              }
+                  : 'Dati insufficienti'}
             </div>
           </CardContent>
         </Card>
@@ -427,7 +390,27 @@ export default function AdminAnalytics() {
           <CardTitle>Andamento {period === 'daily' ? 'Giornaliero' : period === 'weekly' ? 'Settimanale' : period === 'monthly' ? 'Mensile' : 'Annuale'}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
+          {hasNoData && (
+            <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm text-blue-900 font-medium mb-1">
+                    {period === 'daily' && 'Nessun dato giornaliero disponibile'}
+                    {period === 'weekly' && 'Nessun dato settimanale aggregato'}
+                    {period === 'monthly' && 'Nessun dato mensile aggregato'}
+                    {period === 'yearly' && 'Nessun dato annuale aggregato'}
+                  </p>
+                  <p className="text-sm text-blue-800">
+                    {period === 'daily' && 'Naviga sul sito per raccogliere dati. Clicca "Aggrega Dati" per generare le statistiche.'}
+                    {(period === 'weekly' || period === 'monthly' || period === 'yearly') &&
+                      `Clicca "Aggrega Dati" per forzare l'aggregazione dal periodo ${period === 'weekly' ? 'giornaliero' : period === 'monthly' ? 'settimanale' : 'mensile'} più recente.`}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="min-h-[350px]">
             <ChartContainer config={chartConfig}>
               <ResponsiveContainer width="100%" height="100%">
                 {period === 'daily' ? (

@@ -16,8 +16,8 @@ export async function POST(request: NextRequest) {
       console.log('Body vuoto o non valido, uso defaults')
     }
 
-    const { type = 'all' } = body
-    console.log('Tipo aggregazione:', type)
+    const { type = 'all', force = false } = body
+    console.log('Tipo aggregazione:', type, 'Force:', force)
 
     const results: any = {}
 
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     if (type === 'all' || type === 'daily') {
       console.log('Iniziando aggregazione giornaliera...')
       try {
-        results.daily = await aggregateDaily()
+        results.daily = await aggregateDaily(force)
         console.log('Aggregazione giornaliera completata:', results.daily)
       } catch (error: any) {
         console.error('Errore in aggregazione giornaliera:', error)
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     if (type === 'all' || type === 'weekly') {
       console.log('Iniziando aggregazione settimanale...')
       try {
-        results.weekly = await aggregateWeekly()
+        results.weekly = await aggregateWeekly(force)
         console.log('Aggregazione settimanale completata:', results.weekly)
       } catch (error: any) {
         console.error('Errore in aggregazione settimanale:', error)
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     if (type === 'all' || type === 'monthly') {
       console.log('Iniziando aggregazione mensile...')
       try {
-        results.monthly = await aggregateMonthly()
+        results.monthly = await aggregateMonthly(force)
         console.log('Aggregazione mensile completata:', results.monthly)
       } catch (error: any) {
         console.error('Errore in aggregazione mensile:', error)
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     if (type === 'all' || type === 'yearly') {
       console.log('Iniziando aggregazione annuale...')
       try {
-        results.yearly = await aggregateYearly()
+        results.yearly = await aggregateYearly(force)
         console.log('Aggregazione annuale completata:', results.yearly)
       } catch (error: any) {
         console.error('Errore in aggregazione annuale:', error)
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Aggregazione giornaliera - Eventi to AnalyticsDaily
-async function aggregateDaily() {
+async function aggregateDaily(force = false) {
   console.log('--- aggregateDaily iniziato ---')
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -222,12 +222,12 @@ async function aggregateDaily() {
 }
 
 // Aggregazione settimanale - AnalyticsDaily to AnalyticsWeekly
-async function aggregateWeekly() {
+async function aggregateWeekly(force = false) {
   const today = new Date()
   const dayOfWeek = today.getDay() // 0 = domenica
 
-  // Se non è domenica, non fare nulla
-  if (dayOfWeek !== 0) {
+  // Se non è domenica e non è forzato, non fare nulla
+  if (dayOfWeek !== 0 && !force) {
     return { message: 'Oggi non è domenica, aggregazione settimanale saltata' }
   }
 
@@ -236,6 +236,8 @@ async function aggregateWeekly() {
 
   const weekStart = new Date(weekEnd)
   weekStart.setDate(weekStart.getDate() - 6)
+
+  console.log('Aggregazione settimanale: dal', weekStart.toISOString(), 'al', weekEnd.toISOString())
 
   // Recupera i dati giornalieri della settimana scorsa
   const dailyData = await db.analyticsDaily.findMany({
@@ -248,8 +250,11 @@ async function aggregateWeekly() {
   })
 
   if (dailyData.length === 0) {
-    return { message: 'Nessun dato giornaliero per la settimana scorsa' }
+    console.log('Nessun dato giornaliero per la settimana scorsa')
+    return { message: 'Nessun dato giornaliero per la settimana scorsa', daysProcessed: 0 }
   }
+
+  console.log('Dati giornalieri trovati:', dailyData.length)
 
   // Aggrega le metriche settimanali
   const totalVisits = dailyData.reduce((sum, d) => sum + d.totalVisits, 0)
@@ -356,13 +361,13 @@ async function aggregateWeekly() {
 }
 
 // Aggregazione mensile - AnalyticsWeekly to AnalyticsMonthly
-async function aggregateMonthly() {
+async function aggregateMonthly(force = false) {
   const today = new Date()
   const dayOfMonth = today.getDate()
 
-  // Se non è l'ultimo giorno del mese, non fare nulla
+  // Se non è l'ultimo giorno del mese e non è forzato, non fare nulla
   const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
-  if (dayOfMonth !== lastDayOfMonth) {
+  if (dayOfMonth !== lastDayOfMonth && !force) {
     return { message: 'Oggi non è l\'ultimo del mese, aggregazione mensile saltata' }
   }
 
@@ -370,6 +375,8 @@ async function aggregateMonthly() {
   const year = today.getFullYear()
 
   const monthString = `${year}-${String(month + 1).padStart(2, '0')}`
+
+  console.log('Aggregazione mensile:', monthString, 'Force:', force)
 
   // Recupera i dati settimanali del mese
   const weeklyData = await db.analyticsWeekly.findMany({
@@ -382,8 +389,11 @@ async function aggregateMonthly() {
   })
 
   if (weeklyData.length === 0) {
-    return { message: 'Nessun dato settimanale per questo mese' }
+    console.log('Nessun dato settimanale per questo mese')
+    return { message: 'Nessun dato settimanale per questo mese', weeksProcessed: 0 }
   }
+
+  console.log('Dati settimanali trovati:', weeklyData.length)
 
   // Aggrega le metriche mensili
   const totalVisits = weeklyData.reduce((sum, w) => sum + w.totalVisits, 0)
@@ -475,15 +485,21 @@ async function aggregateMonthly() {
 }
 
 // Aggregazione annuale - AnalyticsMonthly to AnalyticsYearly
-async function aggregateYearly() {
+async function aggregateYearly(force = false) {
   const today = new Date()
 
-  // Se non è 31 dicembre, non fare nulla
+  // Se non è 31 dicembre e non è forzato, non fare nulla
   if (today.getMonth() !== 11 || today.getDate() !== 31) {
-    return { message: 'Oggi non è il 31 dicembre, aggregazione annuale saltata' }
+    if (!force) {
+      return { message: 'Oggi non è il 31 dicembre, aggregazione annuale saltata' }
+    } else {
+      console.log('Aggregazione annuale forzata fuori dal 31 dicembre')
+    }
   }
 
   const year = today.getFullYear()
+
+  console.log('Aggregazione annuale:', year, 'Force:', force)
 
   // Recupera i dati mensili dell'anno
   const monthlyData = await db.analyticsMonthly.findMany({
@@ -491,8 +507,11 @@ async function aggregateYearly() {
   })
 
   if (monthlyData.length === 0) {
-    return { message: 'Nessun dato mensile per questo anno' }
+    console.log('Nessun dato mensile per questo anno')
+    return { message: 'Nessun dato mensile per questo anno', monthsProcessed: 0 }
   }
+
+  console.log('Dati mensili trovati:', monthlyData.length)
 
   // Aggrega le metriche annuali
   const totalVisits = monthlyData.reduce((sum, m) => sum + m.totalVisits, 0)
