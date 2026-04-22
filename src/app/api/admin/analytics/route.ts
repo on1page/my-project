@@ -54,9 +54,14 @@ async function getDailyData(days: number) {
   // Calcola i totali
   const totalVisits = dailyData.reduce((sum, d) => sum + d.totalVisits, 0)
   const totalUniqueVisitors = dailyData.reduce((sum, d) => sum + d.uniqueVisitors, 0)
+
+  // Calcola media session duration sui giorni con dati
   const avgSessionDuration = dailyData.length > 0
     ? Math.round(dailyData.reduce((sum, d) => sum + d.avgSessionDuration, 0) / dailyData.length)
     : 0
+
+  // Calcola la media giornaliera sul periodo selezionato (inclusivi i giorni senza dati)
+  const avgDailyVisits = totalVisits / days
 
   // Aggrega orari migliori
   const hourlyData: Record<number, number> = {}
@@ -115,6 +120,7 @@ async function getDailyData(days: number) {
       totalVisits,
       uniqueVisitors: totalUniqueVisitors,
       avgSessionDuration,
+      avgDailyVisits,
       bestHourOfDay: bestHour ? parseInt(bestHour) : null,
       bestDayOfWeek: null,
       conversionRate

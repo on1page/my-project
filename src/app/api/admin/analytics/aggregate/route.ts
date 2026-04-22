@@ -268,27 +268,63 @@ async function aggregateWeekly(force = false) {
 
   console.log('Aggregazione settimanale: dal', weekStart.toISOString(), 'al', weekEnd.toISOString())
 
-  // Recupera i dati giornalieri della settimana scorsa
+  // Recupera i dati giornalieri della settimana
   const dailyData = await db.analyticsDaily.findMany({
     where: {
       date: {
         gte: weekStart,
         lt: weekEnd
       }
-    }
+    },
+    orderBy: { date: 'asc' }
   })
 
   if (dailyData.length === 0) {
-    console.log('Nessun dato giornaliero per la settimana scorsa')
-    return { message: 'Nessun dato giornaliero per la settimana scorsa', daysProcessed: 0 }
+    console.log('Nessun dato giornaliero per questa settimana, creando record con valori 0')
+
+    // Crea record settimanale con tutti valori a 0
+    const weekly = await db.analyticsWeekly.upsert({
+      where: { id: `week_${weekStart.getTime()}` },
+      update: {
+        weekStartDate: weekStart,
+        weekEndDate: weekEnd,
+        totalVisits: 0,
+        uniqueVisitors: 0,
+        avgDailyVisits: 0,
+        bestDayOfWeek: null,
+        bestHourOfDay: null,
+        topProducts: '[]',
+        conversionInsights: '[]',
+        priceInsights: '{}'
+      },
+      create: {
+        id: `week_${weekStart.getTime()}`,
+        weekStartDate: weekStart,
+        weekEndDate: weekEnd,
+        totalVisits: 0,
+        uniqueVisitors: 0,
+        avgDailyVisits: 0,
+        bestDayOfWeek: null,
+        bestHourOfDay: null,
+        topProducts: '[]',
+        conversionInsights: '[]',
+        priceInsights: '{}'
+      }
+    })
+
+    return { weekly, daysProcessed: 0 }
   }
 
-  console.log('Dati giornalieri trovati:', dailyData.length)
+  console.log('Dati giornalieri trovati:', dailyData.length, 'su 7 giorni della settimana')
 
   // Aggrega le metriche settimanali
   const totalVisits = dailyData.reduce((sum, d) => sum + d.totalVisits, 0)
   const uniqueVisitors = dailyData.reduce((sum, d) => sum + d.uniqueVisitors, 0)
-  const avgDailyVisits = totalVisits / dailyData.length
+
+  // Calcola la media giornaliera su 7 giorni (anche se alcuni hanno 0)
+  const avgDailyVisits = totalVisits / 7
+
+  console.log(`Visite totali: ${totalVisits}, Media giornaliera: ${avgDailyVisits.toFixed(2)}`)
 
   // Trova il giorno migliore della settimana
   const dayNames = ['domenica', 'lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato']
@@ -438,6 +474,9 @@ async function aggregateMonthly(force = false) {
   const monthString = `${year}-${String(month + 1).padStart(2, '0')}`
   console.log('Aggregazione mensile:', monthString, 'Force:', force)
 
+  // Calcola il numero di giorni nel mese
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+
   // Recupera i dati settimanali del mese
   const weeklyData = await db.analyticsWeekly.findMany({
     where: {
@@ -445,21 +484,53 @@ async function aggregateMonthly(force = false) {
         gte: new Date(year, month, 1),
         lt: new Date(year, month + 1, 1)
       }
-    }
+    },
+    orderBy: { weekStartDate: 'asc' }
   })
 
   if (weeklyData.length === 0) {
-    console.log('Nessun dato settimanale per questo mese')
-    return { message: 'Nessun dato settimanale per questo mese', weeksProcessed: 0 }
+    console.log('Nessun dato settimanale per questo mese, creando record con valori 0')
+
+    // Crea record mensile con tutti valori a 0
+    const monthly = await db.analyticsMonthly.upsert({
+      where: { month: monthString },
+      update: {
+        totalVisits: 0,
+        uniqueVisitors: 0,
+        avgDailyVisits: 0,
+        bestDayOfWeek: null,
+        bestHourOfDay: null,
+        avgWeeklyVisits: 0,
+        growthRate: 0,
+        priceInsights: '{}'
+      },
+      create: {
+        month: monthString,
+        year,
+        totalVisits: 0,
+        uniqueVisitors: 0,
+        avgDailyVisits: 0,
+        bestDayOfWeek: null,
+        bestHourOfDay: null,
+        avgWeeklyVisits: 0,
+        growthRate: 0,
+        priceInsights: '{}'
+      }
+    })
+
+    return { monthly, weeksProcessed: 0 }
   }
 
-  console.log('Dati settimanali trovati:', weeklyData.length)
+  console.log('Dati settimanali trovati:', weeklyData.length, 'nel mese')
 
   // Aggrega le metriche mensili
   const totalVisits = weeklyData.reduce((sum, w) => sum + w.totalVisits, 0)
   const uniqueVisitors = weeklyData.reduce((sum, w) => sum + w.uniqueVisitors, 0)
-  const lastDayOfMonth = new Date(year, month + 1, 0).getDate()
-  const avgDailyVisits = totalVisits / lastDayOfMonth
+
+  // Calcola la media giornaliera sui giorni del mese (anche se alcune settimane hanno 0)
+  const avgDailyVisits = totalVisits / daysInMonth
+
+  console.log(`Visite totali: ${totalVisits}, Media giornaliera: ${avgDailyVisits.toFixed(2)}`)
 
   // Best day of week (più frequente nei dati settimanali)
   const dayCounts: Record<string, number> = {}
@@ -577,20 +648,48 @@ async function aggregateYearly(force = false) {
 
   // Recupera i dati mensili dell'anno
   const monthlyData = await db.analyticsMonthly.findMany({
-    where: { year }
+    where: { year },
+    orderBy: { month: 'asc' }
   })
 
   if (monthlyData.length === 0) {
-    console.log('Nessun dato mensile per questo anno')
-    return { message: 'Nessun dato mensile per questo anno', monthsProcessed: 0 }
+    console.log('Nessun dato mensile per questo anno, creando record con valori 0')
+
+    // Crea record annuale con tutti valori a 0
+    const yearly = await db.analyticsYearly.upsert({
+      where: { year },
+      update: {
+        totalVisits: 0,
+        uniqueVisitors: 0,
+        avgMonthlyVisits: 0,
+        bestMonth: null,
+        overallTrend: 'stabile',
+        priceInsights: '{}'
+      },
+      create: {
+        year,
+        totalVisits: 0,
+        uniqueVisitors: 0,
+        avgMonthlyVisits: 0,
+        bestMonth: null,
+        overallTrend: 'stabile',
+        priceInsights: '{}'
+      }
+    })
+
+    return { yearly, monthsProcessed: 0 }
   }
 
-  console.log('Dati mensili trovati:', monthlyData.length)
+  console.log('Dati mensili trovati:', monthlyData.length, 'su 12 mesi dell\'anno')
 
   // Aggrega le metriche annuali
   const totalVisits = monthlyData.reduce((sum, m) => sum + m.totalVisits, 0)
   const uniqueVisitors = monthlyData.reduce((sum, m) => sum + m.uniqueVisitors, 0)
-  const avgMonthlyVisits = totalVisits / monthlyData.length
+
+  // Calcola la media mensile su 12 mesi (anche se alcuni hanno 0)
+  const avgMonthlyVisits = totalVisits / 12
+
+  console.log(`Visite totali: ${totalVisits}, Media mensile: ${avgMonthlyVisits.toFixed(2)}`)
 
   // Best month
   const monthVisits = monthlyData.map(m => ({ month: m.month, visits: m.totalVisits }))
