@@ -10,7 +10,10 @@ export async function GET() {
     if (!siteInfo) {
       siteInfo = await db.siteInfo.create({
         data: {
-          nomeLocale: 'Il Nostro Ristorante'
+          nomeLocale: 'Il Nostro Ristorante',
+          heroTitle: 'Autentica Cucina Italiana',
+          heroCTAText: 'Scopri il Menu',
+          specialitaTitle: 'Le Nostre Specialità'
         }
       });
     }
@@ -34,11 +37,21 @@ export async function PUT(request: NextRequest) {
       slogan,
       chiSiamoTitolo,
       chiSiamoTesto,
+      chiSiamoImageUrl,
       logoUrl,
       faviconUrl,
       telefono,
       email,
-      prenotazioniAttive
+      prenotazioniAttive,
+      // Hero Section
+      heroTitle,
+      heroSubtitle,
+      heroCTAText,
+      heroImageUrl,
+      heroOverlayOpacity,
+      // Specialità Section
+      specialitaTitle,
+      specialitaSubtitle
     } = body;
 
     // Cerca se esiste già un record
@@ -49,11 +62,23 @@ export async function PUT(request: NextRequest) {
     if (slogan !== undefined) updateData.slogan = slogan
     if (chiSiamoTitolo !== undefined) updateData.chiSiamoTitolo = chiSiamoTitolo
     if (chiSiamoTesto !== undefined) updateData.chiSiamoTesto = chiSiamoTesto
+    if (chiSiamoImageUrl !== undefined) updateData.chiSiamoImageUrl = chiSiamoImageUrl
     if (logoUrl !== undefined) updateData.logoUrl = logoUrl
     if (faviconUrl !== undefined) updateData.faviconUrl = faviconUrl
     if (telefono !== undefined) updateData.telefono = telefono
     if (email !== undefined) updateData.email = email
     if (prenotazioniAttive !== undefined) updateData.prenotazioniAttive = prenotazioniAttive
+    
+    // Hero Section
+    if (heroTitle !== undefined) updateData.heroTitle = heroTitle
+    if (heroSubtitle !== undefined) updateData.heroSubtitle = heroSubtitle
+    if (heroCTAText !== undefined) updateData.heroCTAText = heroCTAText
+    if (heroImageUrl !== undefined) updateData.heroImageUrl = heroImageUrl
+    if (heroOverlayOpacity !== undefined) updateData.heroOverlayOpacity = heroOverlayOpacity
+    
+    // Specialità Section
+    if (specialitaTitle !== undefined) updateData.specialitaTitle = specialitaTitle
+    if (specialitaSubtitle !== undefined) updateData.specialitaSubtitle = specialitaSubtitle
 
     if (siteInfo) {
       // Aggiorna il record esistente
@@ -68,10 +93,14 @@ export async function PUT(request: NextRequest) {
         slogan,
         chiSiamoTitolo,
         chiSiamoTesto,
+        chiSiamoImageUrl,
         logoUrl,
         faviconUrl,
         telefono,
-        email
+        email,
+        heroTitle: heroTitle || 'Autentica Cucina Italiana',
+        heroCTAText: heroCTAText || 'Scopri il Menu',
+        specialitaTitle: specialitaTitle || 'Le Nostre Specialità'
       }
 
       if (prenotazioniAttive !== undefined) {
@@ -79,6 +108,12 @@ export async function PUT(request: NextRequest) {
       } else {
         createData.prenotazioniAttive = true
       }
+
+      // Aggiungi campi opzionali
+      if (heroSubtitle) createData.heroSubtitle = heroSubtitle
+      if (heroImageUrl) createData.heroImageUrl = heroImageUrl
+      if (heroOverlayOpacity !== undefined) createData.heroOverlayOpacity = heroOverlayOpacity
+      if (specialitaSubtitle) createData.specialitaSubtitle = specialitaSubtitle
 
       siteInfo = await db.siteInfo.create({
         data: createData

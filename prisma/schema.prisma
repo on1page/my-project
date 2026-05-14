@@ -68,11 +68,24 @@ model SiteInfo {
   slogan             String?
   chiSiamoTitolo     String?
   chiSiamoTesto      String?
+  chiSiamoImageUrl   String?
   logoUrl            String?
   faviconUrl         String?
   telefono           String?
   email              String?
   prenotazioniAttive Boolean  @default(true)
+
+  // Hero Section
+  heroTitle          String?  @default("Autentica Cucina Italiana")
+  heroSubtitle       String?
+  heroCTAText        String?  @default("Scopri il Menu")
+  heroImageUrl       String?
+  heroOverlayOpacity Float    @default(0.5)
+
+  // Specialità Section
+  specialitaTitle    String?  @default("Le Nostre Specialità")
+  specialitaSubtitle String?
+
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
@@ -149,9 +162,9 @@ model CompanyData {
   id              String   @id @default(cuid())
   ragioneSociale  String?
   partitaIva      String?
-  privacyPolicy   String?  @db.Text
-  cookiesPolicy   String?  @db.Text
-  terminiServizio String?  @db.Text
+  privacyPolicy   String?
+  cookiesPolicy   String?
+  terminiServizio String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -166,7 +179,7 @@ model Reservation {
   data      String   // YYYY-MM-DD
   ora       String   // HH:MM
   persone   Int
-  note      String?  @db.Text
+  note      String?
   stato     String   @default("pending") // pending, confirmed, cancelled
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

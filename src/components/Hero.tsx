@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 
@@ -8,24 +9,49 @@ interface HeroProps {
   subtitle?: string
   heroImage?: string
   ctaText?: string
+  heroOverlayOpacity?: number
 }
 
 export default function Hero({
   title = "Autentica Cucina Italiana",
   subtitle = "Scopri i sapori tradizionali della nostra cucina, preparati con passione e ingredienti freschi ogni giorno",
   heroImage = "/images/hero.jpg",
-  ctaText = "Scopri il Menu"
+  ctaText = "Scopri il Menu",
+  heroOverlayOpacity = 0.5
 }: HeroProps) {
   const router = useRouter()
+  const [dynamicHeroImage, setDynamicHeroImage] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function fetchHeroImage() {
+      try {
+        const response = await fetch('/api/admin/images?sezione=hero')
+        if (response.ok) {
+          const images = await response.json()
+          // Prendi la prima immagine attiva della sezione hero
+          const activeImage = images.find((img: any) => img.attiva)
+          if (activeImage && activeImage.url) {
+            setDynamicHeroImage(activeImage.url)
+          }
+        }
+      } catch (error) {
+        console.error('Errore nel recupero dell\'immagine hero:', error)
+      }
+    }
+
+    fetchHeroImage()
+  }, [])
+
+  const backgroundImage = dynamicHeroImage || heroImage
 
   return (
     <section id="home" className="relative min-h-screen flex items-center justify-center pt-20">
       {/* Background Image with Overlay */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url('${heroImage}')` }}
+        style={{ backgroundImage: `url('${backgroundImage}')` }}
       >
-        <div className="absolute inset-0 bg-black/50"></div>
+        <div className="absolute inset-0 bg-black/50" style={{ opacity: heroOverlayOpacity }}></div>
       </div>
 
       {/* Content */}

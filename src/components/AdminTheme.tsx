@@ -1,14 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Save, Plus, Trash2, Image as ImageIcon, FileText, Layout } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Save, Plus, Trash2, Image as ImageIcon, FileText, Layout, Home, Info, Star, Upload, X, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Slider } from '@/components/ui/slider'
+import { Progress } from '@/components/ui/progress'
 import {
   Table,
   TableBody,
@@ -24,10 +26,19 @@ interface SiteInfo {
   slogan?: string | null
   chiSiamoTitolo?: string | null
   chiSiamoTesto?: string | null
+  chiSiamoImageUrl?: string | null
   logoUrl?: string | null
   faviconUrl?: string | null
   telefono?: string | null
   email?: string | null
+  prenotazioniAttive?: boolean
+  heroTitle?: string | null
+  heroSubtitle?: string | null
+  heroCTAText?: string | null
+  heroImageUrl?: string | null
+  heroOverlayOpacity?: number
+  specialitaTitle?: string | null
+  specialitaSubtitle?: string | null
 }
 
 interface SiteImage {
@@ -40,6 +51,148 @@ interface SiteImage {
   attiva: boolean
 }
 
+// Componente per l'upload delle immagini
+interface ImageUploadProps {
+  imageUrl?: string
+  onImageUrlChange: (url: string) => void
+  label: string
+  accept?: string
+  className?: string
+}
+
+function ImageUpload({ imageUrl, onImageUrlChange, label, accept = "image/*", className = "" }: ImageUploadProps) {
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validazione dimensione (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Il file supera la dimensione massima di 5MB')
+      return
+    }
+
+    // Validazione tipo
+    if (!file.type.startsWith('image/')) {
+      alert('Seleziona un file immagine valido')
+      return
+    }
+
+    setUploading(true)
+    setUploadProgress(0)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      // Simula progresso
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval)
+            return 90
+          }
+          return prev + 10
+        })
+      }, 100)
+
+      const response = await fetch('/api/admin/upload-image', {
+        method: 'POST',
+        body: formData
+      })
+
+      clearInterval(progressInterval)
+
+      if (response.ok) {
+        const data = await response.json()
+        onImageUrlChange(data.url)
+        setUploadProgress(100)
+        alert('Immagine caricata con successo!')
+      } else {
+        const error = await response.json()
+        alert(error.error || 'Errore durante il caricamento dell\'immagine')
+      }
+    } catch (error) {
+      console.error('Errore upload:', error)
+      alert('Errore durante il caricamento dell\'immagine')
+    } finally {
+      setUploading(false)
+      setUploadProgress(0)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const handleRemoveImage = () => {
+    onImageUrlChange('')
+  }
+
+  return (
+    <div className={`space-y-3 ${className}`}>
+      <Label>{label}</Label>
+      <div className="flex gap-2">
+        <Input
+          type="text"
+          value={imageUrl || ''}
+          onChange={(e) => onImageUrlChange(e.target.value)}
+          placeholder="https://... o carica un file"
+          disabled={uploading}
+        />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={accept}
+          onChange={handleFileSelect}
+          className="hidden"
+          id={`upload-${label.replace(/\s+/g, '-')}`}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          size="icon"
+          title="Carica immagine dal computer"
+        >
+          {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+        </Button>
+        {imageUrl && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleRemoveImage}
+            disabled={uploading}
+            size="icon"
+            title="Rimuovi immagine"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+      {uploading && (
+        <div className="space-y-2">
+          <Progress value={uploadProgress} className="h-2" />
+          <p className="text-xs text-gray-600">Caricamento in corso... {uploadProgress}%</p>
+        </div>
+      )}
+      {imageUrl && !uploading && (
+        <div className="mt-4">
+          <p className="text-sm text-gray-600 mb-2">Anteprima:</p>
+          <img
+            src={imageUrl}
+            alt="Preview"
+            className="w-full h-64 object-cover rounded-lg border"
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function AdminTheme() {
   const [siteInfo, setSiteInfo] = useState<SiteInfo>({
     id: '',
@@ -47,13 +200,23 @@ export default function AdminTheme() {
     slogan: '',
     chiSiamoTitolo: '',
     chiSiamoTesto: '',
+    chiSiamoImageUrl: '',
     logoUrl: '',
     faviconUrl: '',
     telefono: '',
-    email: ''
+    email: '',
+    prenotazioniAttive: true,
+    heroTitle: '',
+    heroSubtitle: '',
+    heroCTAText: '',
+    heroImageUrl: '',
+    heroOverlayOpacity: 0.5,
+    specialitaTitle: '',
+    specialitaSubtitle: ''
   })
   const [images, setImages] = useState<SiteImage[]>([])
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
 
   // Image form
   const [imageForm, setImageForm] = useState({
@@ -90,6 +253,7 @@ export default function AdminTheme() {
   }
 
   async function saveSiteInfo() {
+    setSaving(true)
     try {
       const response = await fetch('/api/admin/site-info', {
         method: 'PUT',
@@ -105,6 +269,8 @@ export default function AdminTheme() {
     } catch (error) {
       console.error('Errore salvataggio site info:', error)
       alert('Errore nel salvataggio')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -142,6 +308,19 @@ export default function AdminTheme() {
     }
   }
 
+  async function toggleImageActive(id: string, attiva: boolean) {
+    try {
+      const response = await fetch(`/api/admin/images/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attiva })
+      })
+      if (response.ok) fetchData()
+    } catch (error) {
+      console.error('Errore aggiornamento immagine:', error)
+    }
+  }
+
   function editImage(img: SiteImage) {
     setImageForm({
       id: img.id,
@@ -173,111 +352,297 @@ export default function AdminTheme() {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="info">
-        <TabsList>
-          <TabsTrigger value="info">Informazioni Generali</TabsTrigger>
+      <Tabs defaultValue="hero" className="w-full">
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-6">
+          <TabsTrigger value="hero">Hero</TabsTrigger>
+          <TabsTrigger value="chi-siamo">Chi Siamo</TabsTrigger>
+          <TabsTrigger value="specialita">Specialità</TabsTrigger>
+          <TabsTrigger value="info">Generali</TabsTrigger>
           <TabsTrigger value="images">Immagini</TabsTrigger>
+          <TabsTrigger value="prenotazioni">Prenotazioni</TabsTrigger>
         </TabsList>
 
+        {/* Hero Section */}
+        <TabsContent value="hero" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <Home className="w-6 h-6" />
+              Sezione Hero
+            </h2>
+            <Button onClick={saveSiteInfo} disabled={saving}>
+              <Save className="w-4 h-4 mr-2" />
+              {saving ? 'Salvataggio...' : 'Salva'}
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Testo Hero</CardTitle>
+              <CardDescription>Configura il testo principale della hero section</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Titolo Principale *</Label>
+                <Input
+                  value={siteInfo.heroTitle || ''}
+                  onChange={(e) => setSiteInfo({ ...siteInfo, heroTitle: e.target.value })}
+                  placeholder="Autentica Cucina Italiana"
+                />
+              </div>
+              <div>
+                <Label>Sottotitolo</Label>
+                <Textarea
+                  value={siteInfo.heroSubtitle || ''}
+                  onChange={(e) => setSiteInfo({ ...siteInfo, heroSubtitle: e.target.value })}
+                  rows={3}
+                  placeholder="Scopri i sapori tradizionali della nostra cucina..."
+                />
+              </div>
+              <div>
+                <Label>Testo Bottone CTA *</Label>
+                <Input
+                  value={siteInfo.heroCTAText || ''}
+                  onChange={(e) => setSiteInfo({ ...siteInfo, heroCTAText: e.target.value })}
+                  placeholder="Scopri il Menu"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Immagine di Sfondo</CardTitle>
+              <CardDescription>Carica o inserisci l'URL dell'immagine di sfondo della hero</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ImageUpload
+                imageUrl={siteInfo.heroImageUrl || ''}
+                onImageUrlChange={(url) => setSiteInfo({ ...siteInfo, heroImageUrl: url })}
+                label="Immagine Hero"
+                accept="image/*"
+              />
+              <div>
+                <Label>Opacità Overlay: {siteInfo.heroOverlayOpacity?.toFixed(2) || 0.5}</Label>
+                <Slider
+                  value={[siteInfo.heroOverlayOpacity || 0.5]}
+                  onValueChange={([value]) => setSiteInfo({ ...siteInfo, heroOverlayOpacity: value })}
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  className="mt-2"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Chi Siamo Section */}
+        <TabsContent value="chi-siamo" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <Info className="w-6 h-6" />
+              Sezione Chi Siamo
+            </h2>
+            <Button onClick={saveSiteInfo} disabled={saving}>
+              <Save className="w-4 h-4 mr-2" />
+              {saving ? 'Salvataggio...' : 'Salva'}
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Contenuti Testuali</CardTitle>
+              <CardDescription>Configura titolo e descrizione della sezione Chi Siamo</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Titolo Sezione *</Label>
+                <Input
+                  value={siteInfo.chiSiamoTitolo || ''}
+                  onChange={(e) => setSiteInfo({ ...siteInfo, chiSiamoTitolo: e.target.value })}
+                  placeholder="Chi Siamo"
+                />
+              </div>
+              <div>
+                <Label>Testo Descrittivo *</Label>
+                <Textarea
+                  value={siteInfo.chiSiamoTesto || ''}
+                  onChange={(e) => setSiteInfo({ ...siteInfo, chiSiamoTesto: e.target.value })}
+                  rows={6}
+                  placeholder="Dal 1985, portiamo in tavola l'autentica tradizione culinaria italiana..."
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Immagine Sezione</CardTitle>
+              <CardDescription>Carica o inserisci l'URL dell'immagine della sezione Chi Siamo</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ImageUpload
+                imageUrl={siteInfo.chiSiamoImageUrl || ''}
+                onImageUrlChange={(url) => setSiteInfo({ ...siteInfo, chiSiamoImageUrl: url })}
+                label="Immagine Chi Siamo"
+                accept="image/*"
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Specialità Section */}
+        <TabsContent value="specialita" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <Star className="w-6 h-6" />
+              Sezione Specialità
+            </h2>
+            <Button onClick={saveSiteInfo} disabled={saving}>
+              <Save className="w-4 h-4 mr-2" />
+              {saving ? 'Salvataggio...' : 'Salva'}
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Contenuti Testuali</CardTitle>
+              <CardDescription>Configura titolo e sottotitolo della sezione Specialità</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Titolo Sezione *</Label>
+                <Input
+                  value={siteInfo.specialitaTitle || ''}
+                  onChange={(e) => setSiteInfo({ ...siteInfo, specialitaTitle: e.target.value })}
+                  placeholder="Le Nostre Specialità"
+                />
+              </div>
+              <div>
+                <Label>Sottotitolo</Label>
+                <Textarea
+                  value={siteInfo.specialitaSubtitle || ''}
+                  onChange={(e) => setSiteInfo({ ...siteInfo, specialitaSubtitle: e.target.value })}
+                  rows={3}
+                  placeholder="Scopri i piatti più amati dai nostri clienti..."
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Info Generali */}
         <TabsContent value="info" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold flex items-center gap-2">
               <Layout className="w-6 h-6" />
-              Informazioni del Sito
+              Informazioni Generali
             </h2>
-            <Button onClick={saveSiteInfo}>
+            <Button onClick={saveSiteInfo} disabled={saving}>
               <Save className="w-4 h-4 mr-2" />
-              Salva Informazioni
+              {saving ? 'Salvataggio...' : 'Salva'}
             </Button>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Nome e Branding</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Nome del Locale *</Label>
-                  <Input
-                    value={siteInfo.nomeLocale || ''}
-                    onChange={(e) => setSiteInfo({ ...siteInfo, nomeLocale: e.target.value })}
-                    placeholder="Il Nostro Ristorante"
-                  />
-                </div>
-                <div>
-                  <Label>Slogan / Sottotitolo Hero</Label>
-                  <Input
-                    value={siteInfo.slogan || ''}
-                    onChange={(e) => setSiteInfo({ ...siteInfo, slogan: e.target.value })}
-                    placeholder="Autentica Cucina Italiana"
-                  />
-                </div>
-                <div>
-                  <Label>URL Logo</Label>
-                  <Input
-                    value={siteInfo.logoUrl || ''}
-                    onChange={(e) => setSiteInfo({ ...siteInfo, logoUrl: e.target.value })}
-                    placeholder="https://..."
-                  />
-                </div>
-                <div>
-                  <Label>URL Favicon</Label>
-                  <Input
-                    value={siteInfo.faviconUrl || ''}
-                    onChange={(e) => setSiteInfo({ ...siteInfo, faviconUrl: e.target.value })}
-                    placeholder="https://..."
-                  />
-                </div>
-              </CardContent>
-            </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Nome e Branding</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Nome del Locale *</Label>
+                <Input
+                  value={siteInfo.nomeLocale || ''}
+                  onChange={(e) => setSiteInfo({ ...siteInfo, nomeLocale: e.target.value })}
+                  placeholder="Il Nostro Ristorante"
+                />
+              </div>
+              <div>
+                <Label>Slogan Generale</Label>
+                <Input
+                  value={siteInfo.slogan || ''}
+                  onChange={(e) => setSiteInfo({ ...siteInfo, slogan: e.target.value })}
+                  placeholder="Slogan del locale"
+                />
+              </div>
+              <ImageUpload
+                imageUrl={siteInfo.logoUrl || ''}
+                onImageUrlChange={(url) => setSiteInfo({ ...siteInfo, logoUrl: url })}
+                label="URL Logo"
+                accept="image/*"
+              />
+              <ImageUpload
+                imageUrl={siteInfo.faviconUrl || ''}
+                onImageUrlChange={(url) => setSiteInfo({ ...siteInfo, faviconUrl: url })}
+                label="URL Favicon"
+                accept="image/x-icon,image/png"
+              />
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Contenuti Testuali
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Titolo Sezione "Chi Siamo"</Label>
-                  <Input
-                    value={siteInfo.chiSiamoTitolo || ''}
-                    onChange={(e) => setSiteInfo({ ...siteInfo, chiSiamoTitolo: e.target.value })}
-                    placeholder="Chi Siamo"
-                  />
-                </div>
-                <div>
-                  <Label>Testo Sezione "Chi Siamo"</Label>
-                  <Textarea
-                    value={siteInfo.chiSiamoTesto || ''}
-                    onChange={(e) => setSiteInfo({ ...siteInfo, chiSiamoTesto: e.target.value })}
-                    rows={5}
-                    placeholder="Descrivi la tua storia..."
-                  />
-                </div>
-                <div>
-                  <Label>Telefono</Label>
-                  <Input
-                    value={siteInfo.telefono || ''}
-                    onChange={(e) => setSiteInfo({ ...siteInfo, telefono: e.target.value })}
-                    placeholder="+39 012 345 6789"
-                  />
-                </div>
-                <div>
-                  <Label>Email</Label>
-                  <Input
-                    value={siteInfo.email || ''}
-                    onChange={(e) => setSiteInfo({ ...siteInfo, email: e.target.value })}
-                    placeholder="info@tuoristorante.it"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Contatti</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Telefono</Label>
+                <Input
+                  value={siteInfo.telefono || ''}
+                  onChange={(e) => setSiteInfo({ ...siteInfo, telefono: e.target.value })}
+                  placeholder="+39 012 345 6789"
+                />
+              </div>
+              <div>
+                <Label>Email</Label>
+                <Input
+                  value={siteInfo.email || ''}
+                  onChange={(e) => setSiteInfo({ ...siteInfo, email: e.target.value })}
+                  placeholder="info@tuoristorante.it"
+                />
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
+        {/* Prenotazioni */}
+        <TabsContent value="prenotazioni" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <FileText className="w-6 h-6" />
+              Gestione Prenotazioni
+            </h2>
+            <Button onClick={saveSiteInfo} disabled={saving}>
+              <Save className="w-4 h-4 mr-2" />
+              {saving ? 'Salvataggio...' : 'Salva'}
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Impostazioni Prenotazioni</CardTitle>
+              <CardDescription>Attiva o disattiva il sistema di prenotazioni</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div>
+                  <Label className="text-base font-medium">Prenotazioni Online</Label>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Attiva o disattiva la possibilità per i clienti di prenotare online
+                  </p>
+                </div>
+                <Button
+                  variant={siteInfo.prenotazioniAttive ? "default" : "outline"}
+                  onClick={() => setSiteInfo({ ...siteInfo, prenotazioniAttive: !siteInfo.prenotazioniAttive })}
+                >
+                  {siteInfo.prenotazioniAttive ? 'Attive' : 'Disattivate'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Immagini */}
         <TabsContent value="images" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -302,7 +667,7 @@ export default function AdminTheme() {
                     Nuova Immagine
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-2xl">
                   <DialogHeader>
                     <DialogTitle>
                       {imageForm.id ? 'Modifica Immagine' : 'Nuova Immagine'}
@@ -338,11 +703,68 @@ export default function AdminTheme() {
                     </div>
                     <div>
                       <Label>URL Immagine *</Label>
-                      <Input
-                        value={imageForm.url}
-                        onChange={(e) => setImageForm({ ...imageForm, url: e.target.value })}
-                        placeholder="https://..."
-                      />
+                      <div className="flex gap-2">
+                        <Input
+                          value={imageForm.url}
+                          onChange={(e) => setImageForm({ ...imageForm, url: e.target.value })}
+                          placeholder="https://..."
+                        />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0]
+                            if (!file) return
+
+                            if (file.size > 5 * 1024 * 1024) {
+                              alert('Il file supera la dimensione massima di 5MB')
+                              return
+                            }
+
+                            try {
+                              const formData = new FormData()
+                              formData.append('file', file)
+
+                              const response = await fetch('/api/admin/upload-image', {
+                                method: 'POST',
+                                body: formData
+                              })
+
+                              if (response.ok) {
+                                const data = await response.json()
+                                setImageForm({ ...imageForm, url: data.url })
+                                alert('Immagine caricata con successo!')
+                              } else {
+                                const error = await response.json()
+                                alert(error.error || 'Errore durante il caricamento')
+                              }
+                            } catch (error) {
+                              console.error('Errore upload:', error)
+                              alert('Errore durante il caricamento')
+                            }
+                            e.target.value = ''
+                          }}
+                          className="hidden"
+                          id="upload-dialog"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => document.getElementById('upload-dialog')?.click()}
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Carica
+                        </Button>
+                      </div>
+                      {imageForm.url && (
+                        <div className="mt-2">
+                          <img
+                            src={imageForm.url}
+                            alt="Preview"
+                            className="w-full h-48 object-cover rounded"
+                          />
+                        </div>
+                      )}
                     </div>
                     <div>
                       <Label>Ordine</Label>
@@ -351,6 +773,15 @@ export default function AdminTheme() {
                         value={imageForm.ordine}
                         onChange={(e) => setImageForm({ ...imageForm, ordine: parseInt(e.target.value) || 0 })}
                       />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="imgAttiva"
+                        checked={imageForm.attiva}
+                        onChange={(e) => setImageForm({ ...imageForm, attiva: e.target.checked })}
+                      />
+                      <Label htmlFor="imgAttiva">Immagine Attiva</Label>
                     </div>
                     <div className="flex gap-2">
                       <Button onClick={saveImage}>
@@ -392,7 +823,15 @@ export default function AdminTheme() {
                     <TableCell>{img.titolo || '-'}</TableCell>
                     <TableCell>{img.sezione}</TableCell>
                     <TableCell>{img.ordine}</TableCell>
-                    <TableCell>{img.attiva ? 'Sì' : 'No'}</TableCell>
+                    <TableCell>
+                      <Button
+                        size="sm"
+                        variant={img.attiva ? "default" : "outline"}
+                        onClick={() => toggleImageActive(img.id, !img.attiva)}
+                      >
+                        {img.attiva ? 'Sì' : 'No'}
+                      </Button>
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button size="sm" variant="ghost" onClick={() => editImage(img)}>

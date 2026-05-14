@@ -94,19 +94,21 @@ async function getDailyData(days: number) {
       if (!productData[id]) {
         productData[id] = { views: 0, avgDuration: 0 }
       }
-      productData[id].views += data.views
-      productData[id].avgDuration += data.avgDuration
+      productData[id].views += (data.views || 0)
+      productData[id].avgDuration += (data.avgDuration || 0)
     })
   })
   // Calcola media durata
   Object.keys(productData).forEach(id => {
-    productData[id].avgDuration = Math.round(productData[id].avgDuration / dailyData.length)
+    if (dailyData.length > 0) {
+      productData[id].avgDuration = Math.round(productData[id].avgDuration / dailyData.length)
+    }
   })
 
   const topProducts = Object.entries(productData)
     .sort(([, a], [, b]) => b.views - a.views)
     .slice(0, 10)
-    .map(([id, data]) => ({ id, ...data }))
+    .map(([id, data]) => ({ id, views: data.views, avgDuration: data.avgDuration }))
 
   // Conversion data
   const conversionData = dailyData.map(d => JSON.parse(d.conversionData || '{}'))
@@ -157,14 +159,22 @@ async function getWeeklyData() {
       if (!allProducts[p.id]) {
         allProducts[p.id] = { views: 0, avgDuration: 0 }
       }
-      allProducts[p.id].views += p.views
+      allProducts[p.id].views += (p.views || 0)
+      allProducts[p.id].avgDuration += (p.avgDuration || 0)
     })
+  })
+
+  // Calcola la media delle durate
+  Object.keys(allProducts).forEach(id => {
+    if (weeks.length > 0) {
+      allProducts[id].avgDuration = Math.round(allProducts[id].avgDuration / weeks.length)
+    }
   })
 
   const topProducts = Object.entries(allProducts)
     .sort(([, a], [, b]) => b.views - a.views)
     .slice(0, 10)
-    .map(([id, data]) => ({ id, ...data }))
+    .map(([id, data]) => ({ id, views: data.views, avgDuration: data.avgDuration }))
 
   // Conversion insights
   const allConversionInsights: any[] = []

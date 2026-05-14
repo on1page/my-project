@@ -563,9 +563,11 @@ export default function AdminAnalytics() {
                         <TableCell className="font-medium">
                           {getProductName(product.id)}
                         </TableCell>
-                        <TableCell className="text-right">{product.views.toLocaleString()}</TableCell>
                         <TableCell className="text-right">
-                          {formatDuration(product.avgDuration)}
+                          {product.views?.toLocaleString() || '0'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatDuration(product.avgDuration || 0)}
                         </TableCell>
                         <TableCell className="text-right">
                           {getPriceInsightBadge(product.id)}

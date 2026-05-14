@@ -15,13 +15,25 @@ export async function GET(request: NextRequest) {
       where.categoriaId = categoriaId;
     }
 
-    if (bestChoice === 'true') {
-      where.eBestChoice = true;
-    }
+    // Se entrambi i filtri sono attivi, usa OR (bestChoice OPPURE inPromo)
+    if (bestChoice === 'true' && inPromo === 'true') {
+      where.OR = [
+        { eBestChoice: true },
+        {
+          prezzoPromozionale: { not: null },
+          scadenzaPromo: { gte: new Date() }
+        }
+      ];
+    } else {
+      // Se solo uno dei filtri è attivo, usa AND normale
+      if (bestChoice === 'true') {
+        where.eBestChoice = true;
+      }
 
-    if (inPromo === 'true') {
-      where.prezzoPromozionale = { not: null };
-      where.scadenzaPromo = { gte: new Date() };
+      if (inPromo === 'true') {
+        where.prezzoPromozionale = { not: null };
+        where.scadenzaPromo = { gte: new Date() };
+      }
     }
 
     const articoli = await db.articolo.findMany({

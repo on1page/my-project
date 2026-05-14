@@ -19,12 +19,16 @@ interface SpecialitaProps {
   showBestChoice?: boolean
   showPromo?: boolean
   limit?: number
+  title?: string
+  subtitle?: string
 }
 
 export default function Specialita({
   showBestChoice = true,
   showPromo = true,
-  limit = 6
+  limit = 6,
+  title = "Le Nostre Specialità",
+  subtitle = "Scopri i piatti più amati dai nostri clienti e le offerte speciali del momento"
 }: SpecialitaProps) {
   const [articoli, setArticoli] = useState<Articolo[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -98,10 +102,10 @@ export default function Specialita({
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Le Nostre Specialità
+            {title}
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Scopri i piatti più amati dai nostri clienti e le offerte speciali del momento
+            {subtitle}
           </p>
         </div>
 

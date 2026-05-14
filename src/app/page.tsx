@@ -15,9 +15,17 @@ interface SiteInfo {
   slogan?: string
   chiSiamoTitolo?: string
   chiSiamoTesto?: string
+  chiSiamoImageUrl?: string
   logoUrl?: string
   faviconUrl?: string
   prenotazioniAttive?: boolean
+  heroTitle?: string
+  heroSubtitle?: string
+  heroCTAText?: string
+  heroImageUrl?: string
+  heroOverlayOpacity?: number
+  specialitaTitle?: string
+  specialitaSubtitle?: string
 }
 
 export default function Home() {
@@ -83,16 +91,26 @@ export default function Home() {
 
       <main className="flex-1">
         <Hero
-          title={siteInfo.slogan || 'Autentica Cucina Italiana'}
-          ctaText="Scopri il Menu"
+          title={siteInfo.heroTitle || 'Autentica Cucina Italiana'}
+          subtitle={siteInfo.heroSubtitle || 'Scopri i sapori tradizionali della nostra cucina, preparati con passione e ingredienti freschi ogni giorno'}
+          heroImage={siteInfo.heroImageUrl}
+          ctaText={siteInfo.heroCTAText || 'Scopri il Menu'}
+          heroOverlayOpacity={siteInfo.heroOverlayOpacity ?? 0.5}
         />
 
         <ChiSiamo
           title={siteInfo.chiSiamoTitolo || 'Chi Siamo'}
           content={siteInfo.chiSiamoTesto || 'Dal 1985, portiamo in tavola l\'autentica tradizione culinaria italiana. La nostra passione per la cucina e l\'amore per gli ingredienti freschi e di qualità si riflette in ogni piatto che prepariamo.'}
+          image={siteInfo.chiSiamoImageUrl}
         />
 
-        <Specialita showBestChoice={true} showPromo={true} limit={6} />
+        <Specialita
+          showBestChoice={true}
+          showPromo={true}
+          limit={6}
+          title={siteInfo.specialitaTitle || 'Le Nostre Specialità'}
+          subtitle={siteInfo.specialitaSubtitle || 'Scopri i piatti più amati dai nostri clienti e le offerte speciali del momento'}
+        />
       </main>
 
       <Footer onAdminClick={handleAdminClick} />
@@ -113,4 +131,3 @@ export default function Home() {
     </div>
   )
 }
-
