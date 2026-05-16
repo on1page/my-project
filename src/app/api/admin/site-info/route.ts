@@ -32,7 +32,12 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
+
+    // Log per debug
+    console.log('PUT /api/admin/site-info - Ricevuto body:', JSON.stringify(body, null, 2));
+
     const {
+      id,
       nomeLocale,
       slogan,
       chiSiamoTitolo,
@@ -57,74 +62,89 @@ export async function PUT(request: NextRequest) {
     // Cerca se esiste già un record
     let siteInfo = await db.siteInfo.findFirst();
 
-    const updateData: any = {}
-    if (nomeLocale !== undefined) updateData.nomeLocale = nomeLocale
-    if (slogan !== undefined) updateData.slogan = slogan
-    if (chiSiamoTitolo !== undefined) updateData.chiSiamoTitolo = chiSiamoTitolo
-    if (chiSiamoTesto !== undefined) updateData.chiSiamoTesto = chiSiamoTesto
-    if (chiSiamoImageUrl !== undefined) updateData.chiSiamoImageUrl = chiSiamoImageUrl
-    if (logoUrl !== undefined) updateData.logoUrl = logoUrl
-    if (faviconUrl !== undefined) updateData.faviconUrl = faviconUrl
-    if (telefono !== undefined) updateData.telefono = telefono
-    if (email !== undefined) updateData.email = email
-    if (prenotazioniAttive !== undefined) updateData.prenotazioniAttive = prenotazioniAttive
-    
-    // Hero Section
-    if (heroTitle !== undefined) updateData.heroTitle = heroTitle
-    if (heroSubtitle !== undefined) updateData.heroSubtitle = heroSubtitle
-    if (heroCTAText !== undefined) updateData.heroCTAText = heroCTAText
-    if (heroImageUrl !== undefined) updateData.heroImageUrl = heroImageUrl
-    if (heroOverlayOpacity !== undefined) updateData.heroOverlayOpacity = heroOverlayOpacity
-    
-    // Specialità Section
-    if (specialitaTitle !== undefined) updateData.specialitaTitle = specialitaTitle
-    if (specialitaSubtitle !== undefined) updateData.specialitaSubtitle = specialitaSubtitle
+    console.log('SiteInfo trovato:', siteInfo ? siteInfo.id : 'Nessuno');
+
+   const updateData: any = {}
+// Includi solo i campi che sono stati inviati (non undefined)
+// Permetti di salvare stringhe vuote per cancellare i valori
+if (nomeLocale !== undefined) updateData.nomeLocale = nomeLocale
+if (slogan !== undefined) updateData.slogan = slogan
+if (chiSiamoTitolo !== undefined) updateData.chiSiamoTitolo = chiSiamoTitolo
+if (chiSiamoTesto !== undefined) updateData.chiSiamoTesto = chiSiamoTesto
+if (chiSiamoImageUrl !== undefined) updateData.chiSiamoImageUrl = chiSiamoImageUrl
+if (logoUrl !== undefined) updateData.logoUrl = logoUrl
+if (faviconUrl !== undefined) updateData.faviconUrl = faviconUrl
+if (telefono !== undefined) updateData.telefono = telefono
+if (email !== undefined) updateData.email = email
+if (prenotazioniAttive !== undefined) updateData.prenotazioniAttive = prenotazioniAttive
+
+// Hero Section
+if (heroTitle !== undefined) updateData.heroTitle = heroTitle
+if (heroSubtitle !== undefined) updateData.heroSubtitle = heroSubtitle
+if (heroCTAText !== undefined) updateData.heroCTAText = heroCTAText
+if (heroImageUrl !== undefined) updateData.heroImageUrl = heroImageUrl
+if (heroOverlayOpacity !== undefined) updateData.heroOverlayOpacity = heroOverlayOpacity
+
+// Specialità Section
+if (specialitaTitle !== undefined) updateData.specialitaTitle = specialitaTitle
+if (specialitaSubtitle !== undefined) updateData.specialitaSubtitle = specialitaSubtitle
 
     if (siteInfo) {
       // Aggiorna il record esistente
+      console.log('Aggiornamento record esistente con ID:', siteInfo.id);
       siteInfo = await db.siteInfo.update({
         where: { id: siteInfo.id },
         data: updateData
       });
+      console.log('Aggiornamento completato con successo');
     } else {
       // Crea un nuovo record
+      console.log('Creazione nuovo record');
       const createData: any = {
         nomeLocale: nomeLocale || 'Il Nostro Ristorante',
-        slogan,
-        chiSiamoTitolo,
-        chiSiamoTesto,
-        chiSiamoImageUrl,
-        logoUrl,
-        faviconUrl,
-        telefono,
-        email,
+        slogan: slogan || null,
+        chiSiamoTitolo: chiSiamoTitolo || null,
+        chiSiamoTesto: chiSiamoTesto || null,
+        chiSiamoImageUrl: chiSiamoImageUrl || null,
+        logoUrl: logoUrl || null,
+        faviconUrl: faviconUrl || null,
+        telefono: telefono || null,
+        email: email || null,
         heroTitle: heroTitle || 'Autentica Cucina Italiana',
+        heroSubtitle: heroSubtitle || null,
         heroCTAText: heroCTAText || 'Scopri il Menu',
-        specialitaTitle: specialitaTitle || 'Le Nostre Specialità'
+        heroImageUrl: heroImageUrl || null,
+        heroOverlayOpacity: heroOverlayOpacity || 0.5,
+        specialitaTitle: specialitaTitle || 'Le Nostre Specialità',
+        specialitaSubtitle: specialitaSubtitle || null,
+        prenotazioniAttive: prenotazioniAttive !== undefined ? prenotazioniAttive : true
       }
 
-      if (prenotazioniAttive !== undefined) {
-        createData.prenotazioniAttive = prenotazioniAttive
-      } else {
-        createData.prenotazioniAttive = true
-      }
-
-      // Aggiungi campi opzionali
-      if (heroSubtitle) createData.heroSubtitle = heroSubtitle
-      if (heroImageUrl) createData.heroImageUrl = heroImageUrl
-      if (heroOverlayOpacity !== undefined) createData.heroOverlayOpacity = heroOverlayOpacity
-      if (specialitaSubtitle) createData.specialitaSubtitle = specialitaSubtitle
+      console.log('CreateData:', JSON.stringify(createData, null, 2));
 
       siteInfo = await db.siteInfo.create({
         data: createData
       });
+      console.log('Creazione completata con successo, ID:', siteInfo.id);
     }
 
     return NextResponse.json(siteInfo);
   } catch (error) {
     console.error('Errore nell\'aggiornamento site info:', error);
+
+    // Log dettagliato dell'errore
+    if (error instanceof Error) {
+      console.error('Nome errore:', error.name);
+      console.error('Messaggio errore:', error.message);
+      console.error('Stack trace:', error.stack);
+    }
+
     return NextResponse.json(
-      { error: 'Errore nell\'aggiornamento delle informazioni del sito', details: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        error: 'Errore nell\'aggiornamento delle informazioni del sito',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        errorType: error instanceof Error ? error.name : 'Unknown'
+      },
       { status: 500 }
     );
   }

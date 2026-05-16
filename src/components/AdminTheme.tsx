@@ -255,6 +255,8 @@ export default function AdminTheme() {
   async function saveSiteInfo() {
     setSaving(true)
     try {
+      console.log('Salvataggio siteInfo:', JSON.stringify(siteInfo, null, 2))
+
       const response = await fetch('/api/admin/site-info', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -264,11 +266,13 @@ export default function AdminTheme() {
       if (response.ok) {
         alert('Informazioni del sito salvate con successo!')
       } else {
-        alert('Errore nel salvataggio')
+        const errorData = await response.json()
+        console.error('Errore risposta server:', errorData)
+        alert(`Errore nel salvataggio:\n${errorData.error}\n\nDettagli: ${errorData.details}\nTipo: ${errorData.errorType}`)
       }
     } catch (error) {
       console.error('Errore salvataggio site info:', error)
-      alert('Errore nel salvataggio')
+      alert(`Errore di rete o server:\n${error instanceof Error ? error.message : 'Errore sconosciuto'}`)
     } finally {
       setSaving(false)
     }
