@@ -1,67 +1,60 @@
-// Schema per applicazione Ristorazione
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = "postgres://f03b6a41bc4fe4035e4453264b946e79599fdb927e81a68d46c785283a27a2ef:sk_ZRix9vrwCr66dqfYTJn1a@db.prisma.io:5432/postgres?sslmode=require"
 }
 
-// Allergeni disponibili (lista completa normativa europea)
 model Allergene {
-  id          String            @id @default(cuid())
-  nome        String            @unique
+  id          String              @id @default(cuid())
+  nome        String              @unique
   descrizione String?
-  icona       String?           // emoji o nome icona
+  icona       String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
   articoli    AllergeneArticolo[]
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
 }
 
-// Categorie del menu
 model Categoria {
-  id        String    @id @default(cuid())
+  id        String     @id @default(cuid())
   nome      String
-  ordine    Int       @default(0)
-  attiva    Boolean   @default(true)
+  ordine    Int        @default(0)
+  attiva    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   articoli  Articolo[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
 }
 
-// Articoli/Piatti del menu
 model Articolo {
-  id                String           @id @default(cuid())
-  nome              String
-  descrizione       String?
-  categoriaId       String
-  categoria         Categoria        @relation(fields: [categoriaId], references: [id])
-  prezzo            Float
+  id                 String              @id @default(cuid())
+  nome               String
+  descrizione        String?
+  categoriaId        String
+  prezzo             Float
   prezzoPromozionale Float?
-  scadenzaPromo     DateTime?
-  eSurgelato        Boolean          @default(false)
-  eBestChoice       Boolean          @default(false)
-  attivo            Boolean          @default(true)
-  allergeni         AllergeneArticolo[]
-  immagineUrl       String?
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  scadenzaPromo      DateTime?
+  eSurgelato         Boolean             @default(false)
+  eBestChoice        Boolean             @default(false)
+  attivo             Boolean             @default(true)
+  immagineUrl        String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  allergeni          AllergeneArticolo[]
+  categoria          Categoria           @relation(fields: [categoriaId], references: [id])
 }
 
-// Relazione molti-a-molti tra Articoli e Allergeni
 model AllergeneArticolo {
-  id         String   @id @default(cuid())
-  articoloId String
+  id          String    @id @default(cuid())
+  articoloId  String
   allergeneId String
-  articolo   Articolo @relation(fields: [articoloId], references: [id], onDelete: Cascade)
-  allergene  Allergene @relation(fields: [allergeneId], references: [id], onDelete: Cascade)
+  allergene   Allergene @relation(fields: [allergeneId], references: [id], onDelete: Cascade)
+  articolo    Articolo  @relation(fields: [articoloId], references: [id], onDelete: Cascade)
 
   @@unique([articoloId, allergeneId])
 }
 
-// Informazioni generali del sito
 model SiteInfo {
   id                 String   @id @default(cuid())
   nomeLocale         String   @default("Il Nostro Ristorante")
@@ -74,26 +67,20 @@ model SiteInfo {
   telefono           String?
   email              String?
   prenotazioniAttive Boolean  @default(true)
-
-  // Hero Section
   heroTitle          String?  @default("Autentica Cucina Italiana")
   heroSubtitle       String?
   heroCTAText        String?  @default("Scopri il Menu")
   heroImageUrl       String?
   heroOverlayOpacity Float    @default(0.5)
-
-  // Specialità Section
   specialitaTitle    String?  @default("Le Nostre Specialità")
   specialitaSubtitle String?
-
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
 
-// Immagini del sito
 model SiteImage {
   id          String   @id @default(cuid())
-  sezione     String   // hero, chi_siamo, gallery, ecc.
+  sezione     String
   titolo      String?
   descrizione String?
   url         String
@@ -103,122 +90,161 @@ model SiteImage {
   updatedAt   DateTime @updatedAt
 }
 
-// Informazioni footer
 model FooterInfo {
-  id                String   @id @default(cuid())
-  indirizzo         String?
-  citta             String?
-  cap               String?
-  provincia         String?
-  latitudine        Float?
-  longitudine       Float?
-  orariApertura     String?  // JSON con giorni e orari
-  giorniChiusura    String?  // JSON con giorni di chiusura
-  facebookUrl       String?
-  instagramUrl      String?
-  twitterUrl        String?
-  linkedinUrl       String?
-  whatsappUrl       String?
-  tiktokUrl         String?
-  justeatUrl        String?
-  deliverooUrl      String?
-  glovoUrl          String?
-  ubereatsUrl       String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id             String   @id @default(cuid())
+  indirizzo      String?
+  citta          String?
+  cap            String?
+  provincia      String?
+  latitudine     Float?
+  longitudine    Float?
+  orariApertura  String?
+  giorniChiusura String?
+  facebookUrl    String?
+  instagramUrl   String?
+  twitterUrl     String?
+  linkedinUrl    String?
+  whatsappUrl    String?
+  tiktokUrl      String?
+  justeatUrl     String?
+  deliverooUrl   String?
+  glovoUrl       String?
+  ubereatsUrl    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
-// Utenti del sistema
 model User {
   id        String      @id @default(cuid())
   email     String      @unique
   nome      String
   cognome   String?
   password  String
-  ruolo     String      @default("admin") // superadmin, admin
-  permessi  Permission?
+  ruolo     String      @default("admin")
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+  permessi  Permission?
 }
 
-// Permessi utente
 model Permission {
-  id                    String     @id @default(cuid())
-  userId                String     @unique
-  user                  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  puoGestireMenu        Boolean    @default(true)
-  puoGestireFooter      Boolean    @default(true)
-  puoGestireTemi        Boolean    @default(true)
-  puoGestirePrenotazioni Boolean   @default(true)
-  puoGestireDatiAzienda Boolean    @default(true)
-  puoGestireProfili     Boolean    @default(false)
-  puoGestireAnalytics   Boolean    @default(true)
-  createdAt             DateTime   @default(now())
-  updatedAt             DateTime   @updatedAt
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  puoGestireMenu         Boolean  @default(true)
+  puoGestireFooter       Boolean  @default(true)
+  puoGestireTemi         Boolean  @default(true)
+  puoGestirePrenotazioni Boolean  @default(true)
+  puoGestireDatiAzienda  Boolean  @default(true)
+  puoGestireProfili      Boolean  @default(false)
+  puoGestireAnalytics    Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Dati aziendali
+// Dati aziendali e legali
 model CompanyData {
-  id              String   @id @default(cuid())
-  ragioneSociale  String?
-  partitaIva      String?
-  privacyPolicy   String?
-  cookiesPolicy   String?
-  terminiServizio String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                  String   @id @default(cuid())
+
+  // ==================== DATI AZIENDALI BASE ====================
+  ragioneSociale      String?
+  partitaIva          String?
+  codiceFiscale       String?
+  indirizzo           String?
+  citta               String?
+  cap                 String?
+  provincia           String?
+  paese               String?
+  telefono            String?
+  email               String?
+  pec                 String?
+
+  // ==================== DATA PROTECTION OFFICER (DPO) ====================
+  dpoNome             String?
+  dpoEmail            String?
+  dpoIndirizzo        String?
+
+  // ==================== PRIVACY POLICY ====================
+  privacyPolicy       String?  // Se precompilato, sovrascrive il template automatico
+  privacyEnabled      Boolean  @default(true)
+  privacyUrl          String?
+  privacyPolicyUpdate DateTime?
+
+  // ==================== COOKIE POLICY ====================
+  cookiesPolicy       String?  // Se precompilato, sovrascrive il template automatico
+  cookiesEnabled      Boolean  @default(true)
+  cookiesUrl          String?
+  cookiesPolicyUpdate DateTime?
+
+  // ==================== TIPI DI COOKIE UTILIZZATI ====================
+  cookieTecnici       Boolean  @default(true)
+  cookieAnalitici     Boolean  @default(true)
+  cookieMarketing     Boolean  @default(true)
+
+  // ==================== COOKIE BANNER ====================
+  showCookieBanner    Boolean  @default(true)
+  cookieBannerText    String?  @default("Questo sito utilizza cookie tecnici e analitici per migliorare la tua esperienza di navigazione. Cliccando su 'Autorizzo', accetti l'uso dei cookie.")
+  cookieAcceptText    String?  @default("Autorizzo")
+  cookieDeclineText   String?  @default("Annulla")
+
+  // ==================== TERMINI DI SERVIZIO ====================
+  terminiServizio     String?
+  terminiUrl          String?
+
+  // ==================== SCRIPT DI TERZE PARTI ====================
+  thirdPartyScriptsEnabled Boolean @default(true)
+  googleAnalyticsId     String?  // GA4 Measurement ID (es. G-XXXXXXXXXX)
+  facebookPixelId       String?  // Facebook Pixel ID
+  amazonTagId           String?  // Amazon Associate Tag ID
+
+  // ==================== METADATA ====================
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
-// Prenotazioni tavoli
 model Reservation {
   id        String   @id @default(cuid())
   nome      String
   cognome   String
   email     String
   telefono  String
-  data      String   // YYYY-MM-DD
-  ora       String   // HH:MM
+  data      String
+  ora       String
   persone   Int
   note      String?
-  stato     String   @default("pending") // pending, confirmed, cancelled
+  stato     String   @default("pending")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-// ==================== ANALYTICS ====================
-
-// Eventi grezzi - Dati di basso livello (trattenuti 15 giorni)
 model AnalyticsEvent {
-  id          String   @id @default(cuid())
-  sessionId   String   // Per tracciare sessioni
-  eventType   String   // page_view, product_view, add_to_cart, event_view, scroll, etc.
-  pageUrl     String   // URL della pagina
-  productId   String?  // Se interazione con prodotto
-  duration    Int?     // Durata in millisecondi
-  referrer    String?  // Da dove viene l'utente
-  userAgent   String?  // Device info (anonimizzato)
-  ipHash      String?  // Hash dell'IP (anonimo, non IP reale)
-  country     String?  // Paese (da IP)
-  city        String?  // Città (da IP)
-  timestamp   DateTime @default(now())
+  id        String   @id @default(cuid())
+  sessionId String
+  eventType String
+  pageUrl   String
+  productId String?
+  duration  Int?
+  referrer  String?
+  userAgent String?
+  ipHash    String?
+  country   String?
+  city      String?
+  timestamp DateTime @default(now())
 }
 
-// Aggregazione giornaliera
 model AnalyticsDaily {
-  id                  String   @id @default(cuid())
-  date                DateTime @unique
-  totalVisits         Int      @default(0)
-  uniqueVisitors      Int      @default(0)
-  pageViews           String?  // JSON: {"/": 100, "/menu": 50}
-  avgSessionDuration  Int      @default(0) // In secondi
-  hourlyBreakdown     String?  // JSON: {0: 5, 1: 2, ..., 23: 45}
-  topPages            String?  // JSON: [{"page": "/menu", "views": 50}]
-  productViews        String?  // JSON: {productId: {views: 10, avgDuration: 30000}}
-  conversionData      String?  // JSON: {viewed: 100, cart: 20, checkout: 10}
-  createdAt           DateTime @default(now())
+  id                 String   @id @default(cuid())
+  date               DateTime @unique
+  totalVisits        Int      @default(0)
+  uniqueVisitors     Int      @default(0)
+  pageViews          String?
+  avgSessionDuration Int      @default(0)
+  hourlyBreakdown    String?
+  topPages           String?
+  productViews       String?
+  conversionData     String?
+  createdAt          DateTime @default(now())
 }
 
-// Aggregazione settimanale
 model AnalyticsWeekly {
   id                 String   @id @default(cuid())
   weekStartDate      DateTime
@@ -226,18 +252,17 @@ model AnalyticsWeekly {
   totalVisits        Int      @default(0)
   uniqueVisitors     Int      @default(0)
   avgDailyVisits     Float    @default(0)
-  bestDayOfWeek      String?  // "lunedi", "martedi", etc.
-  bestHourOfDay      Int?     // 0-23
-  topProducts        String?  // JSON
-  conversionInsights String?  // JSON: prodotti con alta visualizzazione ma bassa conversione
-  priceInsights      String?  // JSON: badge colori per prodotti
+  bestDayOfWeek      String?
+  bestHourOfDay      Int?
+  topProducts        String?
+  conversionInsights String?
+  priceInsights      String?
   createdAt          DateTime @default(now())
 }
 
-// Aggregazione mensile
 model AnalyticsMonthly {
   id              String   @id @default(cuid())
-  month           String   // "2025-01"
+  month           String
   year            Int
   totalVisits     Int      @default(0)
   uniqueVisitors  Int      @default(0)
@@ -245,22 +270,21 @@ model AnalyticsMonthly {
   bestDayOfWeek   String?
   bestHourOfDay   Int?
   avgWeeklyVisits Float    @default(0)
-  growthRate      Float    @default(0) // % rispetto al mese precedente
-  productInsights String?  // JSON: analisi prodotti
-  priceInsights   String?  // JSON: badge colori per prodotti
+  growthRate      Float    @default(0)
+  productInsights String?
+  priceInsights   String?
   createdAt       DateTime @default(now())
 }
 
-// Aggregazione annuale
 model AnalyticsYearly {
   id               String   @id @default(cuid())
   year             Int      @unique
   totalVisits      Int      @default(0)
   uniqueVisitors   Int      @default(0)
-  avgMonthlyVisits Float   @default(0)
+  avgMonthlyVisits Float    @default(0)
   bestMonth        String?
-  overallTrend     String?  // "in_crescita", "stabile", "in_calo"
-  productInsights  String?  // JSON
-  priceInsights    String?  // JSON
+  overallTrend     String?
+  productInsights  String?
+  priceInsights    String?
   createdAt        DateTime @default(now())
 }

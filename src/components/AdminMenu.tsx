@@ -54,6 +54,7 @@ export default function AdminMenu() {
   const [articoli, setArticoli] = useState<Articolo[]>([])
   const [allergeni, setAllergeni] = useState<Allergene[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // Categoria form
   const [categoriaForm, setCategoriaForm] = useState({ id: '', nome: '', ordine: 0, attiva: true })
@@ -101,6 +102,7 @@ export default function AdminMenu() {
 
   // Categorie CRUD
   async function saveCategoria() {
+    setError(null)
     const url = categoriaForm.id
       ? `/api/admin/categorie/${categoriaForm.id}`
       : '/api/admin/categorie'
@@ -117,20 +119,39 @@ export default function AdminMenu() {
         setShowCategoriaDialog(false)
         setCategoriaForm({ id: '', nome: '', ordine: 0, attiva: true })
         fetchData()
+        alert('Categoria salvata con successo!')
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || 'Errore nel salvataggio della categoria')
+        alert(`Errore: ${errorData.error || 'Errore nel salvataggio della categoria'}`)
       }
     } catch (error) {
       console.error('Errore salvataggio categoria:', error)
+      const errorMsg = 'Errore di connessione. Verifica che il server sia attivo.'
+      setError(errorMsg)
+      alert(errorMsg)
     }
   }
 
   async function deleteCategoria(id: string) {
     if (!confirm('Sei sicuro di voler eliminare questa categoria?')) return
 
+    setError(null)
     try {
       const response = await fetch(`/api/admin/categorie/${id}`, { method: 'DELETE' })
-      if (response.ok) fetchData()
+      if (response.ok) {
+        fetchData()
+        alert('Categoria eliminata con successo!')
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || 'Errore nell\'eliminazione della categoria')
+        alert(`Errore: ${errorData.error || 'Errore nell\'eliminazione della categoria'}`)
+      }
     } catch (error) {
       console.error('Errore eliminazione categoria:', error)
+      const errorMsg = 'Errore di connessione. Verifica che il server sia attivo.'
+      setError(errorMsg)
+      alert(errorMsg)
     }
   }
 
@@ -146,6 +167,7 @@ export default function AdminMenu() {
 
   // Articoli CRUD
   async function saveArticolo() {
+    setError(null)
     const url = articoloForm.id
       ? `/api/admin/articoli/${articoloForm.id}`
       : '/api/admin/articoli'
@@ -162,20 +184,39 @@ export default function AdminMenu() {
         setShowArticoloDialog(false)
         resetArticoloForm()
         fetchData()
+        alert('Articolo salvato con successo!')
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || 'Errore nel salvataggio dell\'articolo')
+        alert(`Errore: ${errorData.error || 'Errore nel salvataggio dell\'articolo'}`)
       }
     } catch (error) {
       console.error('Errore salvataggio articolo:', error)
+      const errorMsg = 'Errore di connessione. Verifica che il server sia attivo.'
+      setError(errorMsg)
+      alert(errorMsg)
     }
   }
 
   async function deleteArticolo(id: string) {
     if (!confirm('Sei sicuro di voler eliminare questo articolo?')) return
 
+    setError(null)
     try {
       const response = await fetch(`/api/admin/articoli/${id}`, { method: 'DELETE' })
-      if (response.ok) fetchData()
+      if (response.ok) {
+        fetchData()
+        alert('Articolo eliminato con successo!')
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || 'Errore nell\'eliminazione dell\'articolo')
+        alert(`Errore: ${errorData.error || 'Errore nell\'eliminazione dell\'articolo'}`)
+      }
     } catch (error) {
       console.error('Errore eliminazione articolo:', error)
+      const errorMsg = 'Errore di connessione. Verifica che il server sia attivo.'
+      setError(errorMsg)
+      alert(errorMsg)
     }
   }
 
@@ -229,6 +270,19 @@ export default function AdminMenu() {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+          <strong className="font-bold">Errore: </strong>
+          <span className="block sm:inline">{error}</span>
+          <button
+            className="absolute top-0 bottom-0 right-0 px-4 py-3"
+            onClick={() => setError(null)}
+          >
+            <span className="text-red-700 font-bold">×</span>
+          </button>
+        </div>
+      )}
+
       <Tabs defaultValue="categorie">
         <TabsList>
           <TabsTrigger value="categorie">Categorie</TabsTrigger>

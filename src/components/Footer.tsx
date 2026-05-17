@@ -43,7 +43,11 @@ interface CompanyData {
   ragioneSociale?: string | null
   partitaIva?: string | null
   privacyPolicy?: string | null
+  privacyEnabled?: boolean
   cookiesPolicy?: string | null
+  cookiesEnabled?: boolean
+  privacyUrl?: string | null
+  cookiesUrl?: string | null
 }
 
 interface FooterProps {
@@ -305,51 +309,21 @@ export default function Footer({ onAdminClick }: FooterProps = {}) {
 
                 {/* Link Policy */}
                 <div className="flex gap-4">
-                  {companyData.privacyPolicy && (
-                    <button
-                      onClick={() => {
-                        const modal = document.createElement('div')
-                        modal.className = 'fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4'
-                        modal.innerHTML = `
-                          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6">
-                            <div class="flex justify-between items-center mb-4">
-                              <h2 class="text-2xl font-bold">Privacy Policy</h2>
-                              <button class="text-gray-600 hover:text-gray-900" onclick="this.closest('.fixed').remove()">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                              </button>
-                            </div>
-                            <div class="prose max-w-none text-gray-700 whitespace-pre-wrap">${companyData.privacyPolicy}</div>
-                          </div>
-                        `
-                        document.body.appendChild(modal)
-                      }}
+                  {(companyData.privacyEnabled !== false) && (
+                    <a
+                      href={companyData.privacyUrl || '/privacy-policy'}
                       className="text-orange-400 hover:text-orange-300 transition-colors"
                     >
                       Privacy Policy
-                    </button>
+                    </a>
                   )}
-                  {companyData.cookiesPolicy && (
-                    <button
-                      onClick={() => {
-                        const modal = document.createElement('div')
-                        modal.className = 'fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4'
-                        modal.innerHTML = `
-                          <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6">
-                            <div class="flex justify-between items-center mb-4">
-                              <h2 class="text-2xl font-bold">Cookies Policy</h2>
-                              <button class="text-gray-600 hover:text-gray-900" onclick="this.closest('.fixed').remove()">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                              </button>
-                            </div>
-                            <div class="prose max-w-none text-gray-700 whitespace-pre-wrap">${companyData.cookiesPolicy}</div>
-                          </div>
-                        `
-                        document.body.appendChild(modal)
-                      }}
+                  {(companyData.cookiesEnabled !== false) && (
+                    <a
+                      href={companyData.cookiesUrl || '/cookie-policy'}
                       className="text-orange-400 hover:text-orange-300 transition-colors"
                     >
-                      Cookies Policy
-                    </button>
+                      Cookie Policy
+                    </a>
                   )}
                 </div>
               </div>

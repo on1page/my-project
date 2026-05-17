@@ -64,30 +64,32 @@ export async function PUT(request: NextRequest) {
 
     console.log('SiteInfo trovato:', siteInfo ? siteInfo.id : 'Nessuno');
 
-   const updateData: any = {}
-// Includi solo i campi che sono stati inviati (non undefined)
-// Permetti di salvare stringhe vuote per cancellare i valori
-if (nomeLocale !== undefined) updateData.nomeLocale = nomeLocale
-if (slogan !== undefined) updateData.slogan = slogan
-if (chiSiamoTitolo !== undefined) updateData.chiSiamoTitolo = chiSiamoTitolo
-if (chiSiamoTesto !== undefined) updateData.chiSiamoTesto = chiSiamoTesto
-if (chiSiamoImageUrl !== undefined) updateData.chiSiamoImageUrl = chiSiamoImageUrl
-if (logoUrl !== undefined) updateData.logoUrl = logoUrl
-if (faviconUrl !== undefined) updateData.faviconUrl = faviconUrl
-if (telefono !== undefined) updateData.telefono = telefono
-if (email !== undefined) updateData.email = email
-if (prenotazioniAttive !== undefined) updateData.prenotazioniAttive = prenotazioniAttive
+    const updateData: any = {}
+    // Includi solo i campi che sono stati inviati (non undefined)
+    // Permetti di salvare stringhe vuote per cancellare i valori
+    if (nomeLocale !== undefined) updateData.nomeLocale = nomeLocale
+    if (slogan !== undefined) updateData.slogan = slogan
+    if (chiSiamoTitolo !== undefined) updateData.chiSiamoTitolo = chiSiamoTitolo
+    if (chiSiamoTesto !== undefined) updateData.chiSiamoTesto = chiSiamoTesto
+    if (chiSiamoImageUrl !== undefined) updateData.chiSiamoImageUrl = chiSiamoImageUrl
+    if (logoUrl !== undefined) updateData.logoUrl = logoUrl
+    if (faviconUrl !== undefined) updateData.faviconUrl = faviconUrl
+    if (telefono !== undefined) updateData.telefono = telefono
+    if (email !== undefined) updateData.email = email
+    if (prenotazioniAttive !== undefined) updateData.prenotazioniAttive = prenotazioniAttive
 
-// Hero Section
-if (heroTitle !== undefined) updateData.heroTitle = heroTitle
-if (heroSubtitle !== undefined) updateData.heroSubtitle = heroSubtitle
-if (heroCTAText !== undefined) updateData.heroCTAText = heroCTAText
-if (heroImageUrl !== undefined) updateData.heroImageUrl = heroImageUrl
-if (heroOverlayOpacity !== undefined) updateData.heroOverlayOpacity = heroOverlayOpacity
+    // Hero Section
+    if (heroTitle !== undefined) updateData.heroTitle = heroTitle
+    if (heroSubtitle !== undefined) updateData.heroSubtitle = heroSubtitle
+    if (heroCTAText !== undefined) updateData.heroCTAText = heroCTAText
+    if (heroImageUrl !== undefined) updateData.heroImageUrl = heroImageUrl
+    if (heroOverlayOpacity !== undefined) updateData.heroOverlayOpacity = heroOverlayOpacity
 
-// Specialità Section
-if (specialitaTitle !== undefined) updateData.specialitaTitle = specialitaTitle
-if (specialitaSubtitle !== undefined) updateData.specialitaSubtitle = specialitaSubtitle
+    // Specialità Section
+    if (specialitaTitle !== undefined) updateData.specialitaTitle = specialitaTitle
+    if (specialitaSubtitle !== undefined) updateData.specialitaSubtitle = specialitaSubtitle
+
+    console.log('UpdateData:', JSON.stringify(updateData, null, 2));
 
     if (siteInfo) {
       // Aggiorna il record esistente
