@@ -65,7 +65,7 @@ export default function Hero({
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button
             size="lg"
-            className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-6 text-lg"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg"
             onClick={() => router.push('/menu')}
           >
             {ctaText}

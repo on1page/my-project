@@ -77,7 +77,7 @@ export default function SocialSidebar() {
       name: 'Instagram',
       url: generateShareUrl('instagram'),
       icon: Instagram,
-      color: 'bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 hover:from-purple-700 hover:via-pink-700 hover:to-orange-600',
+      color: 'bg-gradient-to-br from-purple-600 via-pink-600 to-primary hover:from-purple-700 hover:via-pink-700 hover:to-primary/90',
       isShare: false,
       action: 'copy-and-open'
     },
@@ -170,8 +170,8 @@ export default function SocialSidebar() {
       {/* Pulsante per riaprire la tendina */}
       {!isOpen && (
         <button
-          onClick={() => setIsOpen(true)}
-          className="fixed left-0 top-1/2 -translate-y-1/2 z-50 bg-orange-600 hover:bg-orange-700 text-white p-3 rounded-r-lg shadow-lg hover:scale-110 transition-all duration-300"
+          onClick={() => setIsOpen(false)}
+          className="fixed left-0 top-1/2 -translate-y-1/2 z-50 bg-primary hover:bg-primary/90 text-primary-foreground p-3 rounded-r-lg shadow-lg hover:scale-110 transition-all duration-300"
           aria-label="Apri menu social"
           title="Condividi"
           style={{ borderTopRightRadius: '0.5rem', borderBottomRightRadius: '0.5rem', borderTopLeftRadius: '0', borderBottomLeftRadius: '0' }}

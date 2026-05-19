@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Utensils, MapPin, ImageIcon, Users, Building2, Calendar, BarChart3, LogOut, Menu as MenuIcon } from 'lucide-react'
+import { X, Utensils, MapPin, ImageIcon, Users, Building2, Calendar, BarChart3, LogOut, Menu as MenuIcon, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -12,6 +12,7 @@ import AdminUsers from './AdminUsers'
 import AdminCompanyData from './AdminCompanyData'
 import AdminReservations from './AdminReservations'
 import AdminAnalytics from './AdminAnalytics'
+import AdminSiteInfo from './AdminSiteInfo'
 
 interface AdminPanelProps {
   onClose: () => void
@@ -25,6 +26,7 @@ interface Permission {
   puoGestireDatiAzienda: boolean
   puoGestireProfili: boolean
   puoGestireAnalytics: boolean
+  puoGestireSito: boolean
 }
 
 interface CurrentUser {
@@ -47,6 +49,7 @@ const menuItems: MenuItem[] = [
   { id: 'menu', label: 'Menu', icon: Utensils, permission: 'puoGestireMenu' },
   { id: 'footer', label: 'Footer', icon: MapPin, permission: 'puoGestireFooter' },
   { id: 'theme', label: 'Temi', icon: ImageIcon, permission: 'puoGestireTemi' },
+  { id: 'site', label: 'Sito', icon: Globe, permission: 'puoGestireSito' },
   { id: 'company', label: 'Dati Azienda', icon: Building2, permission: 'puoGestireDatiAzienda' },
   { id: 'reservations', label: 'Prenotazioni', icon: Calendar, permission: 'puoGestirePrenotazioni' },
   { id: 'analytics', label: 'Analytics', icon: BarChart3, permission: 'puoGestireAnalytics' },
@@ -129,6 +132,8 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
         return <AdminFooter />
       case 'theme':
         return <AdminTheme />
+      case 'site':
+        return <AdminSiteInfo />
       case 'company':
         return <AdminCompanyData />
       case 'reservations':

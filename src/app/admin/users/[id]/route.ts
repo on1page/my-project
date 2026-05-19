@@ -13,8 +13,6 @@ export async function PUT(
     const body = await request.json();
     const { email, nome, cognome, password, ruolo, permessi } = body;
 
-    console.log('PUT - Dati ricevuti:', { id, email, nome, cognome, hasPassword: !!password, ruolo, permessi })
-
     // Prepara i dati per l'aggiornamento
     const updateData: any = {
       email,
@@ -28,15 +26,11 @@ export async function PUT(
       updateData.password = password
     }
 
-    console.log('PUT - Dati update:', updateData)
-
     // Aggiorna l'utente
     const user = await db.user.update({
       where: { id },
       data: updateData
     });
-
-    console.log('PUT - Utente aggiornato:', user.id)
 
     // Aggiorna i permessi se specificati
     if (permessi) {
@@ -53,7 +47,9 @@ export async function PUT(
             puoGestireTemi: permessi.puoGestireTemi,
             puoGestirePrenotazioni: permessi.puoGestirePrenotazioni,
             puoGestireDatiAzienda: permessi.puoGestireDatiAzienda,
-            puoGestireProfili: permessi.puoGestireProfili
+            puoGestireProfili: permessi.puoGestireProfili,
+            puoGestireAnalytics: permessi.puoGestireAnalytics,
+            puoGestireSito: permessi.puoGestireSito
           }
         });
       } else {
@@ -65,7 +61,9 @@ export async function PUT(
             puoGestireTemi: permessi.puoGestireTemi ?? true,
             puoGestirePrenotazioni: permessi.puoGestirePrenotazioni ?? true,
             puoGestireDatiAzienda: permessi.puoGestireDatiAzienda ?? true,
-            puoGestireProfili: permessi.puoGestireProfili ?? false
+            puoGestireProfili: permessi.puoGestireProfili ?? false,
+            puoGestireAnalytics: permessi.puoGestireAnalytics ?? true,
+            puoGestireSito: permessi.puoGestireSito ?? true
           }
         });
       }
@@ -79,15 +77,9 @@ export async function PUT(
       }
     });
 
-    console.log('PUT - Utente completo restituito')
     return NextResponse.json(userCompleto);
   } catch (error: any) {
     console.error('Errore nell\'aggiornamento utente:', error);
-    console.error('Dettagli errore:', {
-      message: error?.message,
-      code: error?.code,
-      meta: error?.meta
-    });
     return NextResponse.json(
       {
         error: 'Errore nell\'aggiornamento dell\'utente',

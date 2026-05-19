@@ -56,7 +56,19 @@ export async function PUT(request: NextRequest) {
       heroOverlayOpacity,
       // Specialità Section
       specialitaTitle,
-      specialitaSubtitle
+      specialitaSubtitle,
+      // Theme Settings
+      primaryColor,
+      // SEO Section
+      seoTitle,
+      seoDescription,
+      seoKeywords,
+      seoOgTitle,
+      seoOgDescription,
+      seoOgImage,
+      seoTwitterCard,
+      seoRobots,
+      seoCanonical
     } = body;
 
     // Cerca se esiste già un record
@@ -89,6 +101,20 @@ export async function PUT(request: NextRequest) {
     if (specialitaTitle !== undefined) updateData.specialitaTitle = specialitaTitle
     if (specialitaSubtitle !== undefined) updateData.specialitaSubtitle = specialitaSubtitle
 
+    // Theme Settings
+    if (primaryColor !== undefined) updateData.primaryColor = primaryColor
+
+    // SEO Section
+    if (seoTitle !== undefined) updateData.seoTitle = seoTitle
+    if (seoDescription !== undefined) updateData.seoDescription = seoDescription
+    if (seoKeywords !== undefined) updateData.seoKeywords = seoKeywords
+    if (seoOgTitle !== undefined) updateData.seoOgTitle = seoOgTitle
+    if (seoOgDescription !== undefined) updateData.seoOgDescription = seoOgDescription
+    if (seoOgImage !== undefined) updateData.seoOgImage = seoOgImage
+    if (seoTwitterCard !== undefined) updateData.seoTwitterCard = seoTwitterCard
+    if (seoRobots !== undefined) updateData.seoRobots = seoRobots
+    if (seoCanonical !== undefined) updateData.seoCanonical = seoCanonical
+
     console.log('UpdateData:', JSON.stringify(updateData, null, 2));
 
     if (siteInfo) {
@@ -119,7 +145,18 @@ export async function PUT(request: NextRequest) {
         heroOverlayOpacity: heroOverlayOpacity || 0.5,
         specialitaTitle: specialitaTitle || 'Le Nostre Specialità',
         specialitaSubtitle: specialitaSubtitle || null,
-        prenotazioniAttive: prenotazioniAttive !== undefined ? prenotazioniAttive : true
+        prenotazioniAttive: prenotazioniAttive !== undefined ? prenotazioniAttive : true,
+        primaryColor: primaryColor || '#ea580c',
+        // SEO defaults
+        seoTitle: seoTitle || 'Z.ai Code Scaffold - AI-Powered Development',
+        seoDescription: seoDescription || 'Modern Next.js scaffold optimized for AI-powered development with Z.ai. Built with TypeScript, Tailwind CSS, and shadcn/ui.',
+        seoKeywords: seoKeywords || 'Z.ai, Next.js, TypeScript, Tailwind CSS, shadcn/ui, AI development, React',
+        seoOgTitle: seoOgTitle || null,
+        seoOgDescription: seoOgDescription || null,
+        seoOgImage: seoOgImage || null,
+        seoTwitterCard: seoTwitterCard || 'summary_large_image',
+        seoRobots: seoRobots || null,
+        seoCanonical: seoCanonical || null
       }
 
       console.log('CreateData:', JSON.stringify(createData, null, 2));

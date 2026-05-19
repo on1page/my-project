@@ -137,7 +137,7 @@ export default function AdminCompanyData() {
     return (
       <div className="flex items-center justify-center py-16">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mb-4"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
           <p className="text-gray-600">Caricamento dati...</p>
         </div>
       </div>
@@ -153,7 +153,7 @@ export default function AdminCompanyData() {
             Configura i dati aziendali e le impostazioni GDPR per Privacy e Cookie Policy
           </p>
         </div>
-        <Button onClick={handleSave} disabled={saving} className="bg-orange-600 hover:bg-orange-700">
+        <Button onClick={handleSave} disabled={saving} className="bg-primary hover:bg-primary/90">
           <Save className="w-4 h-4 mr-2" />
           {saving ? 'Salvataggio...' : 'Salva Dati'}
         </Button>
@@ -194,7 +194,7 @@ export default function AdminCompanyData() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Building2 className="w-5 h-5 text-orange-600" />
+                    <Building2 className="w-5 h-5 text-primary" />
                     Dati Aziendali
                   </CardTitle>
                   <CardDescription>
@@ -615,7 +615,7 @@ export default function AdminCompanyData() {
                     <div>
                       <Label htmlFor="amazonTagId" className="flex items-center gap-2">
                         <span className="font-semibold">🛒 Amazon Associates Tag</span>
-                        <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">Cookie Marketing</span>
+                        <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Cookie Marketing</span>
                       </Label>
                       <p className="text-sm text-gray-500 mb-2">
                         Inserisci il tuo Amazon Associate Tag ID (es: tuoazienda-20)
@@ -710,10 +710,10 @@ export default function AdminCompanyData() {
                   </div>
 
                   <div className="pt-4 border-t">
-                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
                       <div className="flex items-start gap-3 mb-3">
-                        <Info className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
-                        <div className="text-sm text-orange-800">
+                        <Info className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                        <div className="text-sm text-primary">
                           <p className="font-semibold mb-1">Test del Banner Cookie</p>
                           <p>Usa questi strumenti per testare il banner senza dover cancellare manualmente il localStorage.</p>
                         </div>
@@ -726,7 +726,7 @@ export default function AdminCompanyData() {
                             localStorage.removeItem('cookie-consent-date')
                             window.location.reload()
                           }}
-                          className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                          className="border-primary/30 text-primary hover:bg-primary/10"
                         >
                           Resetta Consenso e Ricarica
                         </Button>

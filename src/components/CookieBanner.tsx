@@ -159,7 +159,7 @@ export default function CookieBanner() {
           <div className="pointer-events-auto w-full max-w-4xl">
             <div className="bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden">
               {/* Header colorato */}
-              <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-amber-500 px-6 py-4 sm:px-8 sm:py-5">
+              <div className="bg-gradient-to-r from-primary via-primary to-primary/80 px-6 py-4 sm:px-8 sm:py-5">
                 <div className="flex items-center gap-4">
                   <motion.div
                     animate={{
@@ -180,7 +180,7 @@ export default function CookieBanner() {
                     <h3 className="text-xl sm:text-2xl font-bold text-white">
                       🍪 Utilizziamo i Cookie
                     </h3>
-                    <p className="text-orange-100 text-sm mt-1">
+                    <p className="text-primary/90 text-sm mt-1">
                       Per offrirti la migliore esperienza di navigazione
                     </p>
                   </div>
@@ -201,11 +201,11 @@ export default function CookieBanner() {
                         repeat: Infinity,
                         repeatDelay: 2,
                       }}
-                      className="w-32 h-32 bg-gradient-to-br from-orange-100 to-amber-100 rounded-3xl flex items-center justify-center shadow-inner"
+                      className="w-32 h-32 bg-gradient-to-br from-primary/10 to-primary/5 rounded-3xl flex items-center justify-center shadow-inner"
                     >
                       <div className="text-center">
-                        <Shield className="w-16 h-16 text-orange-600 mx-auto mb-2" />
-                        <p className="text-xs font-semibold text-orange-700">GDPR Compliant</p>
+                        <Shield className="w-16 h-16 text-primary mx-auto mb-2" />
+                        <p className="text-xs font-semibold text-primary">GDPR Compliant</p>
                       </div>
                     </motion.div>
                   </div>
@@ -264,7 +264,7 @@ export default function CookieBanner() {
                         <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
                           <Button
                             onClick={handleAcceptAll}
-                            className="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-semibold px-6 py-4 rounded-xl transition-all shadow-lg hover:shadow-xl border-2 border-transparent hover:border-orange-400/30 text-base"
+                            className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground font-semibold px-6 py-4 rounded-xl transition-all shadow-lg hover:shadow-xl border-2 border-transparent hover:border-primary/30 text-base"
                           >
                             <span className="flex items-center justify-center gap-2">
                               <Check className="w-5 h-5" />
@@ -318,12 +318,12 @@ export default function CookieBanner() {
                           {/* Cookie Tecnici */}
                           <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-gray-200">
                             <div className="flex-shrink-0 pt-1">
-                              <Lock className="w-5 h-5 text-orange-600" />
+                              <Lock className="w-5 h-5 text-primary" />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-2">
                                 <h4 className="font-semibold text-gray-900">Cookie Tecnici</h4>
-                                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium">Sempre Attivi</span>
+                                <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-medium">Sempre Attivi</span>
                               </div>
                               <p className="text-sm text-gray-600 mt-1">Necessari per il funzionamento del sito</p>
                             </div>
@@ -376,7 +376,7 @@ export default function CookieBanner() {
                           <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="flex-1">
                             <Button
                               onClick={handleSavePreferences}
-                              className="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-semibold px-6 py-4 rounded-xl transition-all shadow-lg hover:shadow-xl border-2 border-transparent hover:border-orange-400/30 text-base"
+                              className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground font-semibold px-6 py-4 rounded-xl transition-all shadow-lg hover:shadow-xl border-2 border-transparent hover:border-primary/30 text-base"
                             >
                               <span className="flex items-center justify-center gap-2">
                                 <Check className="w-5 h-5" />

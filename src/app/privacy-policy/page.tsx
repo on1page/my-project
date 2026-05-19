@@ -320,14 +320,14 @@ function getSectionIcon(index: number) {
     1: <Shield className="w-6 h-6 text-blue-600" />,
     2: <Eye className="w-6 h-6 text-green-600" />,
     3: <FileCheck className="w-6 h-6 text-purple-600" />,
-    4: <Share2 className="w-6 h-6 text-orange-600" />,
+    4: <Share2 className="w-6 h-6 text-primary" />,
     5: <Trash2 className="w-6 h-6 text-red-600" />,
     6: <AlertTriangle className="w-6 h-6 text-yellow-600" />,
     7: <FileCheck className="w-6 h-6 text-blue-600" />,
     8: <Shield className="w-6 h-6 text-green-600" />,
     9: <User className="w-6 h-6 text-purple-600" />,
     10: <User className="w-6 h-6 text-blue-600" />,
-    11: <AlertTriangle className="w-6 h-6 text-orange-600" />
+    11: <AlertTriangle className="w-6 h-6 text-primary" />
   }
   return icons[index] || null
 }

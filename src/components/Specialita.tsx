@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -154,13 +155,15 @@ export default function Specialita({
                     >
                       {/* Image */}
                       <div className="relative h-48 md:h-56 overflow-hidden">
-                        <img
+                        <Image
                           src={articolo.immagineUrl || '/images/pasta.jpg'}
                           alt={articolo.nome}
+                          width={400}
+                          height={300}
                           className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
                         />
                         {articolo.eBestChoice && (
-                          <div className="absolute top-3 left-3 bg-orange-600 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+                          <div className="absolute top-3 left-3 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
                             <Star size={14} />
                             Best Choice
                           </div>
@@ -185,7 +188,7 @@ export default function Specialita({
                         <div className="flex items-center gap-3">
                           {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) ? (
                             <>
-                              <span className="text-2xl font-bold text-orange-600">
+                              <span className="text-2xl font-bold text-primary">
                                 €{articolo.prezzoPromozionale.toFixed(2)}
                               </span>
                               <span className="text-lg text-gray-400 line-through">
@@ -218,7 +221,7 @@ export default function Specialita({
               <button
                 key={index}
                 className={`w-3 h-3 rounded-full transition-colors ${
-                  index === currentIndex ? 'bg-orange-600' : 'bg-gray-300'
+                  index === currentIndex ? 'bg-primary' : 'bg-gray-300'
                 }`}
                 onClick={() => setCurrentIndex(index)}
               />

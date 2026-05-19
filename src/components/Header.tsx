@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Menu, X, Settings, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import ReservationDialog from './ReservationDialog'
@@ -34,10 +35,16 @@ export default function Header({ siteName, logoUrl, onAdminClick, isLoggedIn, on
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
             {logoUrl ? (
-              <img src={logoUrl} alt={siteName} className="h-10 md:h-12 w-auto" />
+              <Image
+                src={logoUrl}
+                alt={siteName}
+                width={48}
+                height={48}
+                className="h-10 md:h-12 w-auto"
+              />
             ) : (
-              <div className="h-10 md:h-12 w-10 md:w-12 bg-orange-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">{siteName[0]}</span>
+              <div className="h-10 md:h-12 w-10 md:w-12 bg-primary rounded-lg flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-xl">{siteName[0]}</span>
               </div>
             )}
             <span className="text-lg md:text-xl font-bold text-gray-900">
@@ -51,14 +58,14 @@ export default function Header({ siteName, logoUrl, onAdminClick, isLoggedIn, on
               <Link
                 key={item.name}
                 href={item.href}
-                className="text-gray-700 hover:text-orange-600 transition-colors font-medium"
+                className="text-gray-700 hover:text-primary transition-colors font-medium"
               >
                 {item.name}
               </Link>
             ))}
             {prenotazioniAttive && (
               <Button
-                className="bg-orange-600 hover:bg-orange-700"
+                className="bg-primary hover:bg-primary/90"
                 onClick={() => setShowReservationDialog(true)}
               >
                 Prenota Tavolo
@@ -85,7 +92,7 @@ export default function Header({ siteName, logoUrl, onAdminClick, isLoggedIn, on
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="text-gray-700 hover:text-orange-600 transition-colors font-medium py-2"
+                  className="text-gray-700 hover:text-primary transition-colors font-medium py-2"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.name}
@@ -93,7 +100,7 @@ export default function Header({ siteName, logoUrl, onAdminClick, isLoggedIn, on
               ))}
               {prenotazioniAttive && (
                 <Button
-                  className="bg-orange-600 hover:bg-orange-700 w-full mt-2"
+                  className="bg-primary hover:bg-primary/90 w-full mt-2"
                   onClick={() => setShowReservationDialog(true)}
                 >
                   Prenota Tavolo
@@ -111,4 +118,3 @@ export default function Header({ siteName, logoUrl, onAdminClick, isLoggedIn, on
     </header>
   )
 }
-

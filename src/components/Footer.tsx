@@ -139,7 +139,7 @@ export default function Footer({ onAdminClick }: FooterProps = {}) {
           {(footerInfo.indirizzo || footerInfo.citta) && (
             <div className="lg:col-span-2">
               <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <MapPin className="text-orange-500" />
+                <MapPin className="text-primary" />
                 Dove Trovarci
               </h3>
               <div className="bg-gray-800 rounded-xl overflow-hidden mb-4">
@@ -170,7 +170,7 @@ export default function Footer({ onAdminClick }: FooterProps = {}) {
               <p className="text-gray-300 mb-4">{getAddressString()}</p>
               <Button
                 onClick={() => window.open(getDirectionsUrl(), '_blank')}
-                className="w-full bg-orange-600 hover:bg-orange-700"
+                className="w-full bg-primary hover:bg-primary/90"
               >
                 <Navigation className="w-4 h-4 mr-2" />
                 Ottieni Indicazioni
@@ -182,7 +182,7 @@ export default function Footer({ onAdminClick }: FooterProps = {}) {
           {(orari.length > 0 || giorniChiusura.length > 0) && (
             <div>
               <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Clock className="text-orange-500" />
+                <Clock className="text-primary" />
                 Orari
               </h3>
               <div className="space-y-2">
@@ -207,7 +207,7 @@ export default function Footer({ onAdminClick }: FooterProps = {}) {
           <div>
             {footerInfo.telefono || footerInfo.email ? (
               <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Phone className="text-orange-500" />
+                <Phone className="text-primary" />
                 Contatti
               </h3>
             ) : null}
@@ -243,7 +243,7 @@ export default function Footer({ onAdminClick }: FooterProps = {}) {
                       variant="outline"
                       size="sm"
                       onClick={() => window.open(app.url!, '_blank')}
-                      className="border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white"
+                      className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                     >
                       {app.name}
                     </Button>
@@ -265,7 +265,7 @@ export default function Footer({ onAdminClick }: FooterProps = {}) {
                         variant="outline"
                         size="icon"
                         onClick={() => window.open(social.url!, '_blank')}
-                        className="border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white"
+                        className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                       >
                         <Icon className="w-4 h-4" />
                       </Button>
@@ -312,7 +312,7 @@ export default function Footer({ onAdminClick }: FooterProps = {}) {
                   {(companyData.privacyEnabled !== false) && (
                     <a
                       href={companyData.privacyUrl || '/privacy-policy'}
-                      className="text-orange-400 hover:text-orange-300 transition-colors"
+                      className="text-primary hover:text-primary/80 transition-colors"
                     >
                       Privacy Policy
                     </a>
@@ -320,7 +320,7 @@ export default function Footer({ onAdminClick }: FooterProps = {}) {
                   {(companyData.cookiesEnabled !== false) && (
                     <a
                       href={companyData.cookiesUrl || '/cookie-policy'}
-                      className="text-orange-400 hover:text-orange-300 transition-colors"
+                      className="text-primary hover:text-primary/80 transition-colors"
                     >
                       Cookie Policy
                     </a>

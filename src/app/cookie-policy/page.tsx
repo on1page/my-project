@@ -425,14 +425,14 @@ function getSectionIcon(index: number) {
   const icons: Record<number, React.ReactNode> = {
     1: <CookieIcon className="w-6 h-6 text-amber-600" />,
     2: <Shield className="w-6 h-6 text-blue-600" />,
-    3: <CookieIcon className="w-6 h-6 text-orange-600" />,
+    3: <CookieIcon className="w-6 h-6 text-primary" />,
     4: <Eye className="w-6 h-6 text-green-600" />,
     5: <Trash2 className="w-6 h-6 text-red-600" />,
     6: <CheckCircle className="w-6 h-6 text-green-600" />,
     7: <Shield className="w-6 h-6 text-purple-600" />,
     8: <CookieIcon className="w-6 h-6 text-blue-600" />,
     9: <AlertTriangle className="w-6 h-6 text-yellow-600" />,
-    10: <CookieIcon className="w-6 h-6 text-orange-600" />
+    10: <CookieIcon className="w-6 h-6 text-primary" />
   }
   return icons[index] || null
 }

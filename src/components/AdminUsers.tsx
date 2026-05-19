@@ -27,6 +27,7 @@ interface Permission {
   puoGestireDatiAzienda: boolean
   puoGestireProfili: boolean
   puoGestireAnalytics: boolean
+  puoGestireSito: boolean
 }
 
 interface User {
@@ -68,7 +69,8 @@ export default function AdminUsers({ currentUser }: AdminUsersProps = {}) {
       puoGestirePrenotazioni: true,
       puoGestireDatiAzienda: true,
       puoGestireProfili: false,
-      puoGestireAnalytics: false
+      puoGestireAnalytics: false,
+      puoGestireSito: true
     }
   })
   const [showUserDialog, setShowUserDialog] = useState(false)
@@ -152,7 +154,8 @@ export default function AdminUsers({ currentUser }: AdminUsersProps = {}) {
         puoGestirePrenotazioni: true,
         puoGestireDatiAzienda: true,
         puoGestireProfili: false,
-        puoGestireAnalytics: false
+        puoGestireAnalytics: false,
+        puoGestireSito: true
       }
     })
     setShowUserDialog(true)
@@ -173,7 +176,8 @@ export default function AdminUsers({ currentUser }: AdminUsersProps = {}) {
         puoGestirePrenotazioni: true,
         puoGestireDatiAzienda: true,
         puoGestireProfili: false,
-        puoGestireAnalytics: false
+        puoGestireAnalytics: false,
+        puoGestireSito: true
       }
     })
   }
@@ -365,6 +369,22 @@ export default function AdminUsers({ currentUser }: AdminUsersProps = {}) {
                           <div className="text-sm text-gray-500">Può visualizzare le statistiche di utilizzo del sito</div>
                         </div>
                       </label>
+
+                      <label className="flex items-center gap-3 p-3 border rounded hover:bg-gray-50 cursor-pointer">
+                        <Checkbox
+                          checked={userForm.permessi.puoGestireSito}
+                          onCheckedChange={(checked) =>
+                            setUserForm({
+                              ...userForm,
+                              permessi: { ...userForm.permessi, puoGestireSito: checked as boolean }
+                            })
+                          }
+                        />
+                        <div>
+                          <div className="font-medium">Gestione Sito</div>
+                          <div className="text-sm text-gray-500">Può modificare le impostazioni del sito, SEO e meta tag</div>
+                        </div>
+                      </label>
                     </div>
                   </div>
                 )}
@@ -419,6 +439,7 @@ export default function AdminUsers({ currentUser }: AdminUsersProps = {}) {
                     {user.permessi?.puoGestireDatiAzienda && <Badge variant="outline" className="text-xs">Dati Azienda</Badge>}
                     {user.permessi?.puoGestireProfili && <Badge variant="outline" className="text-xs">Profili</Badge>}
                     {user.permessi?.puoGestireAnalytics && <Badge variant="outline" className="text-xs">Analytics</Badge>}
+                    {user.permessi?.puoGestireSito && <Badge variant="outline" className="text-xs">Sito</Badge>}
                   </div>
                 </TableCell>
                 <TableCell>

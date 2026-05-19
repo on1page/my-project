@@ -74,6 +74,21 @@ model SiteInfo {
   heroOverlayOpacity Float    @default(0.5)
   specialitaTitle    String?  @default("Le Nostre Specialità")
   specialitaSubtitle String?
+
+  // ==================== THEME SETTINGS ====================
+  primaryColor       String   @default("#ea580c") // Colore principale in HEX (default: arancione)
+
+  // ==================== SEO SETTINGS ====================
+  seoTitle          String?  @default("Z.ai Code Scaffold - AI-Powered Development")
+  seoDescription    String?  @default("Modern Next.js scaffold optimized for AI-powered development with Z.ai. Built with TypeScript, Tailwind CSS, and shadcn/ui.")
+  seoKeywords       String?  @default("Z.ai, Next.js, TypeScript, Tailwind CSS, shadcn/ui, AI development, React")
+  seoOgTitle        String?  // Open Graph Title (default: seoTitle)
+  seoOgDescription  String?  // Open Graph Description (default: seoDescription)
+  seoOgImage        String?  // Open Graph Image
+  seoTwitterCard    String?  @default("summary_large_image") // summary, summary_large_image
+  seoRobots         String?  // index, noindex, nofollow, noindex,nofollow
+  seoCanonical      String?  // Canonical URL
+
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
@@ -136,6 +151,7 @@ model Permission {
   puoGestireDatiAzienda  Boolean  @default(true)
   puoGestireProfili      Boolean  @default(false)
   puoGestireAnalytics    Boolean  @default(true)
+  puoGestireSito         Boolean  @default(true)
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
   user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)

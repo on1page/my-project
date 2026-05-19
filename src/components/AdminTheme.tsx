@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Save, Plus, Trash2, Image as ImageIcon, FileText, Layout, Home, Info, Star, Upload, X, Loader2 } from 'lucide-react'
+import Image from 'next/image'
+import { Save, Plus, Trash2, Image as ImageIcon, FileText, Layout, Home, Info, Star, Upload, X, Loader2, Palette } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -39,6 +40,7 @@ interface SiteInfo {
   heroOverlayOpacity?: number
   specialitaTitle?: string | null
   specialitaSubtitle?: string | null
+  primaryColor?: string | null
 }
 
 interface SiteImage {
@@ -182,9 +184,11 @@ function ImageUpload({ imageUrl, onImageUrlChange, label, accept = "image/*", cl
       {imageUrl && !uploading && (
         <div className="mt-4">
           <p className="text-sm text-gray-600 mb-2">Anteprima:</p>
-          <img
+          <Image
             src={imageUrl}
             alt="Preview"
+            width={800}
+            height={600}
             className="w-full h-64 object-cover rounded-lg border"
           />
         </div>
@@ -212,7 +216,8 @@ export default function AdminTheme() {
     heroImageUrl: '',
     heroOverlayOpacity: 0.5,
     specialitaTitle: '',
-    specialitaSubtitle: ''
+    specialitaSubtitle: '',
+    primaryColor: '#ea580c'
   })
   const [images, setImages] = useState<SiteImage[]>([])
   const [loading, setLoading] = useState(true)
@@ -265,6 +270,8 @@ export default function AdminTheme() {
 
       if (response.ok) {
         alert('Informazioni del sito salvate con successo!')
+        // Ricarica i dati per aggiornare l'interfaccia
+        fetchData()
       } else {
         const errorData = await response.json()
         console.error('Errore risposta server:', errorData)
@@ -357,11 +364,12 @@ export default function AdminTheme() {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="hero" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-6">
+        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7">
           <TabsTrigger value="hero">Hero</TabsTrigger>
           <TabsTrigger value="chi-siamo">Chi Siamo</TabsTrigger>
           <TabsTrigger value="specialita">Specialità</TabsTrigger>
           <TabsTrigger value="info">Generali</TabsTrigger>
+          <TabsTrigger value="tema">Tema</TabsTrigger>
           <TabsTrigger value="images">Immagini</TabsTrigger>
           <TabsTrigger value="prenotazioni">Prenotazioni</TabsTrigger>
         </TabsList>
@@ -609,6 +617,109 @@ export default function AdminTheme() {
           </Card>
         </TabsContent>
 
+        {/* Tema Section */}
+        <TabsContent value="tema" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <Palette className="w-6 h-6" />
+              Impostazioni Tema
+            </h2>
+            <Button onClick={saveSiteInfo} disabled={saving}>
+              <Save className="w-4 h-4 mr-2" />
+              {saving ? 'Salvataggio...' : 'Salva'}
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Colore Principale</CardTitle>
+              <CardDescription>Scegli il colore principale del sito. Questo colore verrà applicato a pulsanti, link, accenti e elementi grafici.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <Label htmlFor="primaryColor">Colore Principale</Label>
+                <div className="flex gap-4 mt-2">
+                  <Input
+                    id="primaryColor"
+                    type="color"
+                    value={siteInfo.primaryColor || '#ea580c'}
+                    onChange={(e) => setSiteInfo({ ...siteInfo, primaryColor: e.target.value })}
+                    className="w-20 h-12 p-1 cursor-pointer"
+                  />
+                  <Input
+                    type="text"
+                    value={siteInfo.primaryColor || '#ea580c'}
+                    onChange={(e) => setSiteInfo({ ...siteInfo, primaryColor: e.target.value })}
+                    placeholder="#ea580c"
+                    className="flex-1"
+                  />
+                </div>
+                <p className="text-sm text-gray-600 mt-2">
+                  Inserisci un codice colore HEX (es. #ea580c, #3b82f6, #10b981)
+                </p>
+              </div>
+
+              <div className="border-t pt-6">
+                <Label>Colori Predefiniti</Label>
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3 mt-3">
+                  {[
+                    { color: '#ea580c', name: 'Arancione' },
+                    { color: '#dc2626', name: 'Rosso' },
+                    { color: '#ef4444', name: 'Rosso Chiaro' },
+                    { color: '#f97316', name: 'Arancione Chiaro' },
+                    { color: '#eab308', name: 'Giallo' },
+                    { color: '#22c55e', name: 'Verde' },
+                    { color: '#3b82f6', name: 'Blu' },
+                    { color: '#8b5cf6', name: 'Viola' },
+                    { color: '#ec4899', name: 'Rosa' },
+                    { color: '#14b8a6', name: 'Turchese' },
+                    { color: '#6366f1', name: 'Indaco' },
+                    { color: '#f43f5e', name: 'Rosa Scuro' },
+                    { color: '#0ea5e9', name: 'Cielo' },
+                    { color: '#84cc16', name: 'Lime' },
+                    { color: '#06b6d4', name: 'Ciano' },
+                    { color: '#1e293b', name: 'Slate Scuro' },
+                  ].map((preset) => (
+                    <button
+                      key={preset.color}
+                      type="button"
+                      onClick={() => setSiteInfo({ ...siteInfo, primaryColor: preset.color })}
+                      className={`w-full aspect-square rounded-lg border-2 transition-all hover:scale-105 ${
+                        siteInfo.primaryColor === preset.color
+                          ? 'border-gray-900 ring-2 ring-gray-900 ring-offset-2'
+                          : 'border-gray-200 hover:border-gray-400'
+                      }`}
+                      style={{ backgroundColor: preset.color }}
+                      title={preset.name}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t pt-6">
+                <Label>Anteprima</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
+                  <div
+                    className="p-6 rounded-xl text-white text-center"
+                    style={{ backgroundColor: siteInfo.primaryColor || '#ea580c' }}
+                  >
+                    <p className="font-semibold">Pulsante Primario</p>
+                  </div>
+                  <div className="border-2 p-6 rounded-xl text-center" style={{ borderColor: siteInfo.primaryColor || '#ea580c' }}>
+                    <p className="font-semibold" style={{ color: siteInfo.primaryColor || '#ea580c' }}>Bottone Secondario</p>
+                  </div>
+                  <div className="p-6 rounded-xl bg-gray-100 text-center">
+                    <p className="font-semibold" style={{ color: siteInfo.primaryColor || '#ea580c' }}>Link Color</p>
+                  </div>
+                  <div className="p-6 rounded-xl text-center" style={{ backgroundColor: `${siteInfo.primaryColor || '#ea580c'}20` }}>
+                    <p className="font-semibold" style={{ color: siteInfo.primaryColor || '#ea580c' }}>Sfondo Light</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Prenotazioni */}
         <TabsContent value="prenotazioni" className="space-y-4">
           <div className="flex justify-between items-center">
@@ -762,9 +873,11 @@ export default function AdminTheme() {
                       </div>
                       {imageForm.url && (
                         <div className="mt-2">
-                          <img
+                          <Image
                             src={imageForm.url}
                             alt="Preview"
+                            width={800}
+                            height={600}
                             className="w-full h-48 object-cover rounded"
                           />
                         </div>
@@ -818,9 +931,11 @@ export default function AdminTheme() {
                 {images.map((img) => (
                   <TableRow key={img.id}>
                     <TableCell>
-                      <img
+                      <Image
                         src={img.url}
                         alt={img.titolo || img.sezione}
+                        width={80}
+                        height={80}
                         className="w-20 h-20 object-cover rounded"
                       />
                     </TableCell>
