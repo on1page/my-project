@@ -200,42 +200,25 @@ export default function MenuPage() {
                                   {articolo.allergeni.map((allergene) => {
                                     const isSelected = selectedAllergene?.articoloId === articolo.id && selectedAllergene?.allergeneId === allergene.id
                                     return (
-                                      <TooltipProvider key={allergene.id}>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <button
-                                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors text-lg ${
-                                                isSelected
-                                                  ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2'
-                                                  : 'bg-amber-100 hover:bg-amber-200'
-                                              }`}
-                                              onClick={(e) => {
-                                                e.preventDefault()
-                                                if (isSelected) {
-                                                  setSelectedAllergene(null)
-                                                } else {
-                                                  setSelectedAllergene({ articoloId: articolo.id, allergeneId: allergene.id })
-                                                }
-                                              }}
-                                              title={allergene.nome}
-                                            >
-                                              {allergene.icona || '⚠️'}
-                                            </button>
-                                          </TooltipTrigger>
-                                          <TooltipContent side="top" className="max-w-xs">
-                                            <div>
-                                              <p className="font-semibold text-sm">
-                                                {allergene.nome}
-                                              </p>
-                                              {allergene.descrizione && (
-                                                <p className="text-xs text-gray-500 mt-1">
-                                                  {allergene.descrizione}
-                                                </p>
-                                              )}
-                                            </div>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
+                                      <button
+                                        key={allergene.id}
+                                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors text-lg cursor-pointer ${
+                                          isSelected
+                                            ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2'
+                                            : 'bg-amber-100 hover:bg-amber-200'
+                                        }`}
+                                        onClick={(e) => {
+                                          e.preventDefault()
+                                          if (isSelected) {
+                                            setSelectedAllergene(null)
+                                          } else {
+                                            setSelectedAllergene({ articoloId: articolo.id, allergeneId: allergene.id })
+                                          }
+                                        }}
+                                        title={allergene.nome}
+                                      >
+                                        {allergene.icona || '⚠️'}
+                                      </button>
                                     )
                                   })}
                                 </div>
@@ -253,7 +236,7 @@ export default function MenuPage() {
                                   </div>
                                 )}
                                 <p className="text-xs text-gray-500 mt-1">
-                                  Passa il mouse o tocca le icone per vedere i dettagli degli allergeni
+                                  Tocca le icone per vedere i dettagli degli allergeni
                                 </p>
                               </div>
                             )}
@@ -297,3 +280,4 @@ export default function MenuPage() {
       <SocialSidebar />
     </div>
   )
+}
