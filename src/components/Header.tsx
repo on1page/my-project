@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Menu, X, Settings, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import ReservationDialog from './ReservationDialog'
@@ -35,13 +34,7 @@ export default function Header({ siteName, logoUrl, onAdminClick, isLoggedIn, on
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
             {logoUrl ? (
-              <Image
-                src={logoUrl}
-                alt={siteName}
-                width={48}
-                height={48}
-                className="h-10 md:h-12 w-auto"
-              />
+              <img src={logoUrl} alt={siteName} className="h-10 md:h-12 w-auto" />
             ) : (
               <div className="h-10 md:h-12 w-10 md:w-12 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-xl">{siteName[0]}</span>

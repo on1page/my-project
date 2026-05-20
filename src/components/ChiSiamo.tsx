@@ -1,7 +1,5 @@
 'use client'
 
-import Image from 'next/image'
-
 interface ChiSiamoProps {
   title?: string
   content?: string
@@ -19,11 +17,9 @@ export default function ChiSiamo({
         <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
           {/* Image */}
           <div className="relative">
-            <Image
+            <img
               src={image}
               alt={title}
-              width={800}
-              height={600}
               className="w-full h-64 md:h-96 object-cover rounded-2xl shadow-2xl"
             />
             {/* STATISTICHE OVERLAY IMMAGINE (Commentato - rimuovere i commenti per riattivare)

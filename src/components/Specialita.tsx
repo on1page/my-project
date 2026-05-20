@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -155,11 +154,9 @@ export default function Specialita({
                     >
                       {/* Image */}
                       <div className="relative h-48 md:h-56 overflow-hidden">
-                        <Image
+                        <img
                           src={articolo.immagineUrl || '/images/pasta.jpg'}
                           alt={articolo.nome}
-                          width={400}
-                          height={300}
                           className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
                         />
                         {articolo.eBestChoice && (

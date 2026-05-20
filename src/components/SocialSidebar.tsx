@@ -170,7 +170,7 @@ export default function SocialSidebar() {
       {/* Pulsante per riaprire la tendina */}
       {!isOpen && (
         <button
-          onClick={() => setIsOpen(false)}
+          onClick={() => setIsOpen(true)}
           className="fixed left-0 top-1/2 -translate-y-1/2 z-50 bg-primary hover:bg-primary/90 text-primary-foreground p-3 rounded-r-lg shadow-lg hover:scale-110 transition-all duration-300"
           aria-label="Apri menu social"
           title="Condividi"
