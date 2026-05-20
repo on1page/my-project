@@ -97,7 +97,7 @@ export default function MenuPage() {
       {/* Header semplificato */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
-          <Link href="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-orange-600 transition-colors">
+          <Link href="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-primary transition-colors">
             <ArrowLeft className="w-5 h-5" />
             <span>Torna alla Home</span>
           </Link>
@@ -129,10 +129,10 @@ export default function MenuPage() {
                     {/* Titolo categoria */}
                     <div className="mb-6">
                       <h2 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
-                        <span className="w-2 h-8 bg-orange-600 rounded-full"></span>
+                        <span className="w-2 h-8 bg-primary rounded-full"></span>
                         {categoria.nome}
                       </h2>
-                      <div className="h-0.5 bg-gradient-to-r from-orange-600 to-transparent mt-2 ml-4"></div>
+                      <div className="h-0.5 bg-gradient-to-r from-primary to-transparent mt-2 ml-4"></div>
                     </div>
 
                     {/* Grid articoli */}
@@ -159,7 +159,7 @@ export default function MenuPage() {
                               {/* Badges */}
                               <div className="absolute top-3 left-3 flex gap-2">
                                 {articolo.eBestChoice && (
-                                  <Badge className="bg-orange-600 hover:bg-orange-700">
+                                  <Badge className="bg-primary hover:bg-primary/90">
                                     <Star className="w-3 h-3 mr-1" />
                                     Best Choice
                                   </Badge>
@@ -262,7 +262,7 @@ export default function MenuPage() {
                             <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
                               {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) ? (
                                 <div className="flex items-center gap-3">
-                                  <span className="text-2xl font-bold text-orange-600">
+                                  <span className="text-2xl font-bold text-primary">
                                     €{articolo.prezzoPromozionale.toFixed(2)}
                                   </span>
                                   <span className="text-sm text-gray-400 line-through">
@@ -297,4 +297,3 @@ export default function MenuPage() {
       <SocialSidebar />
     </div>
   )
-}
