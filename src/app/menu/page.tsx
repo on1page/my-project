@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { ArrowLeft, Star, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -49,6 +48,7 @@ export default function MenuPage() {
   const [articoli, setArticoli] = useState<Articolo[]>([])
   const [categorie, setCategorie] = useState<Categoria[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedAllergene, setSelectedAllergene] = useState<{ articoloId: string; allergeneId: string } | null>(null)
   const { trackProductView, isInitialized } = useAnalytics()
   const trackedProducts = useRef<Set<string>>(new Set())
 
@@ -97,7 +97,7 @@ export default function MenuPage() {
       {/* Header semplificato */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
-          <Link href="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-primary transition-colors">
+          <Link href="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-orange-600 transition-colors">
             <ArrowLeft className="w-5 h-5" />
             <span>Torna alla Home</span>
           </Link>
@@ -129,10 +129,10 @@ export default function MenuPage() {
                     {/* Titolo categoria */}
                     <div className="mb-6">
                       <h2 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
-                        <span className="w-2 h-8 bg-primary rounded-full"></span>
+                        <span className="w-2 h-8 bg-orange-600 rounded-full"></span>
                         {categoria.nome}
                       </h2>
-                      <div className="h-0.5 bg-gradient-to-r from-primary to-transparent mt-2 ml-4"></div>
+                      <div className="h-0.5 bg-gradient-to-r from-orange-600 to-transparent mt-2 ml-4"></div>
                     </div>
 
                     {/* Grid articoli */}
@@ -151,17 +151,15 @@ export default function MenuPage() {
                           {/* Immagine */}
                           {articolo.immagineUrl && (
                             <div className="relative h-48 overflow-hidden">
-                              <Image
+                              <img
                                 src={articolo.immagineUrl}
                                 alt={articolo.nome}
-                                width={400}
-                                height={300}
                                 className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
                               />
                               {/* Badges */}
                               <div className="absolute top-3 left-3 flex gap-2">
                                 {articolo.eBestChoice && (
-                                  <Badge className="bg-primary hover:bg-primary/90">
+                                  <Badge className="bg-orange-600 hover:bg-orange-700">
                                     <Star className="w-3 h-3 mr-1" />
                                     Best Choice
                                   </Badge>
@@ -198,36 +196,64 @@ export default function MenuPage() {
                             {/* Allergeni */}
                             {articolo.allergeni && articolo.allergeni.length > 0 && (
                               <div className="mb-4">
-                                <TooltipProvider>
-                                  <div className="flex flex-wrap gap-2">
-                                    {articolo.allergeni.map((allergene) => (
-                                      <Tooltip key={allergene.id}>
-                                        <TooltipTrigger asChild>
-                                          <div
-                                            className="w-8 h-8 rounded-full bg-amber-100 hover:bg-amber-200 flex items-center justify-center cursor-help transition-colors text-lg"
-                                            title={allergene.nome}
-                                          >
-                                            {allergene.icona || '⚠️'}
-                                          </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="top" className="max-w-xs">
-                                          <div>
-                                            <p className="font-semibold text-sm">
-                                              {allergene.nome}
-                                            </p>
-                                            {allergene.descrizione && (
-                                              <p className="text-xs text-gray-500 mt-1">
-                                                {allergene.descrizione}
+                                <div className="flex flex-wrap gap-2">
+                                  {articolo.allergeni.map((allergene) => {
+                                    const isSelected = selectedAllergene?.articoloId === articolo.id && selectedAllergene?.allergeneId === allergene.id
+                                    return (
+                                      <TooltipProvider key={allergene.id}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <button
+                                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors text-lg ${
+                                                isSelected
+                                                  ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2'
+                                                  : 'bg-amber-100 hover:bg-amber-200'
+                                              }`}
+                                              onClick={(e) => {
+                                                e.preventDefault()
+                                                if (isSelected) {
+                                                  setSelectedAllergene(null)
+                                                } else {
+                                                  setSelectedAllergene({ articoloId: articolo.id, allergeneId: allergene.id })
+                                                }
+                                              }}
+                                              title={allergene.nome}
+                                            >
+                                              {allergene.icona || '⚠️'}
+                                            </button>
+                                          </TooltipTrigger>
+                                          <TooltipContent side="top" className="max-w-xs">
+                                            <div>
+                                              <p className="font-semibold text-sm">
+                                                {allergene.nome}
                                               </p>
-                                            )}
-                                          </div>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    ))}
+                                              {allergene.descrizione && (
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                  {allergene.descrizione}
+                                                </p>
+                                              )}
+                                            </div>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    )
+                                  })}
+                                </div>
+                                {/* Descrizione selezionata per touch device */}
+                                {selectedAllergene?.articoloId === articolo.id && (
+                                  <div className="mt-3 p-3 bg-primary/10 border border-primary/30 rounded-lg">
+                                    <p className="font-semibold text-sm text-primary">
+                                      {articolo.allergeni.find(a => a.id === selectedAllergene.allergeneId)?.nome}
+                                    </p>
+                                    {articolo.allergeni.find(a => a.id === selectedAllergene.allergeneId)?.descrizione && (
+                                      <p className="text-xs text-primary/80 mt-1">
+                                        {articolo.allergeni.find(a => a.id === selectedAllergene.allergeneId)?.descrizione}
+                                      </p>
+                                    )}
                                   </div>
-                                </TooltipProvider>
+                                )}
                                 <p className="text-xs text-gray-500 mt-1">
-                                  Passa il mouse sulle icone per vedere i dettagli degli allergeni
+                                  Passa il mouse o tocca le icone per vedere i dettagli degli allergeni
                                 </p>
                               </div>
                             )}
@@ -236,7 +262,7 @@ export default function MenuPage() {
                             <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
                               {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) ? (
                                 <div className="flex items-center gap-3">
-                                  <span className="text-2xl font-bold text-primary">
+                                  <span className="text-2xl font-bold text-orange-600">
                                     €{articolo.prezzoPromozionale.toFixed(2)}
                                   </span>
                                   <span className="text-sm text-gray-400 line-through">
