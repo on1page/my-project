@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Save, MapPin, Phone, Mail, Facebook, Instagram, Twitter, Linkedin, MessageCircle } from 'lucide-react'
+import { Save, MapPin, Phone, Mail, Facebook, Instagram, Twitter, Linkedin, MessageCircle, Locate, Loader2, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -31,6 +31,10 @@ interface FooterInfo {
   ubereatsUrl?: string | null
 }
 
+const GIORNI_SETTIMANA = [
+  'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica'
+]
+
 export default function AdminFooter() {
   const [footerInfo, setFooterInfo] = useState<FooterInfo>({
     id: '',
@@ -53,10 +57,67 @@ export default function AdminFooter() {
     ubereatsUrl: ''
   })
   const [loading, setLoading] = useState(true)
+  const [geocodingLoading, setGeocodingLoading] = useState(false)
+
+  // Orari in formato semplice testo
+  const [orariTesto, setOrariTesto] = useState('')
+
+  // Giorni di chiusura
+  const [giorniChiusuraList, setGiorniChiusuraList] = useState<string[]>([])
 
   useEffect(() => {
     fetchFooterInfo()
   }, [])
+
+  // Carica il testo degli orari quando vengono caricati dal database
+  useEffect(() => {
+    if (footerInfo.orariApertura) {
+      try {
+        const parsed = JSON.parse(footerInfo.orariApertura)
+        if (Array.isArray(parsed)) {
+          // Converte il JSON in testo leggibile
+          const testo = parsed.map((item: any) => {
+            const orari = Array.isArray(item.orario)
+              ? item.orario.join(', ')
+              : item.orario
+            return `${item.giorno}: ${orari}`
+          }).join('\n')
+          setOrariTesto(testo)
+        }
+      } catch (e) {
+        // Se non è JSON, usa direttamente il testo
+        setOrariTesto(footerInfo.orariApertura)
+      }
+    }
+  }, [footerInfo.orariApertura])
+
+  // Carica i giorni di chiusura dal database
+  useEffect(() => {
+    if (footerInfo.giorniChiusura) {
+      try {
+        const parsed = JSON.parse(footerInfo.giorniChiusura)
+        if (Array.isArray(parsed)) {
+          setGiorniChiusuraList(parsed)
+        } else if (typeof parsed === 'string') {
+          // Se è una stringa, la aggiungiamo come unico elemento
+          setGiorniChiusuraList([parsed])
+        }
+      } catch (e) {
+        // Se non è JSON, potrebbe essere una stringa semplice
+        // In questo caso, non la consideriamo come giorno di chiusura valido
+        // perché i giorni validi sono solo quelli della lista GIORNI_SETTIMANA
+        const valore = footerInfo.giorniChiusura.trim()
+        // Controlla se il valore corrisponde a un giorno della settimana
+        const giornoValido = GIORNI_SETTIMANA.find(g =>
+          valore.toLowerCase().includes(g.toLowerCase()) ||
+          g.toLowerCase().includes(valore.toLowerCase())
+        )
+        if (giornoValido) {
+          setGiorniChiusuraList([giornoValido])
+        }
+      }
+    }
+  }, [footerInfo.giorniChiusura])
 
   async function fetchFooterInfo() {
     setLoading(true)
@@ -78,7 +139,11 @@ export default function AdminFooter() {
       const response = await fetch('/api/admin/footer', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(footerInfo)
+        body: JSON.stringify({
+          ...footerInfo,
+          orariApertura: orariTesto,
+          giorniChiusura: JSON.stringify(giorniChiusuraList)
+        })
       })
 
       if (response.ok) {
@@ -89,6 +154,60 @@ export default function AdminFooter() {
     } catch (error) {
       console.error('Errore salvataggio footer info:', error)
       alert('Errore nel salvataggio delle informazioni')
+    }
+  }
+
+  async function detectCoordinates() {
+    const { indirizzo, citta, cap, provincia } = footerInfo
+
+    if (!indirizzo || !citta) {
+      alert('Inserisci almeno indirizzo e città per rilevare le coordinate')
+      return
+    }
+
+    setGeocodingLoading(true)
+    try {
+      // Costruisci l'indirizzo completo
+      const fullAddress = `${indirizzo}, ${cap || ''} ${citta} ${provincia || ''}, Italia`
+
+      // Usa l'API Nominatim di OpenStreetMap (gratuita)
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'RistoranteWebsite'
+          }
+        }
+      )
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data && data.length > 0) {
+          setFooterInfo({
+            ...footerInfo,
+            latitudine: parseFloat(data[0].lat),
+            longitudine: parseFloat(data[0].lon)
+          })
+          alert('Coordinate rilevate con successo!')
+        } else {
+          alert('Impossibile trovare le coordinate per questo indirizzo. Verifica che l\'indirizzo sia corretto.')
+        }
+      } else {
+        alert('Errore durante il rilevamento delle coordinate. Riprova più tardi.')
+      }
+    } catch (error) {
+      console.error('Errore geocodifica:', error)
+      alert('Errore durante il rilevamento delle coordinate. Riprova più tardi.')
+    } finally {
+      setGeocodingLoading(false)
+    }
+  }
+
+  function toggleGiornoChiusura(giorno: string) {
+    if (giorniChiusuraList.includes(giorno)) {
+      setGiorniChiusuraList(giorniChiusuraList.filter(g => g !== giorno))
+    } else {
+      setGiorniChiusuraList([...giorniChiusuraList, giorno])
     }
   }
 
@@ -125,7 +244,7 @@ export default function AdminFooter() {
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <Label>Indirizzo</Label>
+                  <Label>Indirizzo *</Label>
                   <Input
                     value={footerInfo.indirizzo || ''}
                     onChange={(e) => setFooterInfo({ ...footerInfo, indirizzo: e.target.value })}
@@ -133,7 +252,7 @@ export default function AdminFooter() {
                   />
                 </div>
                 <div>
-                  <Label>Città</Label>
+                  <Label>Città *</Label>
                   <Input
                     value={footerInfo.citta || ''}
                     onChange={(e) => setFooterInfo({ ...footerInfo, citta: e.target.value })}
@@ -158,13 +277,26 @@ export default function AdminFooter() {
                 </div>
                 <div>
                   <Label>Latitudine</Label>
-                  <Input
-                    type="number"
-                    step="any"
-                    value={footerInfo.latitudine || ''}
-                    onChange={(e) => setFooterInfo({ ...footerInfo, latitudine: parseFloat(e.target.value) || null })}
-                    placeholder="45.4642"
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      step="any"
+                      value={footerInfo.latitudine || ''}
+                      onChange={(e) => setFooterInfo({ ...footerInfo, latitudine: parseFloat(e.target.value) || null })}
+                      placeholder="45.4642"
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={detectCoordinates}
+                      disabled={geocodingLoading}
+                      title="Rileva coordinate dall'indirizzo"
+                    >
+                      {geocodingLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Locate className="w-4 h-4" />}
+                    </Button>
+                  </div>
                 </div>
                 <div>
                   <Label>Longitudine</Label>
@@ -178,7 +310,7 @@ export default function AdminFooter() {
                 </div>
               </div>
               <p className="text-sm text-gray-500">
-                💡 Per ottenere latitudine e longitudine, cerca il tuo indirizzo su Google Maps e clicca con il tasto destro sulla posizione.
+                💡 Clicca l'icona 📍 per rilevare automaticamente latitudine e longitudine dall'indirizzo inserito.
               </p>
             </CardContent>
           </Card>
@@ -187,38 +319,43 @@ export default function AdminFooter() {
         <TabsContent value="orari">
           <Card>
             <CardHeader>
-              <CardTitle>Orari di Apertura</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                Orari di Apertura
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label>Orari di Apertura (JSON)</Label>
+                <Label>Orari di Apertura</Label>
                 <Textarea
-                  value={footerInfo.orariApertura || ''}
-                  onChange={(e) => setFooterInfo({ ...footerInfo, orariApertura: e.target.value })}
+                  value={orariTesto}
+                  onChange={(e) => setOrariTesto(e.target.value)}
+                  placeholder="Lunedì: 12:00 - 15:00, 19:00 - 23:00&#10;Martedì: 12:00 - 15:00, 19:00 - 23:00&#10;Mercoledì: Chiuso&#10;Giovedì: 12:00 - 15:00, 19:00 - 23:00&#10;Venerdì: 12:00 - 15:00, 19:00 - 23:00&#10;Sabato: 12:00 - 23:00&#10;Domenica: 12:00 - 23:00"
                   rows={10}
-                  placeholder='[
-  {"giorno": "Lun - Ven", "orario": "12:00 - 14:30, 19:00 - 23:00"},
-  {"giorno": "Sabato", "orario": "12:00 - 15:00, 19:00 - 00:00"},
-  {"giorno": "Domenica", "orario": "12:00 - 15:00"}
-]'
-                  className="font-mono text-sm"
+                  className="mt-2"
                 />
-                <p className="text-sm text-gray-500 mt-2">
-                  Formato JSON con giorno e orario. Lascia vuoto per non mostrare la sezione orari.
-                </p>
               </div>
-              <div>
-                <Label>Giorni di Chiusura (JSON)</Label>
-                <Textarea
-                  value={footerInfo.giorniChiusura || ''}
-                  onChange={(e) => setFooterInfo({ ...footerInfo, giorniChiusura: e.target.value })}
-                  rows={3}
-                  placeholder='["Lunedì a pranzo", "Martedì"]'
-                  className="font-mono text-sm"
-                />
-                <p className="text-sm text-gray-500 mt-2">
-                  Array di giorni di chiusura. Lascia vuoto se aperto tutti i giorni.
-                </p>
+              <p className="text-sm text-gray-500">
+                💡 Inserisci gli orari di apertura. Esempio: "Lunedì: 12:00 - 15:00, 19:00 - 23:00". Ogni riga rappresenta un giorno diverso. Scrivi "Chiuso" per i giorni di riposo.
+              </p>
+
+              <div className="border-t pt-4">
+                <Label className="font-semibold">Giorni di Chiusura</Label>
+                <p className="text-sm text-gray-500 mb-3">Seleziona i giorni in cui il locale è chiuso:</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {GIORNI_SETTIMANA.map((giorno) => (
+                    <div key={giorno} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`chiusura-${giorno}`}
+                        checked={giorniChiusuraList.includes(giorno)}
+                        onCheckedChange={() => toggleGiornoChiusura(giorno)}
+                      />
+                      <Label htmlFor={`chiusura-${giorno}`} className="cursor-pointer">
+                        {giorno}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>

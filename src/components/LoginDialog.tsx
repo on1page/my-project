@@ -73,13 +73,13 @@ export default function LoginDialog({ onClose, onLoginSuccess }: LoginDialogProp
           )}
 
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="Email">Utente</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@labellatavola.it"
+              placeholder="username"
               required
             />
           </div>
@@ -107,7 +107,7 @@ export default function LoginDialog({ onClose, onLoginSuccess }: LoginDialogProp
         </form>
 
         <p className="text-sm text-gray-500 mt-4 text-center">
-          Credenziali demo: admin@labellatavola.it / admin123
+          
         </p>
       </div>
     </div>

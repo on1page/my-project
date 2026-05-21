@@ -75,8 +75,9 @@ model SiteInfo {
   specialitaTitle    String?  @default("Le Nostre Specialità")
   specialitaSubtitle String?
 
-  // ==================== THEME SETTINGS ====================
-  primaryColor       String   @default("#ea580c") // Colore principale in HEX (default: arancione)
+  // ==================== THEME COLORS ====================
+  primaryColor        String?  @default("#ea580c")  // Colore primario (es. arancione)
+  primaryForeground   String?  @default("#ffffff")  // Colore testo su primario
 
   // ==================== SEO SETTINGS ====================
   seoTitle          String?  @default("Z.ai Code Scaffold - AI-Powered Development")

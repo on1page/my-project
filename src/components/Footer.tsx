@@ -98,11 +98,17 @@ export default function Footer({ onAdminClick }: FooterProps = {}) {
 
   const parseOrari = () => {
     if (!footerInfo.orariApertura) return []
+    // Prova prima a fare il parsing JSON per compatibilità con vecchi dati
     try {
-      return JSON.parse(footerInfo.orariApertura)
+      const parsed = JSON.parse(footerInfo.orariApertura)
+      if (Array.isArray(parsed)) {
+        return parsed
+      }
     } catch {
-      return []
+      // Se non è JSON, è un testo semplice: dividi per riga
+      return footerInfo.orariApertura.split('\n').filter(line => line.trim())
     }
+    return []
   }
 
   const parseGiorniChiusura = () => {
@@ -186,12 +192,33 @@ export default function Footer({ onAdminClick }: FooterProps = {}) {
                 Orari
               </h3>
               <div className="space-y-2">
-                {orari.map((orario: any, index: number) => (
-                  <div key={index} className="flex justify-between text-gray-300">
-                    <span>{orario.giorno}</span>
-                    <span className="text-white font-medium">{orario.orario}</span>
-                  </div>
-                ))}
+                {orari.map((orario: any, index: number) => {
+                  // Gestisce sia formato JSON ({giorno: 'Lunedì', orario: '...'})
+                  // che formato testo semplice ('Lunedì: ...')
+                  if (typeof orario === 'string') {
+                    // È testo semplice, mostra direttamente
+                    const [day, ...timeParts] = orario.split(':')
+                    const timeStr = timeParts.join(':').trim()
+                    return (
+                      <div key={index} className="text-gray-300">
+                        <div className="font-medium text-white mb-1">{day.trim()}</div>
+                        <div className="text-sm pl-2">{timeStr}</div>
+                      </div>
+                    )
+                  }
+
+                  // È formato JSON
+                  const orarioStr = Array.isArray(orario.orario)
+                    ? orario.orario.join(', ')
+                    : orario.orario
+
+                  return (
+                    <div key={index} className="text-gray-300">
+                      <div className="font-medium text-white mb-1">{orario.giorno}</div>
+                      <div className="text-sm pl-2">{orarioStr}</div>
+                    </div>
+                  )
+                })}
                 {giorniChiusura.length > 0 && (
                   <div className="pt-2 border-t border-gray-700">
                     <p className="text-sm text-gray-400">

@@ -31,7 +31,7 @@ function generateSessionId(): string {
   return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 }
 
-// POST - Traccia un evento analytics
+// POST - Traccia un evento analytics e aggiorna il record annuale
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -62,18 +62,6 @@ export async function POST(request: NextRequest) {
     // Anonimizza l'IP
     const ipHash = ip !== 'unknown' ? hashIP(ip) : null
 
-    // Ottieni geolocalizzazione (se possibile)
-    let country: string | null = null
-    let city: string | null = null
-
-    if (ip !== 'unknown') {
-      const geoInfo = await getGeoInfo(ip)
-      if (geoInfo) {
-        country = geoInfo.country || null
-        city = geoInfo.city || null
-      }
-    }
-
     // Genera o usa session ID esistente
     const finalSessionId = sessionId || generateSessionId()
 
@@ -88,8 +76,43 @@ export async function POST(request: NextRequest) {
         referrer: referrer || null,
         userAgent: userAgent || null,
         ipHash,
-        country,
-        city
+        country: null,
+        city: null
+      }
+    })
+
+    // Ottieni o crea il record annuale
+    const currentYear = new Date().getFullYear()
+    let yearlyRecord = await db.analyticsYearly.findUnique({
+      where: { year: currentYear }
+    })
+
+    if (!yearlyRecord) {
+      yearlyRecord = await db.analyticsYearly.create({
+        data: {
+          year: currentYear,
+          totalVisits: 0,
+          uniqueVisitors: 0,
+          avgMonthlyVisits: 0,
+          bestMonth: null,
+          overallTrend: 'stabile',
+          productInsights: '{}',
+          priceInsights: '{}'
+        }
+      })
+    }
+
+    // Aggiorna le statistiche annuali (solo il totale delle visite, per velocità)
+    const totalVisits = (yearlyRecord.totalVisits || 0) + 1
+
+    // Aggiorna il record annuale con i dati minimi necessari
+    await db.analyticsYearly.update({
+      where: { year: currentYear },
+      data: {
+        totalVisits,
+        avgMonthlyVisits: Math.round(totalVisits / (new Date().getMonth() + 1)),
+        bestMonth: null, // Potrebbe essere calcolato in futuro
+        overallTrend: 'in crescita' // Semplificato
       }
     })
 

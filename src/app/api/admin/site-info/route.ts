@@ -57,8 +57,9 @@ export async function PUT(request: NextRequest) {
       // Specialità Section
       specialitaTitle,
       specialitaSubtitle,
-      // Theme Settings
+      // Theme Colors
       primaryColor,
+      primaryForeground,
       // SEO Section
       seoTitle,
       seoDescription,
@@ -101,8 +102,9 @@ export async function PUT(request: NextRequest) {
     if (specialitaTitle !== undefined) updateData.specialitaTitle = specialitaTitle
     if (specialitaSubtitle !== undefined) updateData.specialitaSubtitle = specialitaSubtitle
 
-    // Theme Settings
+    // Theme Colors
     if (primaryColor !== undefined) updateData.primaryColor = primaryColor
+    if (primaryForeground !== undefined) updateData.primaryForeground = primaryForeground
 
     // SEO Section
     if (seoTitle !== undefined) updateData.seoTitle = seoTitle
@@ -146,7 +148,9 @@ export async function PUT(request: NextRequest) {
         specialitaTitle: specialitaTitle || 'Le Nostre Specialità',
         specialitaSubtitle: specialitaSubtitle || null,
         prenotazioniAttive: prenotazioniAttive !== undefined ? prenotazioniAttive : true,
+        // Theme Colors
         primaryColor: primaryColor || '#ea580c',
+        primaryForeground: primaryForeground || '#ffffff',
         // SEO defaults
         seoTitle: seoTitle || 'Z.ai Code Scaffold - AI-Powered Development',
         seoDescription: seoDescription || 'Modern Next.js scaffold optimized for AI-powered development with Z.ai. Built with TypeScript, Tailwind CSS, and shadcn/ui.',
