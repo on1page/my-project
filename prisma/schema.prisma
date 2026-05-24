@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgres://f03b6a41bc4fe4035e4453264b946e79599fdb927e81a68d46c785283a27a2ef:sk_ZRix9vrwCr66dqfYTJn1a@db.prisma.io:5432/postgres?sslmode=require"
+  url      = env("DATABASE_URL")
 }
 
 model Allergene {
@@ -49,8 +49,8 @@ model AllergeneArticolo {
   id          String    @id @default(cuid())
   articoloId  String
   allergeneId String
-  allergene   Allergene @relation(fields: [allergeneId], references: [id], onDelete: Cascade)
   articolo    Articolo  @relation(fields: [articoloId], references: [id], onDelete: Cascade)
+  allergene   Allergene @relation(fields: [allergeneId], references: [id], onDelete: Cascade)
 
   @@unique([articoloId, allergeneId])
 }
@@ -74,22 +74,17 @@ model SiteInfo {
   heroOverlayOpacity Float    @default(0.5)
   specialitaTitle    String?  @default("Le Nostre Specialità")
   specialitaSubtitle String?
-
-  // ==================== THEME COLORS ====================
-  primaryColor        String?  @default("#ea580c")  // Colore primario (es. arancione)
-  primaryForeground   String?  @default("#ffffff")  // Colore testo su primario
-
-  // ==================== SEO SETTINGS ====================
-  seoTitle          String?  @default("Z.ai Code Scaffold - AI-Powered Development")
-  seoDescription    String?  @default("Modern Next.js scaffold optimized for AI-powered development with Z.ai. Built with TypeScript, Tailwind CSS, and shadcn/ui.")
-  seoKeywords       String?  @default("Z.ai, Next.js, TypeScript, Tailwind CSS, shadcn/ui, AI development, React")
-  seoOgTitle        String?  // Open Graph Title (default: seoTitle)
-  seoOgDescription  String?  // Open Graph Description (default: seoDescription)
-  seoOgImage        String?  // Open Graph Image
-  seoTwitterCard    String?  @default("summary_large_image") // summary, summary_large_image
-  seoRobots         String?  // index, noindex, nofollow, noindex,nofollow
-  seoCanonical      String?  // Canonical URL
-
+  primaryColor       String?  @default("#ea580c")
+  primaryForeground  String?  @default("#ffffff")
+  seoTitle           String?  @default("Z.ai Code Scaffold - AI-Powered Development")
+  seoDescription     String?  @default("Modern Next.js scaffold optimized for AI-powered development with Z.ai. Built with TypeScript, Tailwind CSS, and shadcn/ui.")
+  seoKeywords        String?  @default("Z.ai, Next.js, TypeScript, Tailwind CSS, shadcn/ui, AI development, React")
+  seoOgTitle         String?
+  seoOgDescription   String?
+  seoOgImage         String?
+  seoTwitterCard     String?  @default("summary_large_image")
+  seoRobots          String?
+  seoCanonical       String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 }
@@ -153,69 +148,51 @@ model Permission {
   puoGestireProfili      Boolean  @default(false)
   puoGestireAnalytics    Boolean  @default(true)
   puoGestireSito         Boolean  @default(true)
+  puoGestireEventi       Boolean  @default(true)
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
   user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Dati aziendali e legali
 model CompanyData {
-  id                  String   @id @default(cuid())
-
-  // ==================== DATI AZIENDALI BASE ====================
-  ragioneSociale      String?
-  partitaIva          String?
-  codiceFiscale       String?
-  indirizzo           String?
-  citta               String?
-  cap                 String?
-  provincia           String?
-  paese               String?
-  telefono            String?
-  email               String?
-  pec                 String?
-
-  // ==================== DATA PROTECTION OFFICER (DPO) ====================
-  dpoNome             String?
-  dpoEmail            String?
-  dpoIndirizzo        String?
-
-  // ==================== PRIVACY POLICY ====================
-  privacyPolicy       String?  // Se precompilato, sovrascrive il template automatico
-  privacyEnabled      Boolean  @default(true)
-  privacyUrl          String?
-  privacyPolicyUpdate DateTime?
-
-  // ==================== COOKIE POLICY ====================
-  cookiesPolicy       String?  // Se precompilato, sovrascrive il template automatico
-  cookiesEnabled      Boolean  @default(true)
-  cookiesUrl          String?
-  cookiesPolicyUpdate DateTime?
-
-  // ==================== TIPI DI COOKIE UTILIZZATI ====================
-  cookieTecnici       Boolean  @default(true)
-  cookieAnalitici     Boolean  @default(true)
-  cookieMarketing     Boolean  @default(true)
-
-  // ==================== COOKIE BANNER ====================
-  showCookieBanner    Boolean  @default(true)
-  cookieBannerText    String?  @default("Questo sito utilizza cookie tecnici e analitici per migliorare la tua esperienza di navigazione. Cliccando su 'Autorizzo', accetti l'uso dei cookie.")
-  cookieAcceptText    String?  @default("Autorizzo")
-  cookieDeclineText   String?  @default("Annulla")
-
-  // ==================== TERMINI DI SERVIZIO ====================
-  terminiServizio     String?
-  terminiUrl          String?
-
-  // ==================== SCRIPT DI TERZE PARTI ====================
-  thirdPartyScriptsEnabled Boolean @default(true)
-  googleAnalyticsId     String?  // GA4 Measurement ID (es. G-XXXXXXXXXX)
-  facebookPixelId       String?  // Facebook Pixel ID
-  amazonTagId           String?  // Amazon Associate Tag ID
-
-  // ==================== METADATA ====================
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                       String    @id @default(cuid())
+  ragioneSociale           String?
+  partitaIva               String?
+  codiceFiscale            String?
+  indirizzo                String?
+  citta                    String?
+  cap                      String?
+  provincia                String?
+  paese                    String?
+  telefono                 String?
+  email                    String?
+  pec                      String?
+  dpoNome                  String?
+  dpoEmail                 String?
+  dpoIndirizzo             String?
+  privacyPolicy            String?
+  privacyEnabled           Boolean   @default(true)
+  privacyUrl               String?
+  privacyPolicyUpdate      DateTime?
+  cookiesPolicy            String?
+  cookiesEnabled           Boolean   @default(true)
+  cookiesUrl               String?
+  cookiesPolicyUpdate      DateTime?
+  cookieTecnici            Boolean   @default(true)
+  cookieAnalitici          Boolean   @default(true)
+  cookieMarketing          Boolean   @default(true)
+  showCookieBanner         Boolean   @default(true)
+  cookieBannerText         String?   @default("Questo sito utilizza cookie tecnici e analitici per migliorare la tua esperienza di navigazione. Cliccando su 'Autorizzo', accetti l'uso dei cookie.")
+  cookieAcceptText         String?   @default("Autorizzo")
+  cookieDeclineText        String?   @default("Annulla")
+  terminiServizio          String?
+  terminiUrl               String?
+  thirdPartyScriptsEnabled Boolean   @default(true)
+  googleAnalyticsId        String?
+  facebookPixelId          String?
+  amazonTagId              String?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 }
 
 model Reservation {
@@ -304,4 +281,49 @@ model AnalyticsYearly {
   productInsights  String?
   priceInsights    String?
   createdAt        DateTime @default(now())
+}
+
+model Evento {
+  id               String   @id @default(cuid())
+  titolo           String
+  slug             String   @unique
+  descrizione      String
+  descrizioneBreve String
+  categoria        String
+  immagineUrl      String?
+  data             DateTime
+  oraInizio        String
+  oraFine          String
+  prezzo           Float
+  etichettaPrezzo  String?
+  capacita         Int
+  postiDisponibili Int
+  location         String?
+  incluso          String?
+  infoAggiuntive   String?
+  stato            String   @default("available")
+  inEvidenza       Boolean  @default(false)
+  nuovo            Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model BannerPubblicitario {
+  id           String   @id @default(cuid())
+  tipo         String
+  posizione    String
+  sponsorNome  String
+  sponsorLogo  String?
+  sponsorUrl   String
+  titolo       String?
+  descrizione  String?
+  ctaTesto     String?
+  ctaUrl       String?
+  immagineUrl  String?
+  coloreSfondo String?
+  attivo       Boolean  @default(true)
+  ordine       Int      @default(0)
+  pagine       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
