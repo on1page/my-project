@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Plus, Pencil, Trash2, Save, X, Check, Upload, Move, ZoomIn, ZoomOut, RotateCcw, Loader2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Save, X, Check, Upload, Move, ZoomIn, ZoomOut, RotateCcw, Loader2, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -80,6 +80,7 @@ export default function AdminMenu() {
 
   // Image upload state
   const [uploading, setUploading] = useState(false)
+  const [generating, setGenerating] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Image editor state
@@ -162,6 +163,40 @@ export default function AdminMenu() {
   function removeImage() {
     setArticoloForm(prev => ({ ...prev, immagineUrl: '' }))
     resetImageEditor()
+  }
+
+  async function handleGenerateImage() {
+    if (!articoloForm.nome.trim()) {
+      alert('Inserisci il nome del piatto prima di generare l\'immagine')
+      return
+    }
+
+    setGenerating(true)
+    try {
+      const response = await fetch('/api/admin/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: articoloForm.nome,
+          descrizione: articoloForm.descrizione
+        })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        setArticoloForm(prev => ({ ...prev, immagineUrl: result.url }))
+        resetImageEditor()
+        setImageEditorOpen(true)
+      } else {
+        const err = await response.json()
+        alert(err.error || 'Errore durante la generazione')
+      }
+    } catch (error) {
+      console.error('Errore generazione:', error)
+      alert('Errore durante la generazione dell\'immagine')
+    } finally {
+      setGenerating(false)
+    }
   }
 
   function openImageEditor() {
@@ -675,21 +710,45 @@ export default function AdminMenu() {
                         </Button>
                       </div>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="w-full h-36 border-2 border-dashed border-gray-300 hover:border-orange-400 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-orange-500 transition-colors cursor-pointer"
-                      >
-                        {uploading ? (
-                          <Loader2 className="w-8 h-8 animate-spin" />
-                        ) : (
-                          <>
-                            <Upload className="w-8 h-8" />
-                            <span className="text-sm font-medium">Clicca per caricare un&apos;immagine</span>
-                            <span className="text-xs text-gray-400">JPG, PNG, GIF, WebP (max 5MB)</span>
-                          </>
+                      <div className="space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={generating}
+                          className={`w-full h-28 border-2 border-dashed ${generating ? 'border-gray-200 opacity-50' : 'border-gray-300 hover:border-orange-400'} rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-orange-500 transition-colors cursor-pointer disabled:cursor-not-allowed`}
+                        >
+                          {uploading ? (
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                          ) : (
+                            <>
+                              <Upload className="w-6 h-6" />
+                              <span className="text-sm font-medium">Carica da file</span>
+                            </>
+                          )}
+                        </button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={`w-full gap-2 ${generating ? 'opacity-70' : ''}`}
+                          onClick={handleGenerateImage}
+                          disabled={generating || !articoloForm.nome.trim()}
+                        >
+                          {generating ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Generazione in corso... (può richiedere qualche secondo)
+                            </>
+                          ) : (
+                            <>
+                              <Wand2 className="w-4 h-4" />
+                              Genera immagine con AI
+                            </>
+                          )}
+                        </Button>
+                        {!articoloForm.nome.trim() && (
+                          <p className="text-xs text-gray-400 text-center">Inserisci prima il nome del piatto per abilitare la generazione</p>
                         )}
-                      </button>
+                      </div>
                     )}
                     <input
                       ref={fileInputRef}
@@ -831,11 +890,11 @@ export default function AdminMenu() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button onClick={saveArticolo} disabled={imageEditorOpen}>
+                    <Button onClick={saveArticolo} disabled={imageEditorOpen || generating}>
                       <Save className="w-4 h-4 mr-2" />
                       Salva
                     </Button>
-                    <Button variant="outline" onClick={() => { if (!imageEditorOpen) setShowArticoloDialog(false) }} disabled={imageEditorOpen}>
+                    <Button variant="outline" onClick={() => { if (!imageEditorOpen) setShowArticoloDialog(false) }} disabled={imageEditorOpen || generating}>
                       Annulla
                     </Button>
                   </div>
