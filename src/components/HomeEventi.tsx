@@ -38,9 +38,16 @@ export default function HomeEventi({ title, subtitle }: HomeEventiProps) {
         const response = await fetch('/api/eventi')
         if (response.ok) {
           const result = await response.json()
-          const inEvidenza = (result.data || []).filter(
-            (e: EventoInEvidenza) => e.inEvidenza
-          )
+          const oggi = new Date()
+          oggi.setHours(0, 0, 0, 0)
+          const inEvidenza = (result.data || [])
+            .filter((e: EventoInEvidenza) => e.inEvidenza)
+            .sort((a: EventoInEvidenza, b: EventoInEvidenza) => {
+              const diffA = Math.abs(new Date(a.data).getTime() - oggi.getTime())
+              const diffB = Math.abs(new Date(b.data).getTime() - oggi.getTime())
+              return diffA - diffB
+            })
+            .slice(0, 3)
           setEventi(inEvidenza)
         }
       } catch (error) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   Calendar,
   Clock,
@@ -14,7 +14,11 @@ import {
   Loader2,
   Sparkles,
   Upload,
-  Image as ImageIcon
+  ZoomIn,
+  ZoomOut,
+  Move,
+  Check,
+  RotateCcw
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -23,6 +27,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
+import { Slider } from '@/components/ui/slider'
 import {
   Dialog,
   DialogContent,
@@ -70,6 +75,17 @@ export default function AdminEventi() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingEvento, setEditingEvento] = useState<Evento | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Image editor state
+  const [imageEditorOpen, setImageEditorOpen] = useState(false)
+  const [imageZoom, setImageZoom] = useState(1)
+  const [imagePanX, setImagePanX] = useState(0)
+  const [imagePanY, setImagePanY] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const [imageNaturalSize, setImageNaturalSize] = useState({ w: 0, h: 0 })
+  const editorContainerRef = useRef<HTMLDivElement>(null)
+  const editorImageRef = useRef<HTMLImageElement>(null)
 
   const [formData, setFormData] = useState({
     titolo: '',
@@ -155,7 +171,17 @@ export default function AdminEventi() {
         nuovo: false
       })
     }
+    resetImageEditor()
     setDialogOpen(true)
+  }
+
+  function resetImageEditor() {
+    setImageEditorOpen(false)
+    setImageZoom(1)
+    setImagePanX(0)
+    setImagePanY(0)
+    setIsDragging(false)
+    setDragStart({ x: 0, y: 0 })
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -175,6 +201,9 @@ export default function AdminEventi() {
       if (response.ok) {
         const result = await response.json()
         setFormData(prev => ({ ...prev, immagineUrl: result.url }))
+        // Open image editor after upload
+        resetImageEditor()
+        setImageEditorOpen(true)
       } else {
         const error = await response.json()
         alert(error.error || 'Errore durante il caricamento')
@@ -190,6 +219,129 @@ export default function AdminEventi() {
 
   function removeImage() {
     setFormData(prev => ({ ...prev, immagineUrl: '' }))
+    resetImageEditor()
+  }
+
+  function openImageEditor() {
+    if (!formData.immagineUrl) return
+    resetImageEditor()
+    setImageEditorOpen(true)
+  }
+
+  // Image editor drag handlers
+  const handleEditorMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+    setDragStart({ x: e.clientX - imagePanX, y: e.clientY - imagePanY })
+  }, [imagePanX, imagePanY])
+
+  const handleEditorMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging) return
+    const newX = e.clientX - dragStart.x
+    const newY = e.clientY - dragStart.y
+
+    // Clamp pan to prevent image from going too far
+    const container = editorContainerRef.current
+    if (container) {
+      const rect = container.getBoundingClientRect()
+      const scaledW = imageNaturalSize.w * (imageZoom / (rect.width / imageNaturalSize.w))
+      const scaledH = imageNaturalSize.h * (imageZoom / (rect.height / imageNaturalSize.h))
+      const maxPanX = Math.max(0, (scaledW - rect.width) / 2)
+      const maxPanY = Math.max(0, (scaledH - rect.height) / 2)
+
+      setImagePanX(Math.max(-maxPanX, Math.min(maxPanX, newX)))
+      setImagePanY(Math.max(-maxPanY, Math.min(maxPanY, newY)))
+    } else {
+      setImagePanX(newX)
+      setImagePanY(newY)
+    }
+  }, [isDragging, dragStart, imageZoom, imageNaturalSize])
+
+  const handleEditorMouseUp = useCallback(() => {
+    setIsDragging(false)
+  }, [])
+
+  // Touch handlers for mobile
+  const handleEditorTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0]
+    setIsDragging(true)
+    setDragStart({ x: touch.clientX - imagePanX, y: touch.clientY - imagePanY })
+  }, [imagePanX, imagePanY])
+
+  const handleEditorTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isDragging) return
+    e.preventDefault()
+    const touch = e.touches[0]
+    const newX = touch.clientX - dragStart.x
+    const newY = touch.clientY - dragStart.y
+
+    const container = editorContainerRef.current
+    if (container) {
+      const rect = container.getBoundingClientRect()
+      const maxPanX = Math.max(0, (imageNaturalSize.w * imageZoom - rect.width) / 2)
+      const maxPanY = Math.max(0, (imageNaturalSize.h * imageZoom - rect.height) / 2)
+      setImagePanX(Math.max(-maxPanX, Math.min(maxPanX, newX)))
+      setImagePanY(Math.max(-maxPanY, Math.min(maxPanY, newY)))
+    } else {
+      setImagePanX(newX)
+      setImagePanY(newY)
+    }
+  }, [isDragging, dragStart, imageZoom, imageNaturalSize])
+
+  const handleEditorTouchEnd = useCallback(() => {
+    setIsDragging(false)
+  }, [])
+
+  function handleImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+    const img = e.currentTarget
+    setImageNaturalSize({ w: img.naturalWidth, h: img.naturalHeight })
+  }
+
+  function confirmImageEdit() {
+    const img = editorImageRef.current
+    const container = editorContainerRef.current
+    if (!img || !container) return
+
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    // Canvas size = container display size
+    const rect = container.getBoundingClientRect()
+    canvas.width = rect.width * 2 // 2x for retina quality
+    canvas.height = rect.height * 2
+    ctx.scale(2, 2)
+
+    // Calculate how the image would be displayed at zoom=1 to fill the container
+    const containerW = rect.width
+    const containerH = rect.height
+    const imgAspect = img.naturalWidth / img.naturalHeight
+    const containerAspect = containerW / containerH
+
+    let baseW: number, baseH: number
+    if (imgAspect > containerAspect) {
+      baseW = containerW
+      baseH = containerW / imgAspect
+    } else {
+      baseH = containerH
+      baseW = containerH * imgAspect
+    }
+
+    const scaledW = baseW * imageZoom
+    const scaledH = baseH * imageZoom
+    const drawX = (containerW - scaledW) / 2 + imagePanX
+    const drawY = (containerH - scaledH) / 2 + imagePanY
+
+    ctx.drawImage(img, drawX, drawY, scaledW, scaledH)
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.9)
+    setFormData(prev => ({ ...prev, immagineUrl: dataUrl }))
+    resetImageEditor()
+  }
+
+  function resetEditorPosition() {
+    setImageZoom(1)
+    setImagePanX(0)
+    setImagePanY(0)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -432,19 +584,42 @@ export default function AdminEventi() {
             <div className="space-y-2">
               <Label>Immagine</Label>
               {formData.immagineUrl ? (
-                <div className="relative rounded-xl overflow-hidden border border-gray-200">
-                  <img
-                    src={formData.immagineUrl}
-                    alt="Immagine evento"
-                    className="w-full h-48 object-cover"
-                  />
-                  <button
+                <div className="space-y-3">
+                  <div className="relative rounded-xl overflow-hidden border border-gray-200">
+                    <img
+                      src={formData.immagineUrl}
+                      alt="Immagine evento"
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="absolute top-2 right-2 flex gap-1.5">
+                      <button
+                        type="button"
+                        onClick={openImageEditor}
+                        className="p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors"
+                        title="Modifica immagine"
+                      >
+                        <Move className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={removeImage}
+                        className="p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors"
+                        title="Rimuovi immagine"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <Button
                     type="button"
-                    onClick={removeImage}
-                    className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors"
+                    variant="outline"
+                    size="sm"
+                    onClick={openImageEditor}
+                    className="gap-1.5 text-xs"
                   >
-                    <X className="w-4 h-4" />
-                  </button>
+                    <Move className="w-3.5 h-3.5" />
+                    Regola posizione e zoom
+                  </Button>
                 </div>
               ) : (
                 <button
@@ -471,6 +646,106 @@ export default function AdminEventi() {
                 className="hidden"
               />
             </div>
+
+            {/* Image Editor Panel */}
+            {imageEditorOpen && formData.immagineUrl && (
+              <div className="rounded-xl border border-orange-200 bg-orange-50/50 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2.5 bg-orange-100/80 border-b border-orange-200">
+                  <div className="flex items-center gap-2">
+                    <Move className="w-4 h-4 text-orange-700" />
+                    <span className="text-sm font-semibold text-orange-800">Regola immagine</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={resetEditorPosition}
+                    className="flex items-center gap-1 text-xs text-orange-700 hover:text-orange-900 transition-colors"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    Reset
+                  </button>
+                </div>
+
+                {/* Editor Canvas */}
+                <div
+                  ref={editorContainerRef}
+                  className="relative w-full h-64 overflow-hidden bg-gray-900 cursor-grab active:cursor-grabbing select-none"
+                  onMouseDown={handleEditorMouseDown}
+                  onMouseMove={handleEditorMouseMove}
+                  onMouseUp={handleEditorMouseUp}
+                  onMouseLeave={handleEditorMouseUp}
+                  onTouchStart={handleEditorTouchStart}
+                  onTouchMove={handleEditorTouchMove}
+                  onTouchEnd={handleEditorTouchEnd}
+                >
+                  <img
+                    ref={editorImageRef}
+                    src={formData.immagineUrl}
+                    alt="Editor immagine"
+                    onLoad={handleImageLoad}
+                    className="absolute max-w-none pointer-events-none"
+                    draggable={false}
+                    style={{
+                      width: `${imageNaturalSize.w ? (imageNaturalSize.w / imageNaturalSize.h) * 100 : 100}%`,
+                      height: '100%',
+                      objectFit: 'contain',
+                      transform: `scale(${imageZoom}) translate(${imagePanX / imageZoom}px, ${imagePanY / imageZoom}px)`,
+                      transformOrigin: 'center center',
+                      left: '50%',
+                      top: '50%',
+                      marginLeft: `${imageNaturalSize.w ? -((imageNaturalSize.w / imageNaturalSize.h) * 50) : -50}%`,
+                      marginTop: '-50%',
+                    }}
+                  />
+                  {/* Grid overlay hint */}
+                  {imageZoom === 1 && imagePanX === 0 && imagePanY === 0 && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="bg-black/50 text-white text-xs px-3 py-1.5 rounded-full backdrop-blur-sm flex items-center gap-1.5">
+                        <Move className="w-3 h-3" />
+                        Trascina per spostare, usa lo zoom sotto
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Zoom Controls */}
+                <div className="px-4 py-3 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <ZoomOut className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                    <Slider
+                      value={[imageZoom]}
+                      onValueChange={([val]) => setImageZoom(val)}
+                      min={1}
+                      max={3}
+                      step={0.05}
+                      className="flex-1"
+                    />
+                    <ZoomIn className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                    <span className="text-xs font-mono text-gray-500 w-10 text-right flex-shrink-0">
+                      {imageZoom.toFixed(1)}x
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={confirmImageEdit}
+                      className="flex-1 gap-1.5"
+                    >
+                      <Check className="w-4 h-4" />
+                      Conferma ritaglio
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={resetImageEditor}
+                    >
+                      Annulla
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Data e Orari */}
             <div className="grid grid-cols-3 gap-4">
@@ -690,7 +965,7 @@ export default function AdminEventi() {
                 <X className="w-4 h-4 mr-2" />
                 Annulla
               </Button>
-              <Button type="submit" disabled={saving || uploading}>
+              <Button type="submit" disabled={saving || uploading || imageEditorOpen}>
                 {saving ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 ) : (

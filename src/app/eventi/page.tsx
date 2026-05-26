@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Calendar, Clock, Euro, Users, Sparkles, Loader2, MapPin } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Calendar, Clock, Euro, Users, Sparkles, Loader2, MapPin, Share2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import ReservationDialog from '@/components/ReservationDialog'
 
 interface Evento {
   id: string
@@ -54,6 +55,7 @@ export default function EventiPage() {
   const [banners, setBanners] = useState<Banner[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedEvent, setSelectedEvent] = useState<Evento | null>(null)
+  const [reservationOpen, setReservationOpen] = useState(false)
 
   useEffect(() => {
     fetchEventi()
@@ -97,6 +99,30 @@ export default function EventiPage() {
       month: 'short'
     })
   }
+
+  function handlePrenota() {
+    if (!selectedEvent) return
+    setSelectedEvent(null)
+    setReservationOpen(true)
+  }
+
+  const handleShare = useCallback(async () => {
+    if (!selectedEvent) return
+    const text = `🎫 ${selectedEvent.titolo}\n📅 ${formatDate(selectedEvent.data)} ore ${selectedEvent.oraInizio}\n${selectedEvent.gratuito ? '🆓 Gratuito' : `💰 €${selectedEvent.prezzo}`}\n${selectedEvent.descrizioneBreve}`
+    const url = window.location.href
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({ title: selectedEvent.titolo, text, url })
+        return
+      } catch {
+        // Utente ha annullato o errore, fallback WhatsApp
+      }
+    }
+    // Fallback: WhatsApp
+    const encoded = encodeURIComponent(`${text}\n\n${url}`)
+    window.open(`https://wa.me/?text=${encoded}`, '_blank')
+  }, [selectedEvent, formatDate])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -295,27 +321,31 @@ export default function EventiPage() {
 
       {/* Dialog Dettagli Evento */}
       <Dialog open={!!selectedEvent} onOpenChange={() => setSelectedEvent(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0">
           {selectedEvent && (
             <>
-              {/* Header con Immagine */}
-              <div className="relative aspect-[21/9] sm:aspect-[16/9] shrink-0">
+              <DialogHeader className="sr-only">
+                <DialogTitle>{selectedEvent.titolo}</DialogTitle>
+              </DialogHeader>
+
+              {/* Immagine compatta */}
+              <div className="relative h-40 sm:h-48 shrink-0">
                 {selectedEvent.immagineUrl ? (
                   <img src={selectedEvent.immagineUrl} alt={selectedEvent.titolo} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
-                    <Calendar className="w-24 h-24 text-orange-400" />
+                    <Calendar className="w-14 h-14 text-orange-400" />
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
                 {/* Badges immagine */}
-                <div className="absolute bottom-4 left-4 flex gap-2">
+                <div className="absolute bottom-3 left-4 flex gap-2">
                   {selectedEvent.gratuito && (
-                    <span className="px-4 py-2 bg-green-500 text-white font-semibold rounded-full shadow-lg">Gratuito</span>
+                    <span className="px-3 py-1.5 bg-green-500 text-white text-sm font-semibold rounded-full shadow-lg">Gratuito</span>
                   )}
                   {selectedEvent.graditaPrenotazione && (
-                    <span className="px-4 py-2 bg-blue-500 text-white font-semibold rounded-full shadow-lg">Prenotazione consigliata</span>
+                    <span className="px-3 py-1.5 bg-blue-500 text-white text-sm font-semibold rounded-full shadow-lg">Prenotazione consigliata</span>
                   )}
                 </div>
               </div>
@@ -394,7 +424,7 @@ export default function EventiPage() {
                 </div>
 
                 {/* Incluso */}
-                {selectedEvent.incluso && selectedEvent.incluso.length > 0 && (
+                {Array.isArray(selectedEvent.incluso) && selectedEvent.incluso.length > 0 && (
                   <div className="p-4 bg-green-50 rounded-xl border border-green-100 mb-6">
                     <h4 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
                       <span>✓</span> {selectedEvent.gratuito ? 'Cosa include' : 'Incluso nel prezzo'}
@@ -408,7 +438,7 @@ export default function EventiPage() {
                 )}
 
                 {/* Info Aggiuntive */}
-                {selectedEvent.infoAggiuntive && selectedEvent.infoAggiuntive.length > 0 && (
+                {Array.isArray(selectedEvent.infoAggiuntive) && selectedEvent.infoAggiuntive.length > 0 && (
                   <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
                     <h4 className="font-semibold text-gray-800 mb-2">Info aggiuntive</h4>
                     <ul className="text-sm text-gray-600 space-y-1">
@@ -421,23 +451,24 @@ export default function EventiPage() {
               </div>
 
               {/* Footer con CTA */}
-              <div className="p-6 sm:p-8 bg-gray-50 border-t border-gray-100 shrink-0">
-                <div className="flex flex-col sm:flex-row gap-4">
+              <div className="p-4 sm:p-6 bg-gray-50 border-t border-gray-100 shrink-0">
+                <div className="flex flex-col sm:flex-row gap-3">
                   {selectedEvent.graditaPrenotazione ? (
-                    <Button className="flex-1" size="lg">
+                    <Button className="flex-1" size="lg" onClick={handlePrenota}>
                       {selectedEvent.gratuito ? 'Prenota un posto' : `Prenota ora - €${selectedEvent.prezzo}`}
                     </Button>
                   ) : selectedEvent.gratuito ? (
-                    <Button className="flex-1" size="lg" variant="outline">
+                    <Button className="flex-1" size="lg" variant="outline" onClick={handlePrenota}>
                       Partecipa all&apos;evento
                     </Button>
                   ) : (
-                    <Button className="flex-1" size="lg">
+                    <Button className="flex-1" size="lg" onClick={handlePrenota}>
                       Scopri di più - €{selectedEvent.prezzo}
                     </Button>
                   )}
-                  <Button variant="outline" size="lg">
-                    Condividi evento
+                  <Button variant="outline" size="lg" onClick={handleShare} className="gap-2">
+                    <Share2 className="w-4 h-4" />
+                    Condividi
                   </Button>
                 </div>
               </div>
@@ -445,6 +476,11 @@ export default function EventiPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Reservation Dialog */}
+      {reservationOpen && (
+        <ReservationDialog onClose={() => setReservationOpen(false)} />
+      )}
     </div>
   )
 }
