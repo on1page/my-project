@@ -39,6 +39,7 @@ model Articolo {
   eBestChoice        Boolean             @default(false)
   attivo             Boolean             @default(true)
   immagineUrl        String?
+  immagineAiGenerata Boolean             @default(false)
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   allergeni          AllergeneArticolo[]

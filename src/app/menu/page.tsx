@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Star, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Star, AlertTriangle, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -35,6 +35,7 @@ interface Articolo {
   attivo: boolean
   allergeni: Allergene[]
   immagineUrl: string | null
+  immagineAiGenerata: boolean
 }
 
 interface Categoria {
@@ -175,6 +176,15 @@ export default function MenuPage() {
                                 <Badge className="absolute top-3 right-3 bg-red-600 hover:bg-red-700">
                                   -{Math.round((1 - articolo.prezzoPromozionale / articolo.prezzo) * 100)}%
                                 </Badge>
+                              )}
+                              {/* Disclaimer AI */}
+                              {articolo.immagineAiGenerata && (
+                                <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm px-2 py-1">
+                                  <p className="text-[10px] text-white/80 flex items-center justify-center gap-1">
+                                    <Wand2 className="w-2.5 h-2.5" />
+                                    Immagine generata con IA
+                                  </p>
+                                </div>
                               )}
                             </div>
                           )}

@@ -80,7 +80,8 @@ export async function POST(request: NextRequest) {
       eBestChoice,
       attivo,
       allergeni,
-      immagineUrl
+      immagineUrl,
+      immagineAiGenerata
     } = body;
 
     if (!nome || !prezzo || !categoriaId) {
@@ -102,7 +103,8 @@ export async function POST(request: NextRequest) {
         eSurgelato: eSurgelato || false,
         eBestChoice: eBestChoice || false,
         attivo: attivo !== undefined ? attivo : true,
-        immagineUrl
+        immagineUrl,
+        immagineAiGenerata: immagineAiGenerata || false
       }
     });
 

@@ -74,7 +74,8 @@ export default function AdminMenu() {
     eBestChoice: false,
     attivo: true,
     allergeni: [] as string[],
-    immagineUrl: ''
+    immagineUrl: '',
+    immagineAiGenerata: false
   })
   const [showArticoloDialog, setShowArticoloDialog] = useState(false)
 
@@ -161,7 +162,7 @@ export default function AdminMenu() {
   }
 
   function removeImage() {
-    setArticoloForm(prev => ({ ...prev, immagineUrl: '' }))
+    setArticoloForm(prev => ({ ...prev, immagineUrl: '', immagineAiGenerata: false }))
     resetImageEditor()
   }
 
@@ -184,7 +185,7 @@ export default function AdminMenu() {
 
       if (response.ok) {
         const result = await response.json()
-        setArticoloForm(prev => ({ ...prev, immagineUrl: result.url }))
+        setArticoloForm(prev => ({ ...prev, immagineUrl: result.url, immagineAiGenerata: true }))
         resetImageEditor()
         setImageEditorOpen(true)
       } else {
@@ -443,7 +444,8 @@ export default function AdminMenu() {
       eBestChoice: art.eBestChoice,
       attivo: art.attivo,
       allergeni: art.allergeni.map(a => a.id),
-      immagineUrl: art.immagineUrl || ''
+      immagineUrl: art.immagineUrl || '',
+      immagineAiGenerata: (art as any).immagineAiGenerata || false
     })
     resetImageEditor()
     setShowArticoloDialog(true)
@@ -462,7 +464,8 @@ export default function AdminMenu() {
       eBestChoice: false,
       attivo: true,
       allergeni: [],
-      immagineUrl: ''
+      immagineUrl: '',
+      immagineAiGenerata: false
     })
     resetImageEditor()
   }
@@ -596,13 +599,18 @@ export default function AdminMenu() {
         <TabsContent value="articoli" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">Gestione Articoli</h2>
-            <Dialog open={showArticoloDialog} onOpenChange={(open) => { if (!open && !imageEditorOpen) setShowArticoloDialog(false) }}>
-              <DialogTrigger asChild>
-                <Button onClick={resetArticoloForm}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nuovo Articolo
-                </Button>
-              </DialogTrigger>
+            <Button onClick={() => {
+              resetArticoloForm()
+              setShowArticoloDialog(true)
+            }}>
+              <Plus className="w-4 h-4 mr-2" />
+              Nuovo Articolo
+            </Button>
+            <Dialog open={showArticoloDialog} onOpenChange={(open) => {
+              if (!open && !imageEditorOpen) {
+                setShowArticoloDialog(false)
+              }
+            }}>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
@@ -708,6 +716,12 @@ export default function AdminMenu() {
                           <Move className="w-3.5 h-3.5" />
                           Regola posizione e zoom
                         </Button>
+                        {articoloForm.immagineAiGenerata && (
+                          <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-center gap-1.5">
+                            <Wand2 className="w-3 h-3 flex-shrink-0" />
+                            Immagine generata con intelligenza artificiale
+                          </p>
+                        )}
                       </div>
                     ) : (
                       <div className="space-y-3">
@@ -922,7 +936,14 @@ export default function AdminMenu() {
                   <TableRow key={art.id}>
                     <TableCell>
                       {art.immagineUrl ? (
-                        <img src={art.immagineUrl} alt={art.nome} className="w-12 h-12 object-cover rounded-lg" />
+                        <div className="relative">
+                          <img src={art.immagineUrl} alt={art.nome} className="w-12 h-12 object-cover rounded-lg" />
+                          {(art as any).immagineAiGenerata && (
+                            <div className="absolute -bottom-0.5 -right-0.5 bg-amber-500 rounded-full p-0.5" title="Immagine AI">
+                              <Wand2 className="w-2.5 h-2.5 text-white" />
+                            </div>
+                          )}
+                        </div>
                       ) : (
                         <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs">Nessuna</div>
                       )}

@@ -622,21 +622,22 @@ export default function AdminEventi() {
                   </Button>
                 </div>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full h-40 border-2 border-dashed border-gray-300 hover:border-orange-400 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-orange-500 transition-colors cursor-pointer"
-                >
-                  {uploading ? (
-                    <Loader2 className="w-8 h-8 animate-spin" />
-                  ) : (
-                    <>
-                      <Upload className="w-8 h-8" />
-                      <span className="text-sm font-medium">Clicca per caricare un&apos;immagine</span>
-                      <span className="text-xs text-gray-400">JPG, PNG, GIF, WebP (max 5MB)</span>
-                    </>
-                  )}
-                </button>
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full h-28 border-2 border-dashed border-gray-300 hover:border-orange-400 rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-orange-500 transition-colors cursor-pointer"
+                  >
+                    {uploading ? (
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : (
+                      <>
+                        <Upload className="w-6 h-6" />
+                        <span className="text-sm font-medium">Carica da file</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               )}
               <input
                 ref={fileInputRef}

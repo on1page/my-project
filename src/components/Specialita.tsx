@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Star } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Star, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface Articolo {
@@ -13,6 +13,7 @@ interface Articolo {
   scadenzaPromo: string | null
   eBestChoice: boolean
   immagineUrl: string | null
+  immagineAiGenerata: boolean
 }
 
 interface SpecialitaProps {
@@ -168,6 +169,14 @@ export default function Specialita({
                         {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) && (
                           <div className="absolute top-3 right-3 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold">
                             -{Math.round((1 - articolo.prezzoPromozionale / articolo.prezzo) * 100)}%
+                          </div>
+                        )}
+                        {articolo.immagineAiGenerata && (
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm px-2 py-1">
+                            <p className="text-[10px] text-white/80 flex items-center justify-center gap-1">
+                              <Wand2 className="w-2.5 h-2.5" />
+                              Immagine generata con IA
+                            </p>
                           </div>
                         )}
                       </div>
