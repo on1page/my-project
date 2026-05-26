@@ -5,6 +5,7 @@ import Header from '@/components/Header'
 import Hero from '@/components/Hero'
 import ChiSiamo from '@/components/ChiSiamo'
 import Specialita from '@/components/Specialita'
+import HomeEventi from '@/components/HomeEventi'
 import Footer from '@/components/Footer'
 import SocialSidebar from '@/components/SocialSidebar'
 import AdminPanel from '@/components/AdminPanel'
@@ -111,6 +112,8 @@ export default function Home() {
           title={siteInfo.specialitaTitle || 'Le Nostre Specialità'}
           subtitle={siteInfo.specialitaSubtitle || 'Scopri i piatti più amati dai nostri clienti e le offerte speciali del momento'}
         />
+
+        <HomeEventi />
       </main>
 
       <Footer onAdminClick={handleAdminClick} />

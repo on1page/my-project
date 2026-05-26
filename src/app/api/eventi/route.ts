@@ -1,27 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
-// GET - Recupera eventi pubblici
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const categoria = searchParams.get('categoria')
-    const soloDisponibili = searchParams.get('soloDisponibili') === 'true'
-
-    const where: any = {
-      stato: { not: 'cancelled' }
-    }
-
-    if (categoria && categoria !== 'all') {
-      where.categoria = categoria
-    }
-
-    if (soloDisponibili) {
-      where.stato = 'available'
-    }
-
     const eventi = await db.evento.findMany({
-      where,
       orderBy: [
         { inEvidenza: 'desc' },
         { data: 'asc' }
