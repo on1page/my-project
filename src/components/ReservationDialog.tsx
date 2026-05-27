@@ -42,14 +42,27 @@ export default function ReservationDialog({
       ...(eventoId ? { eventoId } : {})
     }
 
+    console.log('[ReservationDialog] Invio prenotazione:', payload)
+
     // Invia la prenotazione al backend
     fetch('/api/reservations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
-      .then(response => response.json())
+      .then(async response => {
+        console.log('[ReservationDialog] Status:', response.status)
+        const text = await response.text()
+        console.log('[ReservationDialog] Response text:', text)
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${text}`)
+        }
+
+        return JSON.parse(text)
+      })
       .then(data => {
+        console.log('[ReservationDialog] Response data:', data)
         if (data.success) {
           alert(`Grazie ${formData.nome}! La tua prenotazione è stata confermata.\n\nData: ${formData.data}\nOra: ${formData.ora}\nPersone: ${formData.persone}\n${eventoTitolo ? `Evento: ${eventoTitolo}\n` : ''}Ti contatteremo presto per confermare.`)
           onClose()
@@ -58,8 +71,8 @@ export default function ReservationDialog({
         }
       })
       .catch(error => {
-        console.error('Errore:', error)
-        alert('Errore di connessione. Riprova più tardi.')
+        console.error('[ReservationDialog] Errore:', error)
+        alert(`Errore di connessione: ${error.message}`)
       })
       .finally(() => {
         setLoading(false)

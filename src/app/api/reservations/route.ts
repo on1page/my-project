@@ -1,47 +1,65 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
-// GET - Recupera tutte le prenotazioni
-export async function GET(request: NextRequest) {
+// POST - Crea una nuova prenotazione
+export async function POST(request: NextRequest) {
+  console.log('[API /api/reservations] POST iniziato')
+
   try {
-    const { searchParams } = new URL(request.url)
-    const stato = searchParams.get('stato')
-    const dataFrom = searchParams.get('dataFrom')
-    const dataTo = searchParams.get('dataTo')
+    const body = await request.json()
+    console.log('[API /api/reservations] Body ricevuto:', body)
 
-    const where: any = {}
+    const { nome, cognome, email, telefono, data, ora, persone, note, eventoId } = body
 
-    if (stato) {
-      where.stato = stato
+    if (!nome || !cognome || !email || !telefono || !data || !ora || !persone) {
+      console.log('[API /api/reservations] Campi mancanti')
+      return NextResponse.json(
+        { error: 'Tutti i campi obbligatori devono essere compilati' },
+        { status: 400 }
+      )
     }
 
-    if (dataFrom || dataTo) {
-      where.data = {}
-      if (dataFrom) where.data.gte = dataFrom
-      if (dataTo) where.data.lte = dataTo
-    }
+    console.log('[API /api/reservations] Creazione prenotazione...')
 
-    const reservations = await db.reservation.findMany({
-      where,
-      orderBy: [
-        { data: 'asc' },
-        { ora: 'asc' }
-      ],
-      include: {
-        evento: {
-          select: {
-            id: true,
-            titolo: true
-          }
-        }
+    const reservation = await db.reservation.create({
+      data: {
+        nome,
+        cognome,
+        email,
+        telefono,
+        data,
+        ora,
+        persone: parseInt(persone),
+        note: note || null,
+        eventoId: eventoId || null
       }
     })
 
-    return NextResponse.json(reservations)
+    console.log('[API /api/reservations] Prenotazione creata:', reservation.id)
+
+    const responseData = {
+      success: true,
+      message: 'Prenotazione ricevuta con successo!',
+      reservation: {
+        id: reservation.id,
+        nome: reservation.nome,
+        cognome: reservation.cognome,
+        email: reservation.email,
+        telefono: reservation.telefono,
+        data: reservation.data,
+        ora: reservation.ora,
+        persone: reservation.persone,
+        eventoId: reservation.eventoId
+      }
+    }
+
+    console.log('[API /api/reservations] Invio risposta')
+
+    return NextResponse.json(responseData, { status: 201 })
   } catch (error) {
-    console.error('Errore nel recupero prenotazioni:', error)
+    console.error('[API /api/reservations] Errore:', error)
     return NextResponse.json(
-      { error: 'Errore nel recupero delle prenotazioni' },
+      { error: 'Errore nella creazione della prenotazione', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }
