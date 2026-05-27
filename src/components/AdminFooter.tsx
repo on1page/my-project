@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Save, MapPin, Phone, Mail, Facebook, Instagram, Twitter, Linkedin, MessageCircle, Locate, Loader2, Clock } from 'lucide-react'
+import { Save, MapPin, Phone, Mail, Facebook, Instagram, Linkedin, MessageCircle, Locate, Loader2, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -408,13 +408,13 @@ export default function AdminFooter() {
                 </div>
                 <div>
                   <Label className="flex items-center gap-2">
-                    <Twitter className="w-4 h-4 text-sky-500" />
-                    Twitter URL
+                    <span className="w-4 h-4 flex items-center justify-center font-bold text-sky-500 text-sm">X</span>
+                    X URL
                   </Label>
                   <Input
                     value={footerInfo.twitterUrl || ''}
                     onChange={(e) => setFooterInfo({ ...footerInfo, twitterUrl: e.target.value })}
-                    placeholder="https://twitter.com/tuoristorante"
+                    placeholder="https://x.com/tuoristorante"
                   />
                 </div>
                 <div>

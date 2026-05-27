@@ -9,7 +9,6 @@ import {
   Navigation,
   Facebook,
   Instagram,
-  Twitter,
   Linkedin,
   MessageCircle,
   Utensils,
@@ -134,7 +133,7 @@ export default function Footer({ onAdminClick }: FooterProps = {}) {
     { name: 'Telefono', url: footerInfo.telefono ? `tel:${footerInfo.telefono}` : null, icon: Phone },
     { name: 'Facebook', url: footerInfo.facebookUrl, icon: Facebook },
     { name: 'Instagram', url: footerInfo.instagramUrl, icon: Instagram },
-    { name: 'Twitter', url: footerInfo.twitterUrl, icon: Twitter },
+    { name: 'Twitter', url: footerInfo.twitterUrl, icon: () => <span className="w-4 h-4 flex items-center justify-center font-bold text-sm">X</span> },
     { name: 'LinkedIn', url: footerInfo.linkedinUrl, icon: Linkedin }
   ].filter(social => social.url)
 
