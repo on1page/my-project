@@ -1,319 +1,315 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ChevronLeft, ChevronRight, Star, Wand2 } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowLeft, Star, AlertTriangle, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import Footer from '@/components/Footer'
+import SocialSidebar from '@/components/SocialSidebar'
+import { useAnalytics } from '../../components/useAnalytics'
+import { useSearchParams } from 'next/navigation'
+
+interface Allergene {
+  id: string
+  nome: string
+  descrizione: string | null
+  icona: string | null
+}
 
 interface Articolo {
   id: string
   nome: string
   descrizione: string | null
+  categoriaId: string
+  categoria: {
+    id: string
+    nome: string
+    ordine: number
+  }
   prezzo: number
   prezzoPromozionale: number | null
   scadenzaPromo: string | null
+  eSurgelato: boolean
   eBestChoice: boolean
+  attivo: boolean
+  allergeni: Allergene[]
   immagineUrl: string | null
   immagineAiGenerata: boolean
 }
 
-interface SpecialitaCarouselProps {
-  showBestChoice?: boolean
-  showPromo?: boolean
-  limit?: number
-  title?: string
-  subtitle?: string
+interface Categoria {
+  id: string
+  nome: string
+  ordine: number
 }
 
-export default function SpecialitaCarousel({
-  showBestChoice = true,
-  showPromo = true,
-  limit = 6,
-  title = "Le Nostre Specialità",
-  subtitle = "Scopri i piatti più amati dai nostri clienti e le offerte speciali del momento"
-}: SpecialitaCarouselProps) {
+export default function MenuPage() {
   const [articoli, setArticoli] = useState<Articolo[]>([])
-  const [activeIndex, setActiveIndex] = useState(0)
+  const [categorie, setCategorie] = useState<Categoria[]>([])
   const [loading, setLoading] = useState(true)
-  const carouselRef = useRef<HTMLDivElement>(null)
+  const [selectedAllergene, setSelectedAllergene] = useState<{ articoloId: string; allergeneId: string } | null>(null)
+  const { trackProductView, isInitialized } = useAnalytics()
+  const trackedProducts = useRef<Set<string>>(new Set())
+  const searchParams = useSearchParams()
 
   useEffect(() => {
-    async function fetchArticoli() {
+    async function fetchData() {
       try {
-        const params = new URLSearchParams()
-        if (showBestChoice) params.append('bestChoice', 'true')
-        if (showPromo) params.append('inPromo', 'true')
+        const [artRes, catRes] = await Promise.all([
+          fetch('/api/admin/articoli'),
+          fetch('/api/admin/categorie')
+        ])
 
-        const response = await fetch(`/api/admin/articoli?${params.toString()}`)
-        if (response.ok) {
-          const data = await response.json()
-          setArticoli(data.slice(0, limit))
-        }
+        if (artRes.ok) setArticoli(await artRes.json())
+        if (catRes.ok) setCategorie(await catRes.json())
       } catch (error) {
-        console.error('Errore nel recupero articoli:', error)
+        console.error('Errore nel recupero dati:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchArticoli()
-  }, [showBestChoice, showPromo, limit])
+    fetchData()
+  }, [])
 
-  // Aggiorna l'indice attivo in base alla posizione dello scroll
+  // Scorri all'articolo specifico se c'è il parametro 'articolo' nell'URL
   useEffect(() => {
-    const carousel = carouselRef.current
-    if (!carousel) return
-
-    const handleScroll = () => {
-      const scrollPosition = carousel.scrollLeft
-      const itemWidth = carousel.firstElementChild?.getBoundingClientRect().width || 0
-      const paddingLeft = parseFloat(getComputedStyle(carousel).paddingLeft) || 0
-
-      // Calcola l'indice considerando il padding
-      const index = Math.round((scrollPosition - paddingLeft) / itemWidth)
-      setActiveIndex(Math.min(Math.max(0, index), articoli.length - 1))
+    if (!loading && articoli.length > 0) {
+      const articoloId = searchParams.get('articolo')
+      if (articoloId) {
+        const element = document.getElementById(`articolo-${articoloId}`)
+        if (element) {
+          setTimeout(() => {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            // Evidenzia momentaneamente l'articolo
+            element.classList.add('ring-4', 'ring-primary', 'ring-offset-4')
+            setTimeout(() => {
+              element.classList.remove('ring-4', 'ring-primary', 'ring-offset-4')
+            }, 2000)
+          }, 500)
+        }
+      }
     }
-
-    carousel.addEventListener('scroll', handleScroll)
-    return () => carousel.removeEventListener('scroll', handleScroll)
-  }, [articoli.length])
-
-  const scrollPrev = () => {
-    if (carouselRef.current && activeIndex > 0) {
-      const itemWidth = carouselRef.current.firstElementChild?.getBoundingClientRect().width || 0
-      const paddingLeft = parseFloat(getComputedStyle(carouselRef.current).paddingLeft) || 0
-      carouselRef.current.scrollTo({
-        left: paddingLeft + (activeIndex - 1) * itemWidth,
-        behavior: 'smooth'
-      })
-    }
-  }
-
-  const scrollNext = () => {
-    if (carouselRef.current && activeIndex < articoli.length - 1) {
-      const itemWidth = carouselRef.current.firstElementChild?.getBoundingClientRect().width || 0
-      const paddingLeft = parseFloat(getComputedStyle(carouselRef.current).paddingLeft) || 0
-      carouselRef.current.scrollTo({
-        left: paddingLeft + (activeIndex + 1) * itemWidth,
-        behavior: 'smooth'
-      })
-    }
-  }
-
-  const scrollToIndex = (index: number) => {
-    if (carouselRef.current) {
-      const itemWidth = carouselRef.current.firstElementChild?.getBoundingClientRect().width || 0
-      const paddingLeft = parseFloat(getComputedStyle(carouselRef.current).paddingLeft) || 0
-      carouselRef.current.scrollTo({
-        left: paddingLeft + index * itemWidth,
-        behavior: 'smooth'
-      })
-    }
-  }
+  }, [loading, articoli, searchParams])
 
   const isPromoValid = (scadenza: string | null) => {
     if (!scadenza) return false
     return new Date(scadenza) > new Date()
   }
 
+  const getArticoliPerCategoria = (categoriaId: string) => {
+    return articoli.filter(a => a.categoriaId === categoriaId && a.attivo)
+  }
+
   if (loading) {
     return (
-      <section id="specialita" className="py-16 md:py-24 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <div className="animate-pulse h-8 bg-gray-300 rounded w-64 mx-auto mb-4"></div>
-            <div className="grid md:grid-cols-3 gap-6 mt-12">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="animate-pulse bg-white rounded-xl p-4">
-                  <div className="h-48 bg-gray-300 rounded-lg mb-4"></div>
-                  <div className="h-6 bg-gray-300 rounded mb-2"></div>
-                  <div className="h-4 bg-gray-300 rounded"></div>
-                </div>
-              ))}
-            </div>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-pulse h-8 bg-gray-300 rounded w-48 mx-auto mb-4"></div>
+          <div className="animate-pulse h-4 bg-gray-300 rounded w-32 mx-auto"></div>
         </div>
-      </section>
+      </div>
     )
   }
 
-  if (articoli.length === 0) {
-    return null
-  }
-
   return (
-    <section id="specialita" className="py-16 md:py-24 bg-gray-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            {title}
-          </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            {subtitle}
-          </p>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header semplificato */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div className="container mx-auto px-4 py-4">
+          <Link href="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-primary transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+            <span>Torna alla Home</span>
+          </Link>
         </div>
+      </header>
 
-        {/* Carousel Container */}
-        <div className="relative max-w-4xl mx-auto">
-          {/* Navigation Arrows */}
-          {articoli.length > 1 && (
-            <>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={scrollPrev}
-                disabled={activeIndex === 0}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 rounded-full bg-[rgb(15,23,43)] text-white border-none opacity-70 hover:opacity-100 hover:scale-110 transition-all shadow-lg disabled:opacity-25 disabled:cursor-not-allowed w-10 h-10 md:w-12 md:h-12"
-              >
-                <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={scrollNext}
-                disabled={activeIndex === articoli.length - 1}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 rounded-full bg-[rgb(15,23,43)] text-white border-none opacity-70 hover:opacity-100 hover:scale-110 transition-all shadow-lg disabled:opacity-25 disabled:cursor-not-allowed w-10 h-10 md:w-12 md:h-12"
-              >
-                <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
-              </Button>
-            </>
-          )}
-
-          {/* Carousel */}
-          <div
-            ref={carouselRef}
-            className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-12"
-            style={{
-              scrollBehavior: 'smooth',
-              paddingLeft: 'calc(50% - 110px)',
-              paddingRight: 'calc(50% - 110px)'
-            }}
-          >
-            {articoli.map((articolo, index) => (
-              <div
-                key={articolo.id}
-                className="flex-shrink-0 w-[220px] md:w-[250px] snap-center transition-all duration-300 ease-in-out cursor-pointer"
-                style={{
-                  transform: index === activeIndex ? 'scale(1)' : 'scale(0.85)',
-                  opacity: index === activeIndex ? '1' : '0.5',
-                  transformOrigin: 'center center'
-                }}
-                onClick={() => {
-                  window.location.href = `/menu?articolo=${articolo.id}`
-                }}
-              >
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 group">
-                  {/* Image */}
-                  <div className="relative h-[280px] overflow-hidden">
-                    <img
-                      src={articolo.immagineUrl || '/images/pasta.jpg'}
-                      alt={articolo.nome}
-                      className="w-full h-full object-cover rounded-t-2xl shadow-lg group-hover:scale-105 transition-transform duration-300"
-                    />
-                    {/* Overlay on hover */}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 rounded-t-2xl" />
-                    {/* Click indicator */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                      <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium text-gray-900 shadow-lg">
-                        Vedi dettagli →
-                      </div>
-                    </div>
-                    {articolo.eBestChoice && (
-                      <div className="absolute top-3 left-3 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
-                        <Star size={14} />
-                        Best Choice
-                      </div>
-                    )}
-                    {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) && (
-                      <div className="absolute top-3 right-3 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold">
-                        -{Math.round((1 - articolo.prezzoPromozionale / articolo.prezzo) * 100)}%
-                      </div>
-                    )}
-                    {articolo.immagineAiGenerata && (
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm px-2 py-1">
-                        <p className="text-[10px] text-white/80 flex items-center justify-center gap-1">
-                          <Wand2 className="w-2.5 h-2.5" />
-                          Immagine generata con IA
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-4 text-center">
-                    <h3
-                      className={`font-bold text-gray-900 mb-2 transition-all duration-300 ${
-                        index === activeIndex ? 'text-xl' : 'text-base translate-y-4'
-                      }`}
-                    >
-                      {articolo.nome}
-                    </h3>
-                    {articolo.descrizione && (
-                      <p
-                        className={`text-gray-600 transition-all duration-300 ${
-                          index === activeIndex ? 'text-sm line-clamp-2 opacity-100' : 'text-xs opacity-0'
-                        }`}
-                      >
-                        {articolo.descrizione}
-                      </p>
-                    )}
-                    <div className={`flex items-center justify-center gap-3 mt-3 transition-all duration-300 ${
-                      index === activeIndex ? 'opacity-100' : 'opacity-0'
-                    }`}>
-                      {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) ? (
-                        <>
-                          <span className="text-xl font-bold text-primary">
-                            €{articolo.prezzoPromozionale.toFixed(2)}
-                          </span>
-                          <span className="text-base text-gray-400 line-through">
-                            €{articolo.prezzo.toFixed(2)}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-xl font-bold text-gray-900">
-                          €{articolo.prezzo.toFixed(2)}
-                        </span>
-                      )}
-                    </div>
-                    {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) && (
-                      <p className={`text-xs text-gray-500 mt-2 transition-all duration-300 ${
-                        index === activeIndex ? 'opacity-100' : 'opacity-0'
-                      }`}>
-                        Promo valida fino al {new Date(articolo.scadenzaPromo!).toLocaleDateString('it-IT')}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
+      <main className="flex-1 py-8 md:py-12">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Titolo pagina */}
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Il Nostro Menu
+            </h1>
+            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+              Scopri i nostri piatti preparati con ingredienti freschi e di qualità
+            </p>
           </div>
 
-          {/* Dots/Markers */}
-          {articoli.length > 1 && (
-            <div className="flex justify-center gap-2">
-              {articoli.map((_, index) => (
-                <button
-                  key={index}
-                  className={`h-5 rounded-full transition-all duration-150 ${
-                    index === activeIndex ? 'w-5 bg-[rgb(15,23,43)] opacity-100' : 'w-2 bg-[rgb(15,23,43)] opacity-25'
-                  }`}
-                  onClick={() => scrollToIndex(index)}
-                  aria-label={`Vai alla slide ${index + 1}`}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+          {/* Elenco categorie con articoli */}
+          <div className="space-y-12">
+            {categorie
+              .sort((a, b) => a.ordine - b.ordine)
+              .map((categoria) => {
+                const articoliCategoria = getArticoliPerCategoria(categoria.id)
+                if (articoliCategoria.length === 0) return null
 
-      <style jsx>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
-    </section>
+                return (
+                  <div key={categoria.id} id={`categoria-${categoria.id}`}>
+                    {/* Titolo categoria */}
+                    <div className="mb-6">
+                      <h2 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
+                        <span className="w-2 h-8 bg-primary rounded-full"></span>
+                        {categoria.nome}
+                      </h2>
+                      <div className="h-0.5 bg-gradient-to-r from-primary to-transparent mt-2 ml-4"></div>
+                    </div>
+
+                    {/* Grid articoli */}
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {articoliCategoria.map((articolo) => (
+                        <Card
+                          key={articolo.id}
+                          id={`articolo-${articolo.id}`}
+                          className="overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer scroll-mt-24"
+                          onClick={() => {
+                            if (isInitialized && !trackedProducts.current.has(articolo.id)) {
+                              trackProductView(articolo.id)
+                              trackedProducts.current.add(articolo.id)
+                            }
+                          }}
+                        >
+                          {/* Immagine */}
+                          {articolo.immagineUrl && (
+                            <div className="relative h-48 overflow-hidden">
+                              <img
+                                src={articolo.immagineUrl}
+                                alt={articolo.nome}
+                                className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+                              />
+                              {/* Badges */}
+                              <div className="absolute top-3 left-3 flex gap-2">
+                                {articolo.eBestChoice && (
+                                  <Badge className="bg-primary hover:bg-primary/90">
+                                    <Star className="w-3 h-3 mr-1" />
+                                    Best Choice
+                                  </Badge>
+                                )}
+                                {articolo.eSurgelato && (
+                                  <Badge className="bg-blue-600 hover:bg-blue-700">
+                                    <AlertTriangle className="w-3 h-3 mr-1" />
+                                    Surgelato
+                                  </Badge>
+                                )}
+                              </div>
+                              {/* Sconto promozionale */}
+                              {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) && (
+                                <Badge className="absolute top-3 right-3 bg-red-600 hover:bg-red-700">
+                                  -{Math.round((1 - articolo.prezzoPromozionale / articolo.prezzo) * 100)}%
+                                </Badge>
+                              )}
+                              {/* Disclaimer AI */}
+                              {articolo.immagineAiGenerata && (
+                                <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm px-2 py-1">
+                                  <p className="text-[10px] text-white/80 flex items-center justify-center gap-1">
+                                    <Wand2 className="w-2.5 h-2.5" />
+                                    Immagine generata con IA
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          <CardContent className="p-5">
+                            {/* Nome */}
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">
+                              {articolo.nome}
+                            </h3>
+
+                            {/* Descrizione */}
+                            {articolo.descrizione && (
+                              <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                                {articolo.descrizione}
+                              </p>
+                            )}
+
+                            {/* Allergeni */}
+                            {articolo.allergeni && articolo.allergeni.length > 0 && (
+                              <div className="mb-4">
+                                <div className="flex flex-wrap gap-2">
+                                  {articolo.allergeni.map((allergene) => {
+                                    const isSelected = selectedAllergene?.articoloId === articolo.id && selectedAllergene?.allergeneId === allergene.id
+                                    return (
+                                      <button
+                                        key={allergene.id}
+                                        className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors text-lg cursor-pointer ${
+                                          isSelected
+                                            ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2'
+                                            : 'bg-amber-100 hover:bg-amber-200'
+                                        }`}
+                                        onClick={(e) => {
+                                          e.preventDefault()
+                                          if (isSelected) {
+                                            setSelectedAllergene(null)
+                                          } else {
+                                            setSelectedAllergene({ articoloId: articolo.id, allergeneId: allergene.id })
+                                          }
+                                        }}
+                                        title={allergene.nome}
+                                      >
+                                        {allergene.icona || '⚠️'}
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                                {/* Descrizione selezionata per touch device */}
+                                {selectedAllergene?.articoloId === articolo.id && (
+                                  <div className="mt-3 p-3 bg-primary/10 border border-primary/30 rounded-lg">
+                                    <p className="font-semibold text-sm text-primary">
+                                      {articolo.allergeni.find(a => a.id === selectedAllergene.allergeneId)?.nome}
+                                    </p>
+                                    {articolo.allergeni.find(a => a.id === selectedAllergene.allergeneId)?.descrizione && (
+                                      <p className="text-xs text-primary/80 mt-1">
+                                        {articolo.allergeni.find(a => a.id === selectedAllergene.allergeneId)?.descrizione}
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Tocca le icone per vedere i dettagli degli allergeni
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Prezzo */}
+                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+                              {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) ? (
+                                <div className="flex items-center gap-3">
+                                  <span className="text-2xl font-bold text-primary">
+                                    €{articolo.prezzoPromozionale.toFixed(2)}
+                                  </span>
+                                  <span className="text-sm text-gray-400 line-through">
+                                    €{articolo.prezzo.toFixed(2)}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-2xl font-bold text-gray-900">
+                                  €{articolo.prezzo.toFixed(2)}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Scadenza promo */}
+                            {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) && (
+                              <p className="text-xs text-red-600 mt-2">
+                                Promo valida fino al {new Date(articolo.scadenzaPromo!).toLocaleDateString('it-IT')}
+                              </p>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+          </div>
+        </div>
+      </main>
+
+      <Footer />
+      <SocialSidebar />
+    </div>
   )
 }
