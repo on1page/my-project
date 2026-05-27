@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Calendar, Clock, Euro, Users, Sparkles, Loader2, MapPin, Share2 } from 'lucide-react'
+import Link from 'next/link'
+import { Calendar, Clock, Euro, Users, Sparkles, Loader2, MapPin, Share2, ArrowLeft } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -126,6 +127,16 @@ export default function EventiPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Header semplificato */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div className="container mx-auto px-4 py-4">
+          <Link href="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-primary transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+            <span>Torna alla Home</span>
+          </Link>
+        </div>
+      </header>
+
       {/* Page Header */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
