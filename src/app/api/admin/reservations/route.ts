@@ -26,8 +26,18 @@ export async function GET(request: NextRequest) {
       orderBy: [
         { data: 'asc' },
         { ora: 'asc' }
-      ]
+      ],
+      include: {
+        evento: {
+          select: {
+            id: true,
+            titolo: true
+          }
+        }
+      }
     })
+
+    console.log('[Admin API] Prenotazioni recuperate:', JSON.stringify(reservations, null, 2))
 
     return NextResponse.json(reservations)
   } catch (error) {

@@ -35,7 +35,11 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    console.log('[API /api/reservations] Prenotazione creata:', reservation.id)
+    console.log('[API /api/reservations] Prenotazione creata:', {
+      id: reservation.id,
+      nome: reservation.nome,
+      eventoId: reservation.eventoId
+    })
 
     const responseData = {
       success: true,

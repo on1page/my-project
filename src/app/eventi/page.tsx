@@ -29,6 +29,7 @@ interface Evento {
   graditaPrenotazione: boolean
   capacita: number
   postiDisponibili: number
+  postiRimanenti: number | null
   location: string | null
   incluso: string[] | null
   infoAggiuntive: string[] | null
@@ -58,35 +59,11 @@ export default function EventiPage() {
   const [selectedEvent, setSelectedEvent] = useState<Evento | null>(null)
   const [reservationOpen, setReservationOpen] = useState(false)
   const [eventForReservation, setEventForReservation] = useState<Evento | null>(null)
-  const [postiRimanenti, setPostiRimanenti] = useState<number | null>(null)
 
   useEffect(() => {
     fetchEventi()
     fetchBanners()
   }, [])
-
-  // Fetch posti rimanenti quando cambia l'evento selezionato
-  useEffect(() => {
-    async function fetchPostiRimanenti() {
-      if (!selectedEvent || selectedEvent.capacita === 0) {
-        setPostiRimanenti(null)
-        return
-      }
-
-      try {
-        const response = await fetch(`/api/eventi/${selectedEvent.slug}/posti-rimanenti`)
-        if (response.ok) {
-          const data = await response.json()
-          setPostiRimanenti(data.rimanenti)
-        }
-      } catch (error) {
-        console.error('Errore nel recupero posti rimanenti:', error)
-        setPostiRimanenti(selectedEvent.capacita) // Fallback alla capacità totale
-      }
-    }
-
-    fetchPostiRimanenti()
-  }, [selectedEvent])
 
   async function fetchEventi() {
     setLoading(true)
@@ -98,6 +75,26 @@ export default function EventiPage() {
       console.error('Errore nel recupero eventi:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Funzione per ricaricare gli eventi e aggiornare l'evento selezionato
+  async function refreshEventi() {
+    try {
+      const response = await fetch('/api/eventi')
+      const result = await response.json()
+      const nuoviEventi = result.data || []
+      setEventi(nuoviEventi)
+
+      // Aggiorna l'evento selezionato con i dati aggiornati
+      if (selectedEvent) {
+        const eventoAggiornato = nuoviEventi.find((e: Evento) => e.id === selectedEvent.id)
+        if (eventoAggiornato) {
+          setSelectedEvent(eventoAggiornato)
+        }
+      }
+    } catch (error) {
+      console.error('Errore nel ricaricamento eventi:', error)
     }
   }
 
@@ -128,9 +125,8 @@ export default function EventiPage() {
 
   function handlePrenota() {
     if (!selectedEvent) return
-    // Salva l'evento per la prenotazione invece di azzerarlo
+    // Salva l'evento per la prenotazione mantenendo selectedEvent
     setEventForReservation(selectedEvent)
-    setSelectedEvent(null)
     setReservationOpen(true)
   }
 
@@ -283,17 +279,32 @@ export default function EventiPage() {
                       <p className="text-sm text-gray-600 mb-4 line-clamp-2 flex-grow">{evento.descrizioneBreve}</p>
 
                       {/* Footer Card */}
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                        {evento.gratuito ? (
-                          <span className="text-xl font-bold text-green-600">Gratuito</span>
-                        ) : (
-                          <div className="flex flex-col">
-                            {evento.etichettaPrezzo && (
-                              <span className="text-xs text-gray-500">{evento.etichettaPrezzo}</span>
-                            )}
-                            <span className="text-xl font-bold text-orange-600">€{evento.prezzo}</span>
+                      <div className="space-y-3 pt-4 border-t border-gray-100">
+                        {/* Posti rimanenti */}
+                        {evento.graditaPrenotazione && evento.capacita > 0 && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Users className="w-4 h-4 text-blue-500" />
+                            <span className={
+                              (evento.postiRimanenti ?? evento.capacita) <= 5 ? 'text-red-600 font-semibold' :
+                              (evento.postiRimanenti ?? evento.capacita) <= 10 ? 'text-yellow-600 font-semibold' :
+                              'text-green-600 font-semibold'
+                            }>
+                              {evento.postiRimanenti ?? evento.capacita} disponibili
+                            </span>
+                            <span className="text-gray-400">/ {evento.capacita} totali</span>
                           </div>
                         )}
+                        <div className="flex items-center justify-between">
+                          {evento.gratuito ? (
+                            <span className="text-xl font-bold text-green-600">Gratuito</span>
+                          ) : (
+                            <div className="flex flex-col">
+                              {evento.etichettaPrezzo && (
+                                <span className="text-xs text-gray-500">{evento.etichettaPrezzo}</span>
+                              )}
+                              <span className="text-xl font-bold text-orange-600">€{evento.prezzo}</span>
+                            </div>
+                          )}
 
                         <span className="text-sm font-medium text-orange-600 group-hover:gap-2 transition-all flex items-center gap-1">
                           Dettagli
@@ -303,6 +314,7 @@ export default function EventiPage() {
                         </span>
                       </div>
                     </div>
+                  </div>
                   </Card>
                 ))}
               </div>
@@ -431,11 +443,11 @@ export default function EventiPage() {
                       <div>
                         <p className="text-xs text-gray-500">Posti</p>
                         <p className={`font-semibold ${
-                          (postiRimanenti ?? selectedEvent.capacita) <= 5 ? 'text-red-600' :
-                          (postiRimanenti ?? selectedEvent.capacita) <= 10 ? 'text-yellow-600' :
+                          (selectedEvent.postiRimanenti ?? selectedEvent.capacita) <= 5 ? 'text-red-600' :
+                          (selectedEvent.postiRimanenti ?? selectedEvent.capacita) <= 10 ? 'text-yellow-600' :
                           'text-green-600'
                         }`}>
-                          {postiRimanenti ?? selectedEvent.capacita} disponibili
+                          {selectedEvent.postiRimanenti ?? selectedEvent.capacita} disponibili
                         </p>
                         <p className="text-sm text-gray-600">su {selectedEvent.capacita} totali</p>
                       </div>
@@ -526,6 +538,7 @@ export default function EventiPage() {
           eventoData={eventForReservation.data.split('T')[0]}
           eventoOra={eventForReservation.oraInizio}
           eventoTitolo={eventForReservation.titolo}
+          onSuccess={refreshEventi}
         />
       )}
     </div>

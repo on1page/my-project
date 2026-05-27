@@ -12,6 +12,7 @@ interface ReservationDialogProps {
   eventoData?: string
   eventoOra?: string
   eventoTitolo?: string
+  onSuccess?: () => void
 }
 
 export default function ReservationDialog({
@@ -19,7 +20,8 @@ export default function ReservationDialog({
   eventoId,
   eventoData,
   eventoOra,
-  eventoTitolo
+  eventoTitolo,
+  onSuccess
 }: ReservationDialogProps) {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -65,6 +67,7 @@ export default function ReservationDialog({
         console.log('[ReservationDialog] Response data:', data)
         if (data.success) {
           alert(`Grazie ${formData.nome}! La tua prenotazione è stata confermata.\n\nData: ${formData.data}\nOra: ${formData.ora}\nPersone: ${formData.persone}\n${eventoTitolo ? `Evento: ${eventoTitolo}\n` : ''}Ti contatteremo presto per confermare.`)
+          onSuccess?.()
           onClose()
         } else {
           alert(`Errore: ${data.error || 'Impossibile completare la prenotazione'}`)
