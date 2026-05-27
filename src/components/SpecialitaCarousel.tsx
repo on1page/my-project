@@ -152,7 +152,7 @@ export default function SpecialitaCarousel({
                   />
                   {articolo.eBestChoice && (
                     <div className="badge badge-best">
-                      <Star size={14} />
+                      <Star size={104} />
                       Best Choice
                     </div>
                   )}
