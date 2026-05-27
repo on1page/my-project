@@ -112,6 +112,7 @@ model FooterInfo {
   longitudine    Float?
   orariApertura  String?
   giorniChiusura String?
+  telefono       String?
   facebookUrl    String?
   instagramUrl   String?
   twitterUrl     String?

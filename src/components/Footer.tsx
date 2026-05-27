@@ -131,6 +131,7 @@ export default function Footer({ onAdminClick }: FooterProps = {}) {
   ].filter(app => app.url)
 
   const socialLinks = [
+    { name: 'Telefono', url: footerInfo.telefono ? `tel:${footerInfo.telefono}` : null, icon: Phone },
     { name: 'Facebook', url: footerInfo.facebookUrl, icon: Facebook },
     { name: 'Instagram', url: footerInfo.instagramUrl, icon: Instagram },
     { name: 'Twitter', url: footerInfo.twitterUrl, icon: Twitter },
@@ -232,22 +233,13 @@ export default function Footer({ onAdminClick }: FooterProps = {}) {
 
           {/* Contatti e Delivery */}
           <div>
-            {footerInfo.telefono || footerInfo.email ? (
+            {footerInfo.email && (
               <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Phone className="text-primary" />
+                <Mail className="text-primary" />
                 Contatti
               </h3>
-            ) : null}
+            )}
             <div className="space-y-3 mb-6">
-              {footerInfo.telefono && (
-                <a
-                  href={`tel:${footerInfo.telefono}`}
-                  className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
-                >
-                  <Phone className="w-4 h-4" />
-                  {footerInfo.telefono}
-                </a>
-              )}
               {footerInfo.email && (
                 <a
                   href={`mailto:${footerInfo.email}`}

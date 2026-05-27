@@ -20,6 +20,7 @@ interface FooterInfo {
   longitudine?: number | null
   orariApertura?: string | null
   giorniChiusura?: string | null
+  telefono?: string | null
   facebookUrl?: string | null
   instagramUrl?: string | null
   twitterUrl?: string | null
@@ -46,6 +47,7 @@ export default function AdminFooter() {
     longitudine: null,
     orariApertura: '',
     giorniChiusura: '',
+    telefono: '',
     facebookUrl: '',
     instagramUrl: '',
     twitterUrl: '',
@@ -371,6 +373,17 @@ export default function AdminFooter() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-green-500" />
+                    Telefono
+                  </Label>
+                  <Input
+                    value={footerInfo.telefono || ''}
+                    onChange={(e) => setFooterInfo({ ...footerInfo, telefono: e.target.value })}
+                    placeholder="+39 123 456 7890"
+                  />
+                </div>
                 <div>
                   <Label className="flex items-center gap-2">
                     <Facebook className="w-4 h-4 text-blue-600" />
