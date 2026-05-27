@@ -33,6 +33,8 @@ interface Reservation {
   persone: number
   note?: string | null
   stato: string
+  eventoId?: string | null
+  evento?: { titolo: string } | null
   createdAt: string
 }
 
@@ -161,12 +163,13 @@ Ti aspettiamo presto da noi! A presto! 😊`
     } else {
       return `Ciao ${nomeCliente}! 👋
 
-Il ${dataFormattata} alle ${reservation.ora} siamo al completo.
+Mi dispiace comunicarti che la tua prenotazione è stata cancellata.
 
-Se vuoi prenotare per un'altra data, contattaci pure!
-Ci piacerebbe ospitare ${reservation.persone} clienti come voi.
+📅 Data: ${dataFormattata}
+🕐 Ora: ${reservation.ora}
+👥 Persone: ${reservation.persone}
 
-  A presto! 😊`
+Se vuoi prenotare per un'altra data, contattaci pure! Ci piacerebbe averti con noi. A presto! 😊`
     }
   }
 
@@ -333,6 +336,7 @@ Ci piacerebbe ospitare ${reservation.persone} clienti come voi.
               <TableRow>
                 <TableHead>Data</TableHead>
                 <TableHead>Ora</TableHead>
+                <TableHead>Evento</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Contatti</TableHead>
                 <TableHead>Persone</TableHead>
@@ -343,7 +347,7 @@ Ci piacerebbe ospitare ${reservation.persone} clienti come voi.
             <TableBody>
               {reservations.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                     Nessuna prenotazione trovata
                   </TableCell>
                 </TableRow>
@@ -354,6 +358,13 @@ Ci piacerebbe ospitare ${reservation.persone} clienti come voi.
                       {new Date(res.data).toLocaleDateString('it-IT')}
                     </TableCell>
                     <TableCell>{res.ora}</TableCell>
+                    <TableCell>
+                      {res.evento?.titolo ? (
+                        <span className="text-sm font-medium text-primary">{res.evento.titolo}</span>
+                      ) : (
+                        <span className="text-sm text-gray-400">-</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div>
                         <div className="font-medium">{res.nome} {res.cognome}</div>

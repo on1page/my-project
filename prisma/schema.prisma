@@ -198,7 +198,7 @@ model CompanyData {
 }
 
 model Reservation {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   nome      String
   cognome   String
   email     String
@@ -207,9 +207,37 @@ model Reservation {
   ora       String
   persone   Int
   note      String?
-  stato     String   @default("pending")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  stato     String    @default("pending")
+  eventoId  String?   // Collegamento all'evento
+  evento    Evento?   @relation(fields: [eventoId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Evento {
+  id               String        @id @default(cuid())
+  titolo           String
+  slug             String        @unique
+  descrizione      String
+  descrizioneBreve String
+  immagineUrl      String?
+  data             DateTime
+  oraInizio        String
+  oraFine          String
+  prezzo           Float         @default(0)
+  etichettaPrezzo  String?
+  gratuito         Boolean       @default(false)
+  graditaPrenotazione Boolean     @default(false)
+  capacita         Int           @default(0)
+  postiDisponibili Int           @default(0)
+  location         String?
+  incluso          String?
+  infoAggiuntive   String?
+  inEvidenza       Boolean       @default(false)
+  nuovo            Boolean       @default(false)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  prenotazioni     Reservation[] // Relazione con le prenotazioni
 }
 
 model AnalyticsEvent {
@@ -283,31 +311,6 @@ model AnalyticsYearly {
   productInsights  String?
   priceInsights    String?
   createdAt        DateTime @default(now())
-}
-
-model Evento {
-  id                String   @id @default(cuid())
-  titolo            String
-  slug              String   @unique
-  descrizione       String
-  descrizioneBreve  String
-  immagineUrl       String?
-  data              DateTime
-  oraInizio         String
-  oraFine           String
-  prezzo            Float    @default(0)
-  etichettaPrezzo   String?
-  gratuito          Boolean  @default(false)
-  graditaPrenotazione Boolean @default(false)
-  capacita          Int      @default(0)
-  postiDisponibili  Int      @default(0)
-  location          String?
-  incluso           String?
-  infoAggiuntive    String?
-  inEvidenza        Boolean  @default(false)
-  nuovo             Boolean  @default(false)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
 }
 
 model BannerPubblicitario {

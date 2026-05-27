@@ -57,11 +57,36 @@ export default function EventiPage() {
   const [loading, setLoading] = useState(true)
   const [selectedEvent, setSelectedEvent] = useState<Evento | null>(null)
   const [reservationOpen, setReservationOpen] = useState(false)
+  const [eventForReservation, setEventForReservation] = useState<Evento | null>(null)
+  const [postiRimanenti, setPostiRimanenti] = useState<number | null>(null)
 
   useEffect(() => {
     fetchEventi()
     fetchBanners()
   }, [])
+
+  // Fetch posti rimanenti quando cambia l'evento selezionato
+  useEffect(() => {
+    async function fetchPostiRimanenti() {
+      if (!selectedEvent || selectedEvent.capacita === 0) {
+        setPostiRimanenti(null)
+        return
+      }
+
+      try {
+        const response = await fetch(`/api/eventi/${selectedEvent.id}/posti-rimanenti`)
+        if (response.ok) {
+          const data = await response.json()
+          setPostiRimanenti(data.rimanenti)
+        }
+      } catch (error) {
+        console.error('Errore nel recupero posti rimanenti:', error)
+        setPostiRimanenti(selectedEvent.capacita) // Fallback alla capacità totale
+      }
+    }
+
+    fetchPostiRimanenti()
+  }, [selectedEvent])
 
   async function fetchEventi() {
     setLoading(true)
@@ -103,6 +128,8 @@ export default function EventiPage() {
 
   function handlePrenota() {
     if (!selectedEvent) return
+    // Salva l'evento per la prenotazione invece di azzerarlo
+    setEventForReservation(selectedEvent)
     setSelectedEvent(null)
     setReservationOpen(true)
   }
@@ -404,11 +431,11 @@ export default function EventiPage() {
                       <div>
                         <p className="text-xs text-gray-500">Posti</p>
                         <p className={`font-semibold ${
-                          selectedEvent.postiDisponibili <= 5 ? 'text-red-600' :
-                          selectedEvent.postiDisponibili <= 10 ? 'text-yellow-600' :
+                          (postiRimanenti ?? selectedEvent.capacita) <= 5 ? 'text-red-600' :
+                          (postiRimanenti ?? selectedEvent.capacita) <= 10 ? 'text-yellow-600' :
                           'text-green-600'
                         }`}>
-                          {selectedEvent.postiDisponibili} disponibili
+                          {postiRimanenti ?? selectedEvent.capacita} disponibili
                         </p>
                         <p className="text-sm text-gray-600">su {selectedEvent.capacita} totali</p>
                       </div>
@@ -489,8 +516,17 @@ export default function EventiPage() {
       </Dialog>
 
       {/* Reservation Dialog */}
-      {reservationOpen && (
-        <ReservationDialog onClose={() => setReservationOpen(false)} />
+      {reservationOpen && eventForReservation && (
+        <ReservationDialog
+          onClose={() => {
+            setReservationOpen(false)
+            setEventForReservation(null)
+          }}
+          eventoId={eventForReservation.id}
+          eventoData={eventForReservation.data.split('T')[0]}
+          eventoOra={eventForReservation.oraInizio}
+          eventoTitolo={eventForReservation.titolo}
+        />
       )}
     </div>
   )

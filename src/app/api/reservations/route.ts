@@ -1,44 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
-// POST - Crea una nuova prenotazione
-export async function POST(request: NextRequest) {
+// GET - Recupera tutte le prenotazioni
+export async function GET(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { nome, cognome, email, telefono, data, ora, persone, note } = body
+    const { searchParams } = new URL(request.url)
+    const stato = searchParams.get('stato')
+    const dataFrom = searchParams.get('dataFrom')
+    const dataTo = searchParams.get('dataTo')
 
-    if (!nome || !cognome || !email || !telefono || !data || !ora || !persone) {
-      return NextResponse.json(
-        { error: 'Tutti i campi obbligatori devono essere compilati' },
-        { status: 400 }
-      )
+    const where: any = {}
+
+    if (stato) {
+      where.stato = stato
     }
 
-    const reservation = await db.reservation.create({
-      data: {
-        nome,
-        cognome,
-        email,
-        telefono,
-        data,
-        ora,
-        persone: parseInt(persone),
-        note: note || null
+    if (dataFrom || dataTo) {
+      where.data = {}
+      if (dataFrom) where.data.gte = dataFrom
+      if (dataTo) where.data.lte = dataTo
+    }
+
+    const reservations = await db.reservation.findMany({
+      where,
+      orderBy: [
+        { data: 'asc' },
+        { ora: 'asc' }
+      ],
+      include: {
+        evento: {
+          select: {
+            id: true,
+            titolo: true
+          }
+        }
       }
     })
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Prenotazione ricevuta con successo!',
-        reservation
-      },
-      { status: 201 }
-    )
+    return NextResponse.json(reservations)
   } catch (error) {
-    console.error('Errore nella creazione prenotazione:', error)
+    console.error('Errore nel recupero prenotazioni:', error)
     return NextResponse.json(
-      { error: 'Errore nella creazione della prenotazione' },
+      { error: 'Errore nel recupero delle prenotazioni' },
       { status: 500 }
     )
   }

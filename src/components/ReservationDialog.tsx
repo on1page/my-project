@@ -8,17 +8,27 @@ import { Label } from '@/components/ui/label'
 
 interface ReservationDialogProps {
   onClose: () => void
+  eventoId?: string
+  eventoData?: string
+  eventoOra?: string
+  eventoTitolo?: string
 }
 
-export default function ReservationDialog({ onClose }: ReservationDialogProps) {
+export default function ReservationDialog({
+  onClose,
+  eventoId,
+  eventoData,
+  eventoOra,
+  eventoTitolo
+}: ReservationDialogProps) {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     nome: '',
     cognome: '',
     email: '',
     telefono: '',
-    data: '',
-    ora: '',
+    data: eventoData || '',
+    ora: eventoOra || '',
     persone: '2'
   })
 
@@ -26,16 +36,22 @@ export default function ReservationDialog({ onClose }: ReservationDialogProps) {
     e.preventDefault()
     setLoading(true)
 
+    // Prepara il payload con eventoId se presente
+    const payload = {
+      ...formData,
+      ...(eventoId ? { eventoId } : {})
+    }
+
     // Invia la prenotazione al backend
     fetch('/api/reservations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData)
+      body: JSON.stringify(payload)
     })
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          alert(`Grazie ${formData.nome}! La tua prenotazione è stata confermata.\n\nData: ${formData.data}\nOra: ${formData.ora}\nPersone: ${formData.persone}\n\nTi contatteremo presto per confermare.`)
+          alert(`Grazie ${formData.nome}! La tua prenotazione è stata confermata.\n\nData: ${formData.data}\nOra: ${formData.ora}\nPersone: ${formData.persone}\n${eventoTitolo ? `Evento: ${eventoTitolo}\n` : ''}Ti contatteremo presto per confermare.`)
           onClose()
         } else {
           alert(`Errore: ${data.error || 'Impossibile completare la prenotazione'}`)
@@ -54,7 +70,7 @@ export default function ReservationDialog({ onClose }: ReservationDialogProps) {
     <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto relative m-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Prenota un Tavolo</h2>
+          <h2 className="text-2xl font-bold">{eventoTitolo ? `Prenotazione: ${eventoTitolo}` : 'Prenota un Tavolo'}</h2>
           <Button
             variant="ghost"
             size="icon"
@@ -120,7 +136,11 @@ export default function ReservationDialog({ onClose }: ReservationDialogProps) {
                 onChange={(e) => setFormData({ ...formData, data: e.target.value })}
                 min={new Date().toISOString().split('T')[0]}
                 required
+                disabled={!!eventoData}
               />
+              {eventoData && (
+                <p className="text-xs text-gray-500 mt-1">Data dell'evento</p>
+              )}
             </div>
             <div>
               <Label htmlFor="ora">Ora *</Label>
@@ -130,7 +150,11 @@ export default function ReservationDialog({ onClose }: ReservationDialogProps) {
                 value={formData.ora}
                 onChange={(e) => setFormData({ ...formData, ora: e.target.value })}
                 required
+                disabled={!!eventoOra}
               />
+              {eventoOra && (
+                <p className="text-xs text-gray-500 mt-1">Ora dell'evento</p>
+              )}
             </div>
           </div>
 
