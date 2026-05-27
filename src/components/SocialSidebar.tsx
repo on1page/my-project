@@ -48,7 +48,7 @@ export default function SocialSidebar() {
       case 'facebook':
         return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`
       case 'x':
-        return `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`
+        return `https://x.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`
       case 'whatsapp':
         return `https://wa.me/?text=${encodedText} ${encodedUrl}`
       case 'instagram':

@@ -154,7 +154,7 @@ Il sito potrebbe incorporare contenuti di terze parti (es. video, mappe, social 
 **Esempi di servizi di terze parti:**
 - Google Maps
 - YouTube
-- Social network (Facebook, Instagram, Twitter)
+- Social network (Facebook, Instagram, X)
 - Servizi di pagamento online
 
 ## 4. Gestione dei Cookie
