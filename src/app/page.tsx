@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Header from '@/components/Header'
 import Hero from '@/components/Hero'
 import ChiSiamo from '@/components/ChiSiamo'
-import Specialita from '@/components/Specialita'
+import SpecialitaCarousel from '@/components/SpecialitaCarousel'
 import HomeEventi from '@/components/HomeEventi'
 import Footer from '@/components/Footer'
 import SocialSidebar from '@/components/SocialSidebar'
@@ -105,7 +105,7 @@ export default function Home() {
           image={siteInfo.chiSiamoImageUrl}
         />
 
-        <Specialita
+        <SpecialitaCarousel
           showBestChoice={true}
           showPromo={true}
           limit={6}
