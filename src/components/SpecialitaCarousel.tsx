@@ -76,6 +76,13 @@ export default function SpecialitaCarousel({
     return () => window.removeEventListener('resize', calculatePadding)
   }, [articoli])
 
+  // Centra la prima card quando il padding è calcolato
+  useEffect(() => {
+    if (paddingLeft > 0 && carouselRef.current) {
+      carouselRef.current.scrollTo({ left: 0, behavior: 'smooth' })
+    }
+  }, [paddingLeft])
+
   // Aggiorna l'indice attivo in base alla posizione dello scroll
   useEffect(() => {
     const carousel = carouselRef.current
@@ -210,7 +217,7 @@ export default function SpecialitaCarousel({
               <div
                 key={articolo.id}
                 ref={index === 0 ? (el) => { if (el) cardRef.current = el } : undefined}
-                className="flex-shrink-0 w-[220px] md:w-[250px] snap-center transition-all duration-300 ease-in-out cursor-pointer"
+                className="flex-shrink-0 w-[220px] md:w-[250px] transition-all duration-300 ease-in-out cursor-pointer"
                 style={{
                   transform: index === activeIndex ? 'scale(1)' : 'scale(0.85)',
                   opacity: index === activeIndex ? '1' : '0.5',
