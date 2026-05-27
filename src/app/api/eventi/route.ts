@@ -34,18 +34,22 @@ export async function GET(request: NextRequest) {
     // Calcola posti rimanenti per ogni evento con capacità limitata
     const eventiConPosti = await Promise.all(
       eventi.map(async (evento) => {
-        let postiRimanenti = null
+        let postiRimanenti: number | null = null
 
         if (evento.capacita > 0) {
-          // Conta prenotazioni confermate per questo evento
-          const prenotazioniConfermate = await db.reservation.count({
+          // Somma il numero di persone delle prenotazioni confermate per questo evento
+          const prenotazioniConfermate = await db.reservation.findMany({
             where: {
               eventoId: evento.id,
               stato: 'confirmed'
+            },
+            select: {
+              persone: true
             }
           })
-          postiRimanenti = Math.max(0, evento.capacita - prenotazioniConfermate)
-          console.log(`[API Eventi] ${evento.titolo}: capacita=${evento.capacita}, confermati=${prenotazioniConfermate}, rimanenti=${postiRimanenti}`)
+
+          const totalePrenotati = prenotazioniConfermate.reduce((sum, p) => sum + (p.persone || 0), 0)
+          postiRimanenti = Math.max(0, evento.capacita - totalePrenotati)
         }
 
         return {

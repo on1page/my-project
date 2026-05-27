@@ -4,14 +4,14 @@ import { db } from '@/lib/db'
 // GET - Calcola i posti rimanenti per un evento
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { slug: string } }
 ) {
   try {
-    const eventoId = params.id
+    const eventoSlug = params.slug
 
-    // Recupera l'evento
+    // Recupera l'evento per slug
     const evento = await db.evento.findUnique({
-      where: { id: eventoId }
+      where: { slug: eventoSlug }
     })
 
     if (!evento) {
@@ -21,31 +21,36 @@ export async function GET(
       )
     }
 
-    // Se non ha capacità, non ci sono posti limitati
-    if (evento.capacita === 0) {
+    // Se ha capacità, calcola i posti rimanenti sommando le persone delle prenotazioni
+    if (evento.capacita > 0) {
+      // Somma il numero di persone delle prenotazioni confermate per questo evento
+      const prenotazioniConfermate = await db.reservation.findMany({
+        where: {
+          eventoId: evento.id,
+          stato: 'confirmed'
+        },
+        select: {
+          persone: true
+        }
+      })
+
+      const totalePrenotati = prenotazioniConfermate.reduce((sum, p) => sum + (p.persone || 0), 0)
+      const rimanenti = Math.max(0, evento.capacita - totalePrenotati)
+
       return NextResponse.json({
-        capacita: 0,
-        confermati: 0,
-        rimanenti: null,
-        postiLimitati: false
+        capacita: evento.capacita,
+        prenotati: totalePrenotati,
+        rimanenti: rimanenti,
+        postiLimitati: true
       })
     }
 
-    // Conta le prenotazioni confermate per questo evento
-    const prenotazioniConfermate = await db.reservation.count({
-      where: {
-        eventoId: eventoId,
-        stato: 'confirmed'
-      }
-    })
-
-    const rimanenti = evento.capacita - prenotazioniConfermate
-
+    // Se non ha capacità, non ci sono posti limitati
     return NextResponse.json({
-      capacita: evento.capacita,
-      confermati: prenotazioniConfermate,
-      rimanenti: rimanenti < 0 ? 0 : rimanenti,
-      postiLimitati: true
+      capacita: 0,
+      prenotati: 0,
+      rimanenti: null,
+      postiLimitati: false
     })
   } catch (error) {
     console.error('Errore nel calcolo posti rimanenti:', error)
