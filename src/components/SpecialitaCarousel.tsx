@@ -76,13 +76,6 @@ export default function SpecialitaCarousel({
     return () => window.removeEventListener('resize', calculatePadding)
   }, [articoli])
 
-  // Centra la prima card quando il padding è calcolato
-  useEffect(() => {
-    if (paddingLeft > 0 && carouselRef.current) {
-      carouselRef.current.scrollTo({ left: 0, behavior: 'smooth' })
-    }
-  }, [paddingLeft])
-
   // Aggiorna l'indice attivo in base alla posizione dello scroll
   useEffect(() => {
     const carousel = carouselRef.current
