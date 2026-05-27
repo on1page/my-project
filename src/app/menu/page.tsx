@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import Footer from '@/components/Footer'
 import SocialSidebar from '@/components/SocialSidebar'
 import { useAnalytics } from '../../components/useAnalytics'
+import { useSearchParams } from 'next/navigation'
 
 interface Allergene {
   id: string
@@ -51,6 +52,7 @@ export default function MenuPage() {
   const [selectedAllergene, setSelectedAllergene] = useState<{ articoloId: string; allergeneId: string } | null>(null)
   const { trackProductView, isInitialized } = useAnalytics()
   const trackedProducts = useRef<Set<string>>(new Set())
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     async function fetchData() {
@@ -71,6 +73,26 @@ export default function MenuPage() {
 
     fetchData()
   }, [])
+
+  // Scorri all'articolo specifico se c'è il parametro 'articolo' nell'URL
+  useEffect(() => {
+    if (!loading && articoli.length > 0) {
+      const articoloId = searchParams.get('articolo')
+      if (articoloId) {
+        const element = document.getElementById(`articolo-${articoloId}`)
+        if (element) {
+          setTimeout(() => {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            // Evidenzia momentaneamente l'articolo
+            element.classList.add('ring-4', 'ring-primary', 'ring-offset-4')
+            setTimeout(() => {
+              element.classList.remove('ring-4', 'ring-primary', 'ring-offset-4')
+            }, 2000)
+          }, 500)
+        }
+      }
+    }
+  }, [loading, articoli, searchParams])
 
   const isPromoValid = (scadenza: string | null) => {
     if (!scadenza) return false
@@ -140,7 +162,8 @@ export default function MenuPage() {
                       {articoliCategoria.map((articolo) => (
                         <Card
                           key={articolo.id}
-                          className="overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+                          id={`articolo-${articolo.id}`}
+                          className="overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer scroll-mt-24"
                           onClick={() => {
                             if (isInitialized && !trackedProducts.current.has(articolo.id)) {
                               trackProductView(articolo.id)

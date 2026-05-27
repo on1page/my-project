@@ -58,18 +58,6 @@ export default function SpecialitaCarousel({
     fetchArticoli()
   }, [showBestChoice, showPromo, limit])
 
-  // Centra il primo elemento quando gli articoli sono caricati
-  useEffect(() => {
-    if (articoli.length > 0 && carouselRef.current) {
-      const itemWidth = carouselRef.current.children[1]?.getBoundingClientRect().width || 0
-      const spacerWidth = carouselRef.current.children[0]?.getBoundingClientRect().width || 0
-      carouselRef.current.scrollTo({
-        left: spacerWidth,
-        behavior: 'smooth'
-      })
-    }
-  }, [articoli.length])
-
   // Aggiorna l'indice attivo in base alla posizione dello scroll
   useEffect(() => {
     const carousel = carouselRef.current
@@ -77,11 +65,11 @@ export default function SpecialitaCarousel({
 
     const handleScroll = () => {
       const scrollPosition = carousel.scrollLeft
-      const itemWidth = carousel.children[1]?.getBoundingClientRect().width || 0 // Indice 1 perché 0 è lo spacer
-      const spacerWidth = carousel.children[0]?.getBoundingClientRect().width || 0
+      const itemWidth = carousel.firstElementChild?.getBoundingClientRect().width || 0
+      const paddingLeft = parseFloat(getComputedStyle(carousel).paddingLeft) || 0
 
-      // Calcola l'indice considerando lo spacer iniziale
-      const index = Math.round((scrollPosition - spacerWidth) / itemWidth)
+      // Calcola l'indice considerando il padding
+      const index = Math.round((scrollPosition - paddingLeft) / itemWidth)
       setActiveIndex(Math.min(Math.max(0, index), articoli.length - 1))
     }
 
@@ -91,10 +79,10 @@ export default function SpecialitaCarousel({
 
   const scrollPrev = () => {
     if (carouselRef.current && activeIndex > 0) {
-      const itemWidth = carouselRef.current.children[1]?.getBoundingClientRect().width || 0
-      const spacerWidth = carouselRef.current.children[0]?.getBoundingClientRect().width || 0
+      const itemWidth = carouselRef.current.firstElementChild?.getBoundingClientRect().width || 0
+      const paddingLeft = parseFloat(getComputedStyle(carouselRef.current).paddingLeft) || 0
       carouselRef.current.scrollTo({
-        left: spacerWidth + (activeIndex - 1) * itemWidth,
+        left: paddingLeft + (activeIndex - 1) * itemWidth,
         behavior: 'smooth'
       })
     }
@@ -102,10 +90,10 @@ export default function SpecialitaCarousel({
 
   const scrollNext = () => {
     if (carouselRef.current && activeIndex < articoli.length - 1) {
-      const itemWidth = carouselRef.current.children[1]?.getBoundingClientRect().width || 0
-      const spacerWidth = carouselRef.current.children[0]?.getBoundingClientRect().width || 0
+      const itemWidth = carouselRef.current.firstElementChild?.getBoundingClientRect().width || 0
+      const paddingLeft = parseFloat(getComputedStyle(carouselRef.current).paddingLeft) || 0
       carouselRef.current.scrollTo({
-        left: spacerWidth + (activeIndex + 1) * itemWidth,
+        left: paddingLeft + (activeIndex + 1) * itemWidth,
         behavior: 'smooth'
       })
     }
@@ -113,10 +101,10 @@ export default function SpecialitaCarousel({
 
   const scrollToIndex = (index: number) => {
     if (carouselRef.current) {
-      const itemWidth = carouselRef.current.children[1]?.getBoundingClientRect().width || 0
-      const spacerWidth = carouselRef.current.children[0]?.getBoundingClientRect().width || 0
+      const itemWidth = carouselRef.current.firstElementChild?.getBoundingClientRect().width || 0
+      const paddingLeft = parseFloat(getComputedStyle(carouselRef.current).paddingLeft) || 0
       carouselRef.current.scrollTo({
-        left: spacerWidth + index * itemWidth,
+        left: paddingLeft + index * itemWidth,
         behavior: 'smooth'
       })
     }
@@ -193,32 +181,42 @@ export default function SpecialitaCarousel({
           {/* Carousel */}
           <div
             ref={carouselRef}
-            className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-12 px-32"
+            className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-12"
             style={{
-              scrollBehavior: 'smooth'
+              scrollBehavior: 'smooth',
+              paddingLeft: 'calc(50% - 110px)',
+              paddingRight: 'calc(50% - 110px)'
             }}
           >
-            {/* Spacer sinistro per permettere al primo elemento di essere centrato */}
-            <div className="flex-shrink-0 w-[110px] md:w-[125px]"></div>
-
             {articoli.map((articolo, index) => (
               <div
                 key={articolo.id}
-                className="flex-shrink-0 w-[220px] md:w-[250px] snap-center transition-all duration-300 ease-in-out"
+                className="flex-shrink-0 w-[220px] md:w-[250px] snap-center transition-all duration-300 ease-in-out cursor-pointer"
                 style={{
                   transform: index === activeIndex ? 'scale(1)' : 'scale(0.85)',
                   opacity: index === activeIndex ? '1' : '0.5',
                   transformOrigin: 'center center'
                 }}
+                onClick={() => {
+                  window.location.href = `/menu?articolo=${articolo.id}`
+                }}
               >
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300">
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 group">
                   {/* Image */}
                   <div className="relative h-[280px] overflow-hidden">
                     <img
                       src={articolo.immagineUrl || '/images/pasta.jpg'}
                       alt={articolo.nome}
-                      className="w-full h-full object-cover rounded-t-2xl shadow-lg"
+                      className="w-full h-full object-cover rounded-t-2xl shadow-lg group-hover:scale-105 transition-transform duration-300"
                     />
+                    {/* Overlay on hover */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 rounded-t-2xl" />
+                    {/* Click indicator */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                      <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium text-gray-900 shadow-lg">
+                        Vedi dettagli →
+                      </div>
+                    </div>
                     {articolo.eBestChoice && (
                       <div className="absolute top-3 left-3 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
                         <Star size={14} />
@@ -287,9 +285,6 @@ export default function SpecialitaCarousel({
                 </div>
               </div>
             ))}
-
-            {/* Spacer destro per permettere all'ultimo elemento di essere centrato */}
-            <div className="flex-shrink-0 w-[110px] md:w-[125px]"></div>
           </div>
 
           {/* Dots/Markers */}
