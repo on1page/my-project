@@ -74,7 +74,7 @@ export default function EventiPage() {
       }
 
       try {
-        const response = await fetch(`/api/eventi/${selectedEvent.id}/posti-rimanenti`)
+        const response = await fetch(`/api/eventi/${selectedEvent.slug}/posti-rimanenti`)
         if (response.ok) {
           const data = await response.json()
           setPostiRimanenti(data.rimanenti)
