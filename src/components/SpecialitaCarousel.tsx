@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ChevronLeft, ChevronRight, Star, Wand2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Star, Wand2 } from 'lucide-react'
 
 interface Articolo {
   id: string
@@ -32,11 +31,9 @@ export default function SpecialitaCarousel({
   subtitle = "Scopri i piatti più amati dai nostri clienti e le offerte speciali del momento"
 }: SpecialitaCarouselProps) {
   const [articoli, setArticoli] = useState<Articolo[]>([])
-  const [activeIndex, setActiveIndex] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [paddingLeft, setPaddingLeft] = useState(0)
+  const [activeIndex, setActiveIndex] = useState(0)
   const carouselRef = useRef<HTMLDivElement>(null)
-  const cardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     async function fetchArticoli() {
@@ -60,80 +57,33 @@ export default function SpecialitaCarousel({
     fetchArticoli()
   }, [showBestChoice, showPromo, limit])
 
-  // Calcola il padding per centrare le card
-  useEffect(() => {
-    const calculatePadding = () => {
-      if (carouselRef.current && cardRef.current) {
-        const containerWidth = carouselRef.current.offsetWidth
-        const cardWidth = cardRef.current.offsetWidth
-        const padding = (containerWidth - cardWidth) / 2
-        setPaddingLeft(Math.max(0, padding))
-      }
-    }
-
-    calculatePadding()
-    window.addEventListener('resize', calculatePadding)
-    return () => window.removeEventListener('resize', calculatePadding)
-  }, [articoli])
-
-  // Centra la prima card quando il padding è calcolato
-  useEffect(() => {
-    if (paddingLeft > 0 && carouselRef.current) {
-      carouselRef.current.scrollTo({ left: 0, behavior: 'smooth' })
-    }
-  }, [paddingLeft])
-
-  // Aggiorna l'indice attivo in base alla posizione dello scroll
+  // Track active card based on scroll position
   useEffect(() => {
     const carousel = carouselRef.current
     if (!carousel) return
 
     const handleScroll = () => {
-      const scrollPosition = carousel.scrollLeft
-      const itemWidth = carousel.firstElementChild?.getBoundingClientRect().width || 0
-      const paddingLeft = parseFloat(getComputedStyle(carousel).paddingLeft) || 0
+      const items = carousel.querySelectorAll('.carousel-item')
+      const center = carousel.scrollLeft + carousel.offsetWidth / 2
 
-      // Calcola l'indice considerando il padding
-      const index = Math.round((scrollPosition - paddingLeft) / itemWidth)
-      setActiveIndex(Math.min(Math.max(0, index), articoli.length - 1))
+      let closestIndex = 0
+      let closestDistance = Infinity
+
+      items.forEach((item, index) => {
+        const itemCenter = item.getBoundingClientRect().left + item.getBoundingClientRect().width / 2
+        const distance = Math.abs(center - itemCenter)
+        if (distance < closestDistance) {
+          closestDistance = distance
+          closestIndex = index
+        }
+      })
+
+      setActiveIndex(closestIndex)
     }
 
     carousel.addEventListener('scroll', handleScroll)
     return () => carousel.removeEventListener('scroll', handleScroll)
-  }, [articoli.length])
-
-  const scrollPrev = () => {
-    if (carouselRef.current && activeIndex > 0) {
-      const itemWidth = carouselRef.current.firstElementChild?.getBoundingClientRect().width || 0
-      const paddingLeft = parseFloat(getComputedStyle(carouselRef.current).paddingLeft) || 0
-      carouselRef.current.scrollTo({
-        left: paddingLeft + (activeIndex - 1) * itemWidth,
-        behavior: 'smooth'
-      })
-    }
-  }
-
-  const scrollNext = () => {
-    if (carouselRef.current && activeIndex < articoli.length - 1) {
-      const itemWidth = carouselRef.current.firstElementChild?.getBoundingClientRect().width || 0
-      const paddingLeft = parseFloat(getComputedStyle(carouselRef.current).paddingLeft) || 0
-      carouselRef.current.scrollTo({
-        left: paddingLeft + (activeIndex + 1) * itemWidth,
-        behavior: 'smooth'
-      })
-    }
-  }
-
-  const scrollToIndex = (index: number) => {
-    if (carouselRef.current) {
-      const itemWidth = carouselRef.current.firstElementChild?.getBoundingClientRect().width || 0
-      const paddingLeft = parseFloat(getComputedStyle(carouselRef.current).paddingLeft) || 0
-      carouselRef.current.scrollTo({
-        left: paddingLeft + index * itemWidth,
-        behavior: 'smooth'
-      })
-    }
-  }
+  }, [articoli])
 
   const isPromoValid = (scadenza: string | null) => {
     if (!scadenza) return false
@@ -167,7 +117,7 @@ export default function SpecialitaCarousel({
 
   return (
     <section id="specialita" className="py-16 md:py-24 bg-gray-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             {title}
@@ -178,151 +128,140 @@ export default function SpecialitaCarousel({
         </div>
 
         {/* Carousel Container */}
-        <div className="relative max-w-4xl mx-auto">
-          {/* Navigation Arrows */}
-          {articoli.length > 1 && (
-            <>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={scrollPrev}
-                disabled={activeIndex === 0}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 rounded-full bg-[rgb(15,23,43)] text-white border-none opacity-70 hover:opacity-100 hover:scale-110 transition-all shadow-lg disabled:opacity-25 disabled:cursor-not-allowed w-10 h-10 md:w-12 md:h-12"
-              >
-                <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={scrollNext}
-                disabled={activeIndex === articoli.length - 1}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 rounded-full bg-[rgb(15,23,43)] text-white border-none opacity-70 hover:opacity-100 hover:scale-110 transition-all shadow-lg disabled:opacity-25 disabled:cursor-not-allowed w-10 h-10 md:w-12 md:h-12"
-              >
-                <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
-              </Button>
-            </>
-          )}
-
-          {/* Carousel */}
-          <div
+        <div className="carousel-container">
+          <section
             ref={carouselRef}
-            className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-12"
-            style={{
-              scrollBehavior: 'smooth',
-              paddingLeft: `${paddingLeft}px`,
-              paddingRight: `${paddingLeft}px`
-            }}
+            className="carousel"
           >
+            {/* Empty pseudo elements - represented as invisible divs */}
+            <div className="carousel-spacer" aria-hidden="true"></div>
+
             {articoli.map((articolo, index) => (
-              <div
+              <article
                 key={articolo.id}
-                ref={index === 0 ? (el) => { if (el) cardRef.current = el } : undefined}
-                className="flex-shrink-0 w-[220px] md:w-[250px] transition-all duration-300 ease-in-out cursor-pointer"
-                style={{
-                  transform: index === activeIndex ? 'scale(1)' : 'scale(0.85)',
-                  opacity: index === activeIndex ? '1' : '0.5',
-                  transformOrigin: 'center center'
-                }}
+                className={`carousel-item ${index === 0 ? 'scroll-start' : ''} ${index === activeIndex ? 'active' : ''}`}
                 onClick={() => {
                   window.location.href = `/menu?articolo=${articolo.id}`
                 }}
               >
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 group">
-                  {/* Image */}
-                  <div className="relative h-[280px] overflow-hidden">
-                    <img
-                      src={articolo.immagineUrl || '/images/pasta.jpg'}
-                      alt={articolo.nome}
-                      className="w-full h-full object-cover rounded-t-2xl shadow-lg group-hover:scale-105 transition-transform duration-300"
-                    />
-                    {/* Overlay on hover */}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 rounded-t-2xl" />
-                    {/* Click indicator */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                      <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium text-gray-900 shadow-lg">
-                        Vedi dettagli →
-                      </div>
+                {/* Immagine */}
+                <div className="carousel-img">
+                  <img
+                    src={articolo.immagineUrl || '/images/pasta.jpg'}
+                    alt={articolo.nome}
+                  />
+                  {articolo.eBestChoice && (
+                    <div className="badge badge-best">
+                      <Star size={14} />
+                      Best Choice
                     </div>
-                    {articolo.eBestChoice && (
-                      <div className="absolute top-3 left-3 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
-                        <Star size={14} />
-                        Best Choice
-                      </div>
-                    )}
-                    {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) && (
-                      <div className="absolute top-3 right-3 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold">
-                        -{Math.round((1 - articolo.prezzoPromozionale / articolo.prezzo) * 100)}%
-                      </div>
-                    )}
-                    {articolo.immagineAiGenerata && (
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm px-2 py-1">
-                        <p className="text-[10px] text-white/80 flex items-center justify-center gap-1">
-                          <Wand2 className="w-2.5 h-2.5" />
-                          Immagine generata con IA
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-4 text-center">
-                    <h3
-                      className={`font-bold text-gray-900 mb-2 transition-all duration-300 ${
-                        index === activeIndex ? 'text-xl' : 'text-base translate-y-4'
-                      }`}
-                    >
-                      {articolo.nome}
-                    </h3>
-                    {articolo.descrizione && (
-                      <p
-                        className={`text-gray-600 transition-all duration-300 ${
-                          index === activeIndex ? 'text-sm line-clamp-2 opacity-100' : 'text-xs opacity-0'
-                        }`}
-                      >
-                        {articolo.descrizione}
-                      </p>
-                    )}
-                    <div className={`flex items-center justify-center gap-3 mt-3 transition-all duration-300 ${
-                      index === activeIndex ? 'opacity-100' : 'opacity-0'
-                    }`}>
-                      {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) ? (
-                        <>
-                          <span className="text-xl font-bold text-primary">
-                            €{articolo.prezzoPromozionale.toFixed(2)}
-                          </span>
-                          <span className="text-base text-gray-400 line-through">
-                            €{articolo.prezzo.toFixed(2)}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-xl font-bold text-gray-900">
-                          €{articolo.prezzo.toFixed(2)}
-                        </span>
-                      )}
+                  )}
+                  {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) && (
+                    <div className="badge badge-promo">
+                      -{Math.round((1 - articolo.prezzoPromozionale / articolo.prezzo) * 100)}%
                     </div>
-                    {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) && (
-                      <p className={`text-xs text-gray-500 mt-2 transition-all duration-300 ${
-                        index === activeIndex ? 'opacity-100' : 'opacity-0'
-                      }`}>
-                        Promo valida fino al {new Date(articolo.scadenzaPromo!).toLocaleDateString('it-IT')}
-                      </p>
-                    )}
-                  </div>
+                  )}
+                  {articolo.immagineAiGenerata && (
+                    <div className="ai-badge">
+                      <Wand2 className="w-2.5 h-2.5" />
+                      Immagine generata con IA
+                    </div>
+                  )}
                 </div>
-              </div>
+
+                {/* Titolo */}
+                <h2 className="carousel-title">{articolo.nome}</h2>
+
+                {/* Descrizione */}
+                {articolo.descrizione && (
+                  <p className="carousel-desc">{articolo.descrizione}</p>
+                )}
+
+                {/* Prezzo */}
+                <div className="carousel-price">
+                  {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) ? (
+                    <>
+                      <span className="price-current">
+                        €{articolo.prezzoPromozionale.toFixed(2)}
+                      </span>
+                      <span className="price-original">
+                        €{articolo.prezzo.toFixed(2)}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="price-normal">
+                      €{articolo.prezzo.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+
+                {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) && (
+                  <p className="promo-expiry">
+                    Promo valida fino al {new Date(articolo.scadenzaPromo!).toLocaleDateString('it-IT')}
+                  </p>
+                )}
+              </article>
             ))}
-          </div>
+
+            {/* Empty pseudo element at the end */}
+            <div className="carousel-spacer" aria-hidden="true"></div>
+          </section>
+
+          {/* Navigation Arrows */}
+          {articoli.length > 1 && (
+            <>
+              <button
+                className="nav-btn nav-btn-prev"
+                onClick={() => {
+                  if (carouselRef.current) {
+                    const itemWidth = carouselRef.current.querySelector('.carousel-item')?.getBoundingClientRect().width || 220
+                    carouselRef.current.scrollBy({
+                      left: -itemWidth,
+                      behavior: 'smooth'
+                    })
+                  }
+                }}
+                aria-label="Precedente"
+              >
+                ❮
+              </button>
+              <button
+                className="nav-btn nav-btn-next"
+                onClick={() => {
+                  if (carouselRef.current) {
+                    const itemWidth = carouselRef.current.querySelector('.carousel-item')?.getBoundingClientRect().width || 220
+                    carouselRef.current.scrollBy({
+                      left: itemWidth,
+                      behavior: 'smooth'
+                    })
+                  }
+                }}
+                aria-label="Successivo"
+              >
+                ❯
+              </button>
+            </>
+          )}
 
           {/* Dots/Markers */}
           {articoli.length > 1 && (
-            <div className="flex justify-center gap-2">
+            <div className="carousel-markers">
               {articoli.map((_, index) => (
                 <button
                   key={index}
-                  className={`h-5 rounded-full transition-all duration-150 ${
-                    index === activeIndex ? 'w-5 bg-[rgb(15,23,43)] opacity-100' : 'w-2 bg-[rgb(15,23,43)] opacity-25'
-                  }`}
-                  onClick={() => scrollToIndex(index)}
+                  className={`carousel-marker ${index === activeIndex ? 'active' : ''}`}
+                  onClick={() => {
+                    if (carouselRef.current) {
+                      const item = carouselRef.current.querySelectorAll('.carousel-item')[index]
+                      if (item) {
+                        item.scrollIntoView({
+                          behavior: 'smooth',
+                          block: 'nearest',
+                          inline: 'center'
+                        })
+                      }
+                    }
+                  }}
                   aria-label={`Vai alla slide ${index + 1}`}
                 />
               ))}
@@ -332,12 +271,299 @@ export default function SpecialitaCarousel({
       </div>
 
       <style jsx>{`
-        .scrollbar-hide::-webkit-scrollbar {
+        .carousel-container {
+          --nav-btn-size: 40px;
+          --nav-btn-bg: rgb(15, 23, 43);
+          --nav-marker-bg: rgb(15, 23, 43);
+          --card-width: 220px;
+          --card-ratio: 3/4;
+
+          width: min(calc(100% - 2rem), 700px);
+          margin: 0 auto;
+          position: relative;
+          padding-block: 2rem;
+        }
+
+        .carousel {
+          display: flex;
+          gap: 0;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          overscroll-behavior-x: contain;
+          scroll-behavior: smooth;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          scroll-padding-inline: max(calc(50% - var(--card-width) / 2), 0);
+        }
+
+        .carousel::-webkit-scrollbar {
           display: none;
         }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
+
+        .carousel-spacer {
+          flex: 0 0 1px;
+          min-width: calc(50% - var(--card-width) / 2);
+        }
+
+        .carousel-item {
+          flex: 0 0 var(--card-width);
+          scroll-snap-align: center;
+          scroll-snap-stop: always;
+          display: grid;
+          grid-template-areas:
+            'img'
+            'title'
+            'desc'
+            'price'
+            'promo';
+          text-align: center;
+          cursor: pointer;
+          padding: 0.5rem;
+          transition: all 300ms ease-in-out;
+          container-type: inline-size;
+          container-name: card;
+
+          &.scroll-start {
+            scroll-margin-inline: auto;
+          }
+
+          /* Inactive items */
+          &:not(.active) {
+            .carousel-img {
+              scale: 0.75;
+              opacity: 0.5;
+            }
+
+            .carousel-title {
+              scale: 0.75;
+              opacity: 0.5;
+              translate: 0 -50px;
+            }
+
+            .carousel-desc {
+              scale: 0.75;
+              opacity: 0;
+            }
+
+            .carousel-price,
+            .promo-expiry {
+              opacity: 0;
+            }
+          }
+        }
+
+        .carousel-img {
+          grid-area: img;
+          width: 100%;
+          aspect-ratio: var(--card-ratio);
+          transition: all 300ms ease-in-out;
+          transform-origin: center center;
+          position: relative;
+          overflow: hidden;
+          border-radius: 20px;
+          box-shadow: 0 10px 20px rgba(0 0 0 / 0.25);
+
+          & img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 300ms ease;
+          }
+
+          &:hover img {
+            transform: scale(1.05);
+          }
+        }
+
+        .badge {
+          position: absolute;
+          top: 0.75rem;
+          padding: 0.25rem 0.75rem;
+          border-radius: 9999px;
+          font-size: 0.875rem;
+          font-weight: 500;
+          z-index: 10;
+        }
+
+        .badge-best {
+          left: 0.75rem;
+          background-color: hsl(var(--primary));
+          color: hsl(var(--primary-foreground));
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+        }
+
+        .badge-promo {
+          right: 0.75rem;
+          background-color: rgb(220, 38, 38);
+          color: white;
+          font-weight: 700;
+        }
+
+        .ai-badge {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background-color: rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(4px);
+          padding: 0.25rem 0.5rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.25rem;
+
+          p {
+            font-size: 0.625rem;
+            color: rgba(255, 255, 255, 0.8);
+          }
+        }
+
+        .carousel-title {
+          grid-area: title;
+          margin: 1rem 0 0.25rem 0;
+          font-size: 1.3rem;
+          font-weight: bold;
+          color: rgb(15, 23, 43);
+          white-space: nowrap;
+          transition: all 300ms ease-in-out;
+        }
+
+        .carousel-desc {
+          grid-area: desc;
+          margin: 0 0 0.5rem 0;
+          font-size: 0.875rem;
+          color: rgb(75, 85, 99);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          transition: all 300ms ease-in-out;
+        }
+
+        .carousel-price {
+          grid-area: price;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          transition: all 300ms ease-in-out;
+        }
+
+        .price-current {
+          font-size: 1.25rem;
+          font-weight: bold;
+          color: hsl(var(--primary));
+        }
+
+        .price-original {
+          font-size: 1rem;
+          color: rgb(156, 163, 175);
+          text-decoration: line-through;
+        }
+
+        .price-normal {
+          font-size: 1.25rem;
+          font-weight: bold;
+          color: rgb(15, 23, 43);
+        }
+
+        .promo-expiry {
+          grid-area: promo;
+          font-size: 0.75rem;
+          color: rgb(107, 114, 128);
+          margin-top: 0.25rem;
+          transition: all 300ms ease-in-out;
+        }
+
+        /* Navigation Buttons */
+        .nav-btn {
+          position: absolute;
+          width: var(--nav-btn-size);
+          aspect-ratio: 1/1;
+          font: inherit;
+          background-color: var(--nav-btn-bg);
+          display: grid;
+          place-content: center;
+          color: #FFF;
+          border: none;
+          border-radius: 50%;
+          opacity: 0.7;
+          cursor: pointer;
+          transition: all 150ms ease-in-out;
+          outline: 1px dashed transparent;
+          outline-offset: 0px;
+          z-index: 20;
+          top: 50%;
+          transform: translateY(-50%);
+        }
+
+        .nav-btn-prev {
+          left: calc(var(--nav-btn-size) * -0.5);
+        }
+
+        .nav-btn-next {
+          right: calc(var(--nav-btn-size) * -0.5);
+        }
+
+        .nav-btn:hover,
+        .nav-btn:focus-visible {
+          opacity: 1;
+          scale: 1.1;
+        }
+
+        .nav-btn:focus-visible {
+          outline: 1px dashed var(--nav-btn-bg);
+          outline-offset: 4px;
+        }
+
+        /* Markers */
+        .carousel-markers {
+          position: absolute;
+          width: min(90%, 400px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.25rem;
+          padding-block-start: 1rem;
+          left: calc(50% - min(45%, 200px));
+          right: calc(50% - min(45%, 200px));
+        }
+
+        .carousel-marker {
+          content: ' ';
+          height: 20px;
+          width: 5px;
+          aspect-ratio: 1;
+          background-color: var(--nav-marker-bg);
+          border-radius: 50%;
+          transition: all 150ms ease-in-out;
+          cursor: pointer;
+          border: none;
+          padding: 0;
+          opacity: 0.25;
+
+          &.active {
+            width: 20px;
+            opacity: 1;
+          }
+        }
+
+        .carousel-marker:hover {
+          opacity: 1;
+        }
+
+        .carousel-marker:focus-visible {
+          outline: 1px dashed var(--nav-marker-bg);
+          outline-offset: 4px;
+        }
+
+        /* Active marker styling handled by scroll position tracking */
+        @media (hover: hover) {
+          .carousel-marker:hover {
+            width: 20px;
+            opacity: 1;
+          }
         }
       `}</style>
     </section>
