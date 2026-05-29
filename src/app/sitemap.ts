@@ -19,12 +19,18 @@ const PRIORITIES: Record<string, number> = {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Recupera l'URL di base dal database
-  const siteInfo = await db.siteInfo.findFirst({
-    select: {
-      seoCanonical: true,
-      updatedAt: true,
-    },
-  })
+  let siteInfo
+  try {
+    siteInfo = await db.siteInfo.findFirst({
+      select: {
+        seoCanonical: true,
+        updatedAt: true,
+      },
+    })
+  } catch (error) {
+    console.warn('Database not available during build, using fallback values for sitemap')
+    siteInfo = null
+  }
 
   // Usa l'URL canonico configurato o fallback su localhost
   const baseUrl = siteInfo?.seoCanonical
