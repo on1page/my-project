@@ -32,6 +32,7 @@ export default function SpecialitaCarousel({
 }: SpecialitaCarouselProps) {
   const [articoli, setArticoli] = useState<Articolo[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeIndex, setActiveIndex] = useState(0)
   const carouselRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -55,6 +56,34 @@ export default function SpecialitaCarousel({
 
     fetchArticoli()
   }, [showBestChoice, showPromo, limit])
+
+  // Track active card based on scroll position
+  useEffect(() => {
+    const carousel = carouselRef.current
+    if (!carousel) return
+
+    const handleScroll = () => {
+      const items = carousel.querySelectorAll('.carousel-item')
+      const center = carousel.scrollLeft + carousel.offsetWidth / 2
+
+      let closestIndex = 0
+      let closestDistance = Infinity
+
+      items.forEach((item, index) => {
+        const itemCenter = item.getBoundingClientRect().left + item.getBoundingClientRect().width / 2
+        const distance = Math.abs(center - itemCenter)
+        if (distance < closestDistance) {
+          closestDistance = distance
+          closestIndex = index
+        }
+      })
+
+      setActiveIndex(closestIndex)
+    }
+
+    carousel.addEventListener('scroll', handleScroll)
+    return () => carousel.removeEventListener('scroll', handleScroll)
+  }, [articoli])
 
   const isPromoValid = (scadenza: string | null) => {
     if (!scadenza) return false
@@ -104,10 +133,13 @@ export default function SpecialitaCarousel({
             ref={carouselRef}
             className="carousel"
           >
+            {/* Empty pseudo elements - represented as invisible divs */}
+            <div className="carousel-spacer" aria-hidden="true"></div>
+
             {articoli.map((articolo, index) => (
               <article
                 key={articolo.id}
-                className="carousel-item"
+                className={`carousel-item ${index === 0 ? 'scroll-start' : ''} ${index === activeIndex ? 'active' : ''}`}
                 onClick={() => {
                   window.location.href = `/menu?articolo=${articolo.id}`
                 }}
@@ -170,6 +202,9 @@ export default function SpecialitaCarousel({
                 )}
               </article>
             ))}
+
+            {/* Empty pseudo element at the end */}
+            <div className="carousel-spacer" aria-hidden="true"></div>
           </section>
 
           {/* Navigation Arrows */}
@@ -214,7 +249,7 @@ export default function SpecialitaCarousel({
               {articoli.map((_, index) => (
                 <button
                   key={index}
-                  className="carousel-marker"
+                  className={`carousel-marker ${index === activeIndex ? 'active' : ''}`}
                   onClick={() => {
                     if (carouselRef.current) {
                       const item = carouselRef.current.querySelectorAll('.carousel-item')[index]
@@ -235,7 +270,7 @@ export default function SpecialitaCarousel({
         </div>
       </div>
 
-      <style jsx>{`
+            <style jsx>{`
         .carousel-container {
           --nav-btn-size: 40px;
           --nav-btn-bg: rgb(15, 23, 43);
@@ -259,12 +294,16 @@ export default function SpecialitaCarousel({
           scrollbar-width: none;
           -ms-overflow-style: none;
           
-          /* FIX: Centra automaticamente il primo e l'ultimo elemento */
-          scroll-padding-inline: 50%; 
+          /* RIMOSSO: scroll-padding-inline. Gli spaziatori (carousel-spacer) gestiscono già il centro. */
         }
 
         .carousel::-webkit-scrollbar {
           display: none;
+        }
+
+        .carousel-spacer {
+          flex: 0 0 1px;
+          min-width: calc(50% - var(--card-width) / 2);
         }
 
         .carousel-item {
@@ -284,6 +323,10 @@ export default function SpecialitaCarousel({
           transition: all 300ms ease-in-out;
           container-type: inline-size;
           container-name: card;
+
+          &.scroll-start {
+            scroll-margin-inline: auto;
+          }
         }
 
         .carousel-img {
