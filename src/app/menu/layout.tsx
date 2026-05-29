@@ -2,8 +2,15 @@ import type { Metadata } from "next";
 import { db } from "@/lib/db";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const siteInfo = await db.siteInfo.findFirst();
-  const baseUrl = siteInfo?.seoCanonical || 'https://localhost:3000';
+  let siteInfo;
+  try {
+    siteInfo = await db.siteInfo.findFirst();
+  } catch (error) {
+    console.warn('Database not available during build, using default metadata');
+    siteInfo = null;
+  }
+
+  const baseUrl = siteInfo?.seoCanonical || process.env.NEXT_PUBLIC_SITE_URL || 'https://localhost:3000';
 
   return {
     title: "Il Nostro Menu | " + (siteInfo?.nomeLocale || "Ristorante"),

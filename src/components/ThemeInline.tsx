@@ -7,7 +7,13 @@ interface ThemeInlineProps {
 
 export default async function ThemeInline({ children }: ThemeInlineProps) {
   // Recupera i colori del tema dal database (server-side)
-  const siteInfo = await db.siteInfo.findFirst() as any;
+  let siteInfo;
+  try {
+    siteInfo = await db.siteInfo.findFirst() as any;
+  } catch (error) {
+    console.warn('Database not available during build, using default theme');
+    siteInfo = null;
+  }
 
   const primaryColor = siteInfo?.primaryColor || '#ea580c';
   const primaryForeground = siteInfo?.primaryForeground || '#ffffff';
