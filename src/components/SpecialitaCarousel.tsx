@@ -152,7 +152,7 @@ export default function SpecialitaCarousel({
                   />
                   {articolo.eBestChoice && (
                     <div className="badge badge-best">
-                      <Star size={104} />
+                      <Star size={14} />
                       Best Choice
                     </div>
                   )}
@@ -270,7 +270,7 @@ export default function SpecialitaCarousel({
         </div>
       </div>
 
-      <style jsx>{`
+            <style jsx>{`
         .carousel-container {
           --nav-btn-size: 40px;
           --nav-btn-bg: rgb(15, 23, 43);
@@ -293,7 +293,8 @@ export default function SpecialitaCarousel({
           scroll-behavior: smooth;
           scrollbar-width: none;
           -ms-overflow-style: none;
-          scroll-padding-inline: max(calc(50% - var(--card-width) / 2), 0);
+          
+          /* RIMOSSO: scroll-padding-inline. Gli spaziatori (carousel-spacer) gestiscono già il centro. */
         }
 
         .carousel::-webkit-scrollbar {
@@ -326,30 +327,6 @@ export default function SpecialitaCarousel({
           &.scroll-start {
             scroll-margin-inline: auto;
           }
-
-          /* Inactive items */
-          &:not(.active) {
-            .carousel-img {
-              scale: 0.75;
-              opacity: 0.5;
-            }
-
-            .carousel-title {
-              scale: 0.75;
-              opacity: 0.5;
-              translate: 0 -50px;
-            }
-
-            .carousel-desc {
-              scale: 0.75;
-              opacity: 0;
-            }
-
-            .carousel-price,
-            .promo-expiry {
-              opacity: 0;
-            }
-          }
         }
 
         .carousel-img {
@@ -372,6 +349,11 @@ export default function SpecialitaCarousel({
 
           &:hover img {
             transform: scale(1.05);
+          }
+
+          @container card (max-width: 160px) {
+            scale: 0.75;
+            opacity: 0.5;
           }
         }
 
@@ -428,6 +410,12 @@ export default function SpecialitaCarousel({
           color: rgb(15, 23, 43);
           white-space: nowrap;
           transition: all 300ms ease-in-out;
+
+          @container card (max-width: 160px) {
+            scale: 0.75;
+            opacity: 0.5;
+            translate: 0 -50px;
+          }
         }
 
         .carousel-desc {
@@ -439,6 +427,11 @@ export default function SpecialitaCarousel({
           overflow: hidden;
           text-overflow: ellipsis;
           transition: all 300ms ease-in-out;
+
+          @container card (max-width: 160px) {
+            scale: 0.75;
+            opacity: 0;
+          }
         }
 
         .carousel-price {
@@ -448,6 +441,10 @@ export default function SpecialitaCarousel({
           justify-content: center;
           gap: 0.5rem;
           transition: all 300ms ease-in-out;
+
+          @container card (max-width: 160px) {
+            opacity: 0;
+          }
         }
 
         .price-current {
@@ -474,6 +471,10 @@ export default function SpecialitaCarousel({
           color: rgb(107, 114, 128);
           margin-top: 0.25rem;
           transition: all 300ms ease-in-out;
+
+          @container card (max-width: 160px) {
+            opacity: 0;
+          }
         }
 
         /* Navigation Buttons */
@@ -542,11 +543,6 @@ export default function SpecialitaCarousel({
           border: none;
           padding: 0;
           opacity: 0.25;
-
-          &.active {
-            width: 20px;
-            opacity: 1;
-          }
         }
 
         .carousel-marker:hover {
