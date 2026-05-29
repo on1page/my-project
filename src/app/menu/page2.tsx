@@ -11,8 +11,6 @@ import SocialSidebar from '@/components/SocialSidebar'
 import { useAnalytics } from '../../components/useAnalytics'
 import { useSearchParams } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
-
 interface Allergene {
   id: string
   nome: string
