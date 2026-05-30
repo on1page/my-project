@@ -48,6 +48,7 @@ interface CompanyData {
   googleAnalyticsId?: string | null
   facebookPixelId?: string | null
   amazonTagId?: string | null
+  adSenseId?: string | null
 }
 
 export default function AdminCompanyData() {
@@ -85,7 +86,8 @@ export default function AdminCompanyData() {
     thirdPartyScriptsEnabled: true,
     googleAnalyticsId: '',
     facebookPixelId: '',
-    amazonTagId: ''
+    amazonTagId: '',
+    adSenseId: ''
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -100,7 +102,9 @@ export default function AdminCompanyData() {
     try {
       const response = await fetch('/api/admin/company-data')
       if (response.ok) {
-        const data = await response.json()
+        const result = await response.json()
+        // Supporta entrambi i formati: { data: {...} } o direttamente i dati
+        const data = result.data || result
         setCompanyData(data)
       }
     } catch (error) {
@@ -549,7 +553,7 @@ export default function AdminCompanyData() {
                     Script di Terze Parti
                   </CardTitle>
                   <CardDescription>
-                    Configura gli ID per gli script di tracking e marketing (Google Analytics, Facebook Pixel, Amazon)
+                    Configura gli ID per gli script di tracking e marketing (Google Analytics, Facebook Pixel, Amazon, AdSense)
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -572,7 +576,7 @@ export default function AdminCompanyData() {
                       <div className="text-sm text-blue-800">
                         <p className="font-semibold mb-1">GDPR-Compliant</p>
                         <p>Questi script vengono caricati solo dopo che l'utente ha dato il consenso appropriato:
-                        Google Analytics richiede cookie analitici, Facebook Pixel e Amazon richiedono cookie marketing.</p>
+                        Google Analytics richiede cookie analitici, Facebook Pixel, Amazon e AdSense richiedono cookie marketing.</p>
                       </div>
                     </div>
                   </div>
@@ -587,10 +591,10 @@ export default function AdminCompanyData() {
                         Inserisci il tuo GA4 Measurement ID (es: G-XXXXXXXXXX)
                       </p>
                       <Input
-                        id="adSenseId"
-                        value={companyData.adSenseId || ''}
-                        onChange={(e) => setCompanyData({ ...companyData, adSenseId: e.target.value })}
-                        placeholder="(pub-)XXXXXXXXXX"
+                        id="googleAnalyticsId"
+                        value={companyData.googleAnalyticsId || ''}
+                        onChange={(e) => setCompanyData({ ...companyData, googleAnalyticsId: e.target.value })}
+                        placeholder="G-XXXXXXXXXX"
                         className="font-mono"
                       />
                     </div>
@@ -627,6 +631,26 @@ export default function AdminCompanyData() {
                         placeholder="tuoazienda-20"
                         className="font-mono"
                       />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="adSenseId" className="flex items-center gap-2">
+                        <span className="font-semibold">💰 Google AdSense</span>
+                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Cookie Marketing</span>
+                      </Label>
+                      <p className="text-sm text-gray-500 mb-2">
+                        Inserisci il tuo Publisher ID di Google AdSense (solo numeri, senza pub-)
+                      </p>
+                      <Input
+                        id="adSenseId"
+                        value={companyData.adSenseId || ''}
+                        onChange={(e) => setCompanyData({ ...companyData, adSenseId: e.target.value })}
+                        placeholder="1234567890123456"
+                        className="font-mono"
+                      />
+                      <p className="text-xs text-gray-400 mt-2">
+                        Esempio: Se il tuo ID è <code className="bg-gray-100 px-1 rounded">pub-1234567890123456</code>, inserisci solo <code className="bg-gray-100 px-1 rounded">1234567890123456</code>
+                      </p>
                     </div>
                   </div>
 
