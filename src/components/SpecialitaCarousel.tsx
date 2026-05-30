@@ -95,15 +95,8 @@ export default function SpecialitaCarousel() {
   };
 
   const handleArticoloClick = (articoloId: string) => {
-    router.push(`/menu#${articoloId}`);
-
-    // Scroll all'elemento dopo un breve delay per permettere il caricamento della pagina
-    setTimeout(() => {
-      const element = document.getElementById(articoloId);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 300);
+    // La pagina menu usa il parametro URL ?articolo= invece dell'anchor #
+    router.push(`/menu?articolo=${articoloId}`);
   };
 
   return (
