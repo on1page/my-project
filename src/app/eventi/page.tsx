@@ -12,6 +12,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import ReservationDialog from '@/components/ReservationDialog'
+import AdBanner from '@/components/AdBanner'
+import AdSenseBanner from '@/components/AdSenseBanner'
+import AdSenseHorizontal from '@/components/AdSenseHorizontal'
+import AdSenseRectangle from '@/components/AdSenseRectangle'
 
 interface Evento {
   id: string
@@ -37,24 +41,8 @@ interface Evento {
   nuovo: boolean
 }
 
-interface Banner {
-  id: string
-  tipo: string
-  posizione: string
-  sponsorNome: string
-  sponsorLogo: string | null
-  sponsorUrl: string
-  titolo: string | null
-  descrizione: string | null
-  ctaTesto: string | null
-  ctaUrl: string | null
-  immagineUrl: string | null
-  coloreSfondo: string | null
-}
-
 export default function EventiPage() {
   const [eventi, setEventi] = useState<Evento[]>([])
-  const [banners, setBanners] = useState<Banner[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedEvent, setSelectedEvent] = useState<Evento | null>(null)
   const [reservationOpen, setReservationOpen] = useState(false)
@@ -62,7 +50,6 @@ export default function EventiPage() {
 
   useEffect(() => {
     fetchEventi()
-    fetchBanners()
   }, [])
 
   async function fetchEventi() {
@@ -95,16 +82,6 @@ export default function EventiPage() {
       }
     } catch (error) {
       console.error('Errore nel ricaricamento eventi:', error)
-    }
-  }
-
-  async function fetchBanners() {
-    try {
-      const response = await fetch('/api/banners?pagina=eventi')
-      const result = await response.json()
-      setBanners(result.data || [])
-    } catch (error) {
-      console.error('Errore nel recupero banner:', error)
     }
   }
 
@@ -171,28 +148,11 @@ export default function EventiPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Banner Orizzontale in alto */}
-        {banners.filter(b => b.tipo === 'horizontal' && (b.posizione === 'top' || !b.posizione)).map(banner => (
-          <div key={banner.id} className="w-full my-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl overflow-hidden border border-gray-200">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 p-4 sm:p-6">
-              {banner.sponsorLogo && (
-                <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-xl shadow-sm flex items-center justify-center p-2">
-                  <img src={banner.sponsorLogo} alt={banner.sponsorNome} className="w-full h-full object-contain" />
-                </div>
-              )}
-              <div className="flex-1">
-                <p className="text-xs text-orange-600 font-semibold mb-1">SPONSORIZZATO</p>
-                {banner.titolo && <h4 className="text-base sm:text-lg font-bold text-gray-900 mb-1">{banner.titolo}</h4>}
-                {banner.descrizione && <p className="text-sm text-gray-600">{banner.descrizione}</p>}
-              </div>
-              {banner.ctaTesto && banner.ctaUrl && (
-                <a href={banner.ctaUrl} target="_blank" rel="noopener noreferrer" className="flex-shrink-0 px-5 py-3 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-xl transition-colors text-sm text-center">
-                  {banner.ctaTesto}
-                </a>
-              )}
-            </div>
-          </div>
-        ))}
+        {/* Banner AdSense TOP - Orizzontale */}
+        <AdSenseHorizontal />
+
+        {/* Banner Database TOP - Sponsorizzati */}
+        <AdBanner pagina="eventi" posizione="top" tipo="horizontal" />
 
         {/* Loading State */}
         {loading ? (
@@ -209,162 +169,131 @@ export default function EventiPage() {
                 <p className="text-gray-500">Al momento non ci sono eventi in programma. Torna presto!</p>
               </div>
             ) : (
-              /* Griglia Eventi */
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-                {eventi.map((evento) => (
-                  <Card
-                    key={evento.id}
-                    className={`group relative bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-orange-200 overflow-hidden flex flex-col h-full cursor-pointer ${
-                      evento.inEvidenza ? 'ring-2 ring-orange-300' : ''
-                    }`}
-                    onClick={() => setSelectedEvent(evento)}
-                  >
-                    {/* Immagine */}
-                    <div className="relative aspect-[4/3] overflow-hidden">
-                      {evento.immagineUrl ? (
-                        <img src={evento.immagineUrl} alt={evento.titolo} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
-                          <Calendar className="w-16 h-16 text-orange-400" />
-                        </div>
-                      )}
-
-                      {/* Badges in alto a destra */}
-                      <div className="absolute top-4 right-4 flex gap-2">
-                        {evento.nuovo && (
-                          <span className="px-3 py-1.5 bg-white/90 backdrop-blur-sm text-xs font-semibold rounded-full shadow-md">
-                            🔥 Nuovo
-                          </span>
-                        )}
-                        {evento.inEvidenza && (
-                          <span className="px-3 py-1.5 bg-orange-500 text-white text-xs font-semibold rounded-full shadow-md flex items-center gap-1">
-                            <Sparkles className="w-3 h-3" />
-                            In evidenza
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Badge in basso a sinistra */}
-                      <div className="absolute bottom-4 left-4 flex gap-2">
-                        {evento.gratuito && (
-                          <span className="px-3 py-1.5 bg-green-500 text-white text-xs font-semibold rounded-full shadow-md">
-                            Gratuito
-                          </span>
-                        )}
-                        {evento.graditaPrenotazione && !evento.gratuito && (
-                          <span className="px-3 py-1.5 bg-blue-500 text-white text-xs font-semibold rounded-full shadow-md">
-                            Prenotazione consigliata
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Contenuto */}
-                    <div className="p-5 flex flex-col flex-grow">
-                      {/* Data e Ora */}
-                      <div className="flex items-center gap-2 mb-3">
-                        <Calendar className="w-4 h-4 text-orange-500" />
-                        <span className="text-sm font-medium text-gray-600">{formatShortDate(evento.data)}</span>
-                        <span className="text-gray-400">•</span>
-                        <Clock className="w-4 h-4 text-orange-500" />
-                        <span className="text-sm font-medium text-gray-600">{evento.oraInizio}</span>
-                      </div>
-
-                      {/* Titolo */}
-                      <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-orange-600 transition-colors">
-                        {evento.titolo}
-                      </h3>
-
-                      {/* Descrizione breve */}
-                      <p className="text-sm text-gray-600 mb-4 line-clamp-2 flex-grow">{evento.descrizioneBreve}</p>
-
-                      {/* Footer Card */}
-                      <div className="space-y-3 pt-4 border-t border-gray-100">
-                        {/* Posti rimanenti */}
-                        {evento.graditaPrenotazione && evento.capacita > 0 && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Users className="w-4 h-4 text-blue-500" />
-                            <span className={
-                              (evento.postiRimanenti ?? evento.capacita) <= 5 ? 'text-red-600 font-semibold' :
-                              (evento.postiRimanenti ?? evento.capacita) <= 10 ? 'text-yellow-600 font-semibold' :
-                              'text-green-600 font-semibold'
-                            }>
-                              {evento.postiRimanenti ?? evento.capacita} disponibili
-                            </span>
-                            <span className="text-gray-400">/ {evento.capacita} totali</span>
+              <>
+                {/* Griglia Eventi */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                  {eventi.map((evento, index) => (
+                    <Card
+                      key={evento.id}
+                      className={`group relative bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-orange-200 overflow-hidden flex flex-col h-full cursor-pointer ${
+                        evento.inEvidenza ? 'ring-2 ring-orange-300' : ''
+                      }`}
+                      onClick={() => setSelectedEvent(evento)}
+                    >
+                      {/* Immagine */}
+                      <div className="relative aspect-[4/3] overflow-hidden">
+                        {evento.immagineUrl ? (
+                          <img src={evento.immagineUrl} alt={evento.titolo} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
+                            <Calendar className="w-16 h-16 text-orange-400" />
                           </div>
                         )}
-                        <div className="flex items-center justify-between">
-                          {evento.gratuito ? (
-                            <span className="text-xl font-bold text-green-600">Gratuito</span>
-                          ) : (
-                            <div className="flex flex-col">
-                              {evento.etichettaPrezzo && (
-                                <span className="text-xs text-gray-500">{evento.etichettaPrezzo}</span>
-                              )}
-                              <span className="text-xl font-bold text-orange-600">€{evento.prezzo}</span>
+
+                        {/* Badges in alto a destra */}
+                        <div className="absolute top-4 right-4 flex gap-2">
+                          {evento.nuovo && (
+                            <span className="px-3 py-1.5 bg-white/90 backdrop-blur-sm text-xs font-semibold rounded-full shadow-md">
+                              🔥 Nuovo
+                            </span>
+                          )}
+                          {evento.inEvidenza && (
+                            <span className="px-3 py-1.5 bg-orange-500 text-white text-xs font-semibold rounded-full shadow-md flex items-center gap-1">
+                              <Sparkles className="w-3 h-3" />
+                              In evidenza
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Badge in basso a sinistra */}
+                        <div className="absolute bottom-4 left-4 flex gap-2">
+                          {evento.gratuito && (
+                            <span className="px-3 py-1.5 bg-green-500 text-white text-xs font-semibold rounded-full shadow-md">
+                              Gratuito
+                            </span>
+                          )}
+                          {evento.graditaPrenotazione && !evento.gratuito && (
+                            <span className="px-3 py-1.5 bg-blue-500 text-white text-xs font-semibold rounded-full shadow-md">
+                              Prenotazione consigliata
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Contenuto */}
+                      <div className="p-5 flex flex-col flex-grow">
+                        {/* Data e Ora */}
+                        <div className="flex items-center gap-2 mb-3">
+                          <Calendar className="w-4 h-4 text-orange-500" />
+                          <span className="text-sm font-medium text-gray-600">{formatShortDate(evento.data)}</span>
+                          <span className="text-gray-400">•</span>
+                          <Clock className="w-4 h-4 text-orange-500" />
+                          <span className="text-sm font-medium text-gray-600">{evento.oraInizio}</span>
+                        </div>
+
+                        {/* Titolo */}
+                        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-orange-600 transition-colors">
+                          {evento.titolo}
+                        </h3>
+
+                        {/* Descrizione breve */}
+                        <p className="text-sm text-gray-600 mb-4 line-clamp-2 flex-grow">{evento.descrizioneBreve}</p>
+
+                        {/* Footer Card */}
+                        <div className="space-y-3 pt-4 border-t border-gray-100">
+                          {/* Posti rimanenti */}
+                          {evento.graditaPrenotazione && evento.capacita > 0 && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Users className="w-4 h-4 text-blue-500" />
+                              <span className={
+                                (evento.postiRimanenti ?? evento.capacita) <= 5 ? 'text-red-600 font-semibold' :
+                                (evento.postiRimanenti ?? evento.capacita) <= 10 ? 'text-yellow-600 font-semibold' :
+                                'text-green-600 font-semibold'
+                              }>
+                                {evento.postiRimanenti ?? evento.capacita} disponibili
+                              </span>
+                              <span className="text-gray-400">/ {evento.capacita} totali</span>
                             </div>
                           )}
+                          <div className="flex items-center justify-between">
+                            {evento.gratuito ? (
+                              <span className="text-xl font-bold text-green-600">Gratuito</span>
+                            ) : (
+                              <div className="flex flex-col">
+                                {evento.etichettaPrezzo && (
+                                  <span className="text-xs text-gray-500">{evento.etichettaPrezzo}</span>
+                                )}
+                                <span className="text-xl font-bold text-orange-600">€{evento.prezzo}</span>
+                              </div>
+                            )}
 
-                        <span className="text-sm font-medium text-orange-600 group-hover:gap-2 transition-all flex items-center gap-1">
-                          Dettagli
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </span>
+                            <span className="text-sm font-medium text-orange-600 group-hover:gap-2 transition-all flex items-center gap-1">
+                              Dettagli
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Banner AdSense INLINE - Mostra dopo il 3° evento se ci sono almeno 4 */}
+                {eventi.length >= 4 && (
+                  <div className="mt-8">
+                    <AdSenseRectangle />
                   </div>
-                  </Card>
-                ))}
-              </div>
+                )}
+
+                {/* Banner Database INLINE */}
+                <AdBanner pagina="eventi" posizione="inline" tipo="horizontal" />
+              </>
             )}
 
-            {/* Banner Inline */}
-            {banners.filter(b => b.posizione === 'inline').map(banner => (
-              <div key={banner.id} className="my-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl overflow-hidden border border-gray-200">
-                <div className="flex flex-col sm:flex-row items-center gap-4 p-6">
-                  {banner.sponsorLogo && (
-                    <div className="w-20 h-20 bg-white rounded-xl shadow-sm flex items-center justify-center p-2">
-                      <img src={banner.sponsorLogo} alt={banner.sponsorNome} className="w-full h-full object-contain" />
-                    </div>
-                  )}
-                  <div className="flex-1 text-center sm:text-left">
-                    <p className="text-xs text-orange-600 font-semibold mb-1">SPONSORIZZATO</p>
-                    <h4 className="text-lg font-bold text-gray-900">{banner.titolo}</h4>
-                    <p className="text-sm text-gray-600">{banner.descrizione}</p>
-                  </div>
-                  {banner.ctaTesto && banner.ctaUrl && (
-                    <a href={banner.ctaUrl} target="_blank" rel="noopener noreferrer" className="px-5 py-3 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-xl transition-colors">
-                      {banner.ctaTesto}
-                    </a>
-                  )}
-                </div>
-              </div>
-            ))}
-
-            {/* Banner in basso */}
-            {banners.filter(b => b.tipo === 'horizontal' && b.posizione === 'bottom').map(banner => (
-              <div key={banner.id} className="w-full my-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl overflow-hidden border border-gray-200">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 p-4 sm:p-6">
-                  {banner.sponsorLogo && (
-                    <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-xl shadow-sm flex items-center justify-center p-2">
-                      <img src={banner.sponsorLogo} alt={banner.sponsorNome} className="w-full h-full object-contain" />
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <p className="text-xs text-orange-600 font-semibold mb-1">SPONSORIZZATO</p>
-                    {banner.titolo && <h4 className="text-base sm:text-lg font-bold text-gray-900 mb-1">{banner.titolo}</h4>}
-                    {banner.descrizione && <p className="text-sm text-gray-600">{banner.descrizione}</p>}
-                  </div>
-                  {banner.ctaTesto && banner.ctaUrl && (
-                    <a href={banner.ctaUrl} target="_blank" rel="noopener noreferrer" className="flex-shrink-0 px-5 py-3 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-xl transition-colors text-sm text-center">
-                      {banner.ctaTesto}
-                    </a>
-                  )}
-                </div>
-              </div>
-            ))}
+            {/* Banner Database BOTTOM */}
+            <AdBanner pagina="eventi" posizione="bottom" tipo="horizontal" />
           </>
         )}
       </div>
@@ -513,7 +442,7 @@ export default function EventiPage() {
                     </Button>
                   ) : (
                     <Button className="flex-1" size="lg" onClick={handlePrenota}>
-                      Scopri di più - €{selectedEvent.prezzo}
+                      Scopri di più - €${selectedEvent.prezzo}
                     </Button>
                   )}
                   <Button variant="outline" size="lg" onClick={handleShare} className="gap-2">

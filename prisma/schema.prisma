@@ -19,7 +19,7 @@ model Allergene {
 
 model Categoria {
   id        String     @id @default(cuid())
-  nome      String
+  nome      String     @unique
   ordine    Int        @default(0)
   attiva    Boolean    @default(true)
   createdAt DateTime   @default(now())
@@ -39,9 +39,9 @@ model Articolo {
   eBestChoice        Boolean             @default(false)
   attivo             Boolean             @default(true)
   immagineUrl        String?
+  immagineAiGenerata Boolean             @default(false)
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
-  immagineAiGenerata Boolean             @default(false)
   allergeni          AllergeneArticolo[]
   categoria          Categoria           @relation(fields: [categoriaId], references: [id])
 }
@@ -50,8 +50,8 @@ model AllergeneArticolo {
   id          String    @id @default(cuid())
   articoloId  String
   allergeneId String
-  allergene   Allergene @relation(fields: [allergeneId], references: [id], onDelete: Cascade)
   articolo    Articolo  @relation(fields: [articoloId], references: [id], onDelete: Cascade)
+  allergene   Allergene @relation(fields: [allergeneId], references: [id], onDelete: Cascade)
 
   @@unique([articoloId, allergeneId])
 }
@@ -75,19 +75,19 @@ model SiteInfo {
   heroOverlayOpacity Float    @default(0.5)
   specialitaTitle    String?  @default("Le Nostre Specialità")
   specialitaSubtitle String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  seoCanonical       String?
-  seoDescription     String?  @default("Modern Next.js scaffold optimized for AI-powered development with Z.ai. Built with TypeScript, Tailwind CSS, and shadcn/ui.")
-  seoKeywords        String?  @default("Z.ai, Next.js, TypeScript, Tailwind CSS, shadcn/ui, AI development, React")
-  seoOgDescription   String?
-  seoOgImage         String?
-  seoOgTitle         String?
-  seoRobots          String?
-  seoTitle           String?  @default("Z.ai Code Scaffold - AI-Powered Development")
-  seoTwitterCard     String?  @default("summary_large_image")
   primaryColor       String?  @default("#ea580c")
   primaryForeground  String?  @default("#ffffff")
+  seoTitle           String?  @default("Z.ai Code Scaffold - AI-Powered Development")
+  seoDescription     String?  @default("Modern Next.js scaffold optimized for AI-powered development with Z.ai. Built with TypeScript, Tailwind CSS, and shadcn/ui.")
+  seoKeywords        String?  @default("Z.ai, Next.js, TypeScript, Tailwind CSS, shadcn/ui, AI development, React")
+  seoOgTitle         String?
+  seoOgDescription   String?
+  seoOgImage         String?
+  seoTwitterCard     String?  @default("summary_large_image")
+  seoRobots          String?
+  seoCanonical       String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }
 
 model SiteImage {
@@ -112,6 +112,7 @@ model FooterInfo {
   longitudine    Float?
   orariApertura  String?
   giorniChiusura String?
+  telefono       String?
   facebookUrl    String?
   instagramUrl   String?
   twitterUrl     String?
@@ -124,7 +125,6 @@ model FooterInfo {
   ubereatsUrl    String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  telefono       String?
 }
 
 model User {
@@ -149,10 +149,10 @@ model Permission {
   puoGestireDatiAzienda  Boolean  @default(true)
   puoGestireProfili      Boolean  @default(false)
   puoGestireAnalytics    Boolean  @default(true)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
   puoGestireSito         Boolean  @default(true)
   puoGestireEventi       Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
   user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -160,45 +160,46 @@ model CompanyData {
   id                       String    @id @default(cuid())
   ragioneSociale           String?
   partitaIva               String?
-  privacyPolicy            String?
-  cookiesPolicy            String?
-  terminiServizio          String?
-  createdAt                DateTime  @default(now())
-  updatedAt                DateTime  @updatedAt
-  cap                      String?
-  citta                    String?
   codiceFiscale            String?
-  cookieAcceptText         String?   @default("Autorizzo")
-  cookieAnalitici          Boolean   @default(true)
-  cookieBannerText         String?   @default("Questo sito utilizza cookie tecnici e analitici per migliorare la tua esperienza di navigazione. Cliccando su 'Autorizzo', accetti l'uso dei cookie.")
-  cookieDeclineText        String?   @default("Annulla")
-  cookieMarketing          Boolean   @default(true)
-  cookieTecnici            Boolean   @default(true)
-  cookiesEnabled           Boolean   @default(true)
-  cookiesPolicyUpdate      DateTime?
-  cookiesUrl               String?
+  indirizzo                String?
+  citta                    String?
+  cap                      String?
+  provincia                String?
+  paese                    String?
+  telefono                 String?
+  email                    String?
+  pec                      String?
+  dpoNome                  String?
   dpoEmail                 String?
   dpoIndirizzo             String?
-  dpoNome                  String?
-  email                    String?
-  indirizzo                String?
-  paese                    String?
-  pec                      String?
+  privacyPolicy            String?
   privacyEnabled           Boolean   @default(true)
-  privacyPolicyUpdate      DateTime?
   privacyUrl               String?
-  provincia                String?
+  privacyPolicyUpdate      DateTime?
+  cookiesPolicy            String?
+  cookiesEnabled           Boolean   @default(true)
+  cookiesUrl               String?
+  cookiesPolicyUpdate      DateTime?
+  cookieTecnici            Boolean   @default(true)
+  cookieAnalitici          Boolean   @default(true)
+  cookieMarketing          Boolean   @default(true)
   showCookieBanner         Boolean   @default(true)
-  telefono                 String?
+  cookieBannerText         String?   @default("Questo sito utilizza cookie tecnici e analitici per migliorare la tua esperienza di navigazione. Cliccando su 'Autorizzo', accetti l'uso dei cookie.")
+  cookieAcceptText         String?   @default("Autorizzo")
+  cookieDeclineText        String?   @default("Annulla")
+  terminiServizio          String?
   terminiUrl               String?
-  amazonTagId              String?
-  facebookPixelId          String?
-  googleAnalyticsId        String?
   thirdPartyScriptsEnabled Boolean   @default(true)
+  googleAnalyticsId        String?
+  facebookPixelId          String?
+  amazonTagId              String?
+  adSenseId                String?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 }
 
 model Reservation {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   nome      String
   cognome   String
   email     String
@@ -207,37 +208,37 @@ model Reservation {
   ora       String
   persone   Int
   note      String?
-  stato     String   @default("pending")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  eventoId  String?
-  evento    Evento?  @relation(fields: [eventoId], references: [id])
+  stato     String    @default("pending")
+  eventoId  String?   // Collegamento all'evento
+  evento    Evento?   @relation(fields: [eventoId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Evento {
-  id                  String        @id @default(cuid())
-  titolo              String
-  slug                String        @unique
-  descrizione         String
-  descrizioneBreve    String
-  immagineUrl         String?
-  data                DateTime
-  oraInizio           String
-  oraFine             String
-  prezzo              Float         @default(0)
-  etichettaPrezzo     String?
-  capacita            Int           @default(0)
-  postiDisponibili    Int           @default(0)
-  location            String?
-  incluso             String?
-  infoAggiuntive      String?
-  inEvidenza          Boolean       @default(false)
-  nuovo               Boolean       @default(false)
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-  graditaPrenotazione Boolean       @default(false)
-  gratuito            Boolean       @default(false)
-  prenotazioni        Reservation[]
+  id               String        @id @default(cuid())
+  titolo           String
+  slug             String        @unique
+  descrizione      String
+  descrizioneBreve String
+  immagineUrl      String?
+  data             DateTime
+  oraInizio        String
+  oraFine          String
+  prezzo           Float         @default(0)
+  etichettaPrezzo  String?
+  gratuito         Boolean       @default(false)
+  graditaPrenotazione Boolean     @default(false)
+  capacita         Int           @default(0)
+  postiDisponibili Int           @default(0)
+  location         String?
+  incluso          String?
+  infoAggiuntive   String?
+  inEvidenza       Boolean       @default(false)
+  nuovo            Boolean       @default(false)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  prenotazioni     Reservation[] // Relazione con le prenotazioni
 }
 
 model AnalyticsEvent {
