@@ -100,7 +100,7 @@ export default function SpecialitaCarousel() {
   };
 
   return (
-    <div className="specialita-carousel w-full max-w-6xl mx-auto py-12 px-4">
+    <div id="specialita" className="specialita-carousel w-full max-w-6xl mx-auto py-12 px-4 scroll-mt-20">
       <style jsx>{`
         .carousel-container {
           position: relative;
