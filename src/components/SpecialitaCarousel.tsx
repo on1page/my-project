@@ -32,8 +32,7 @@ export default function SpecialitaCarousel({
 }: SpecialitaCarouselProps) {
   const [articoli, setArticoli] = useState<Articolo[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeIndex, setActiveIndex] = useState(0)
-  const carouselRef = useRef<HTMLDivElement>(null)
+  const carouselRef = useRef<HTMLUListElement>(null)
 
   useEffect(() => {
     async function fetchArticoli() {
@@ -57,34 +56,6 @@ export default function SpecialitaCarousel({
     fetchArticoli()
   }, [showBestChoice, showPromo, limit])
 
-  // Track active card based on scroll position
-  useEffect(() => {
-    const carousel = carouselRef.current
-    if (!carousel) return
-
-    const handleScroll = () => {
-      const items = carousel.querySelectorAll('.carousel-item')
-      const center = carousel.scrollLeft + carousel.offsetWidth / 2
-
-      let closestIndex = 0
-      let closestDistance = Infinity
-
-      items.forEach((item, index) => {
-        const itemCenter = item.getBoundingClientRect().left + item.getBoundingClientRect().width / 2
-        const distance = Math.abs(center - itemCenter)
-        if (distance < closestDistance) {
-          closestDistance = distance
-          closestIndex = index
-        }
-      })
-
-      setActiveIndex(closestIndex)
-    }
-
-    carousel.addEventListener('scroll', handleScroll, { passive: true })
-    return () => carousel.removeEventListener('scroll', handleScroll)
-  }, [articoli])
-
   const isPromoValid = (scadenza: string | null) => {
     if (!scadenza) return false
     return new Date(scadenza) > new Date()
@@ -92,20 +63,56 @@ export default function SpecialitaCarousel({
 
   const scrollNext = () => {
     if (!carouselRef.current) return
-    const itemWidth = carouselRef.current.querySelector('.carousel-item')?.getBoundingClientRect().width || 250
-    carouselRef.current.scrollBy({
-      left: itemWidth,
-      behavior: 'smooth'
+    const items = carouselRef.current.querySelectorAll('.carousel-item')
+    const center = carouselRef.current.scrollLeft + carouselRef.current.offsetWidth / 2
+
+    let currentIndex = 0
+    let closestDistance = Infinity
+
+    items.forEach((item, index) => {
+      const itemCenter = item.getBoundingClientRect().left + item.getBoundingClientRect().width / 2
+      const distance = Math.abs(center - itemCenter)
+      if (distance < closestDistance) {
+        closestDistance = distance
+        currentIndex = index
+      }
     })
+
+    const nextItem = items[Math.min(currentIndex + 1, items.length - 1)]
+    if (nextItem) {
+      nextItem.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      })
+    }
   }
 
   const scrollPrev = () => {
     if (!carouselRef.current) return
-    const itemWidth = carouselRef.current.querySelector('.carousel-item')?.getBoundingClientRect().width || 250
-    carouselRef.current.scrollBy({
-      left: -itemWidth,
-      behavior: 'smooth'
+    const items = carouselRef.current.querySelectorAll('.carousel-item')
+    const center = carouselRef.current.scrollLeft + carouselRef.current.offsetWidth / 2
+
+    let currentIndex = 0
+    let closestDistance = Infinity
+
+    items.forEach((item, index) => {
+      const itemCenter = item.getBoundingClientRect().left + item.getBoundingClientRect().width / 2
+      const distance = Math.abs(center - itemCenter)
+      if (distance < closestDistance) {
+        closestDistance = distance
+        currentIndex = index
+      }
     })
+
+    const prevItem = items[Math.max(currentIndex - 1, 0)]
+    if (prevItem) {
+      prevItem.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      })
+    }
   }
 
   const goToSlide = (index: number) => {
@@ -159,7 +166,7 @@ export default function SpecialitaCarousel({
         </div>
 
         {/* Carousel */}
-        <div className="carousel-wrapper relative max-w-[min(calc(100%-2rem),700px)] mx-auto">
+        <div className="carousel-wrapper relative mx-auto" style={{ width: 'min(calc(100% - 2rem), 700px)' }}>
           {/* Navigation Buttons */}
           {articoli.length > 1 && (
             <>
@@ -184,23 +191,22 @@ export default function SpecialitaCarousel({
           )}
 
           {/* Carousel Container */}
-          <div
+          <ul
             ref={carouselRef}
             className="carousel"
           >
-            {/* Left Spacer */}
-            <div className="carousel-spacer" aria-hidden="true" />
+            {/* Empty pseudo elements - represented as invisible li */}
+            <li className="carousel-spacer" aria-hidden="true"></li>
 
-            {/* Items */}
             {articoli.map((articolo, index) => (
-              <article
+              <li
                 key={articolo.id}
-                className={`carousel-item ${index === activeIndex ? 'active' : ''}`}
+                className={`carousel-item ${index === 0 ? 'scroll-start' : ''}`}
                 onClick={() => {
                   window.location.href = `/menu?articolo=${articolo.id}`
                 }}
               >
-                {/* Image */}
+                {/* Immagine */}
                 <div className="carousel-img">
                   <img
                     src={articolo.immagineUrl || '/images/pasta.jpg'}
@@ -226,15 +232,15 @@ export default function SpecialitaCarousel({
                   )}
                 </div>
 
-                {/* Title */}
+                {/* Titolo */}
                 <h2 className="carousel-title">{articolo.nome}</h2>
 
-                {/* Description */}
+                {/* Descrizione */}
                 {articolo.descrizione && (
                   <p className="carousel-desc">{articolo.descrizione}</p>
                 )}
 
-                {/* Price */}
+                {/* Prezzo */}
                 <div className="carousel-price">
                   {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) ? (
                     <>
@@ -251,12 +257,12 @@ export default function SpecialitaCarousel({
                     Promo valida fino al {new Date(articolo.scadenzaPromo!).toLocaleDateString('it-IT')}
                   </p>
                 )}
-              </article>
+              </li>
             ))}
 
-            {/* Right Spacer */}
-            <div className="carousel-spacer" aria-hidden="true" />
-          </div>
+            {/* Empty pseudo element at the end */}
+            <li className="carousel-spacer" aria-hidden="true"></li>
+          </ul>
 
           {/* Markers */}
           {articoli.length > 1 && (
@@ -264,7 +270,7 @@ export default function SpecialitaCarousel({
               {articoli.map((_, index) => (
                 <button
                   key={index}
-                  className={`carousel-marker ${index === activeIndex ? 'active' : ''}`}
+                  className="carousel-marker"
                   onClick={() => goToSlide(index)}
                   aria-label={`Vai alla slide ${index + 1}`}
                 />
@@ -280,15 +286,32 @@ export default function SpecialitaCarousel({
         }
 
         .carousel {
-          display: flex;
+          /* prev & next buttons */
+          --nav-btn-size: 40px;
+          --nav-btn-bg: rgb(15, 23, 43);
+          --nav-btn-txt: white;
+          
+          /* item markers */
+          --nav-marker-bg: rgb(15, 23, 43);
+          
+          list-style: none;
+          display: grid;
+          grid-auto-flow: column;
+          grid-auto-columns: 250px; 
           gap: 0;
+          
+          /* scroll behavior */
           overflow-x: auto;
           overflow-y: hidden;
           scroll-snap-type: x mandatory;
-          overscroll-behavior-x: contain;
+          overscroll-behavior-x: contain; 
           scroll-behavior: smooth;
           scrollbar-width: none;
           -ms-overflow-style: none;
+          padding: 0;
+          margin: 0;
+          position: relative;
+          anchor-name: --carousel;
         }
 
         .carousel::-webkit-scrollbar {
@@ -300,76 +323,41 @@ export default function SpecialitaCarousel({
           min-width: calc(50% - 125px);
         }
 
+        /* carousel item */
         .carousel-item {
-          flex: 0 0 auto;
-          width: 250px;
-          scroll-snap-align: center;
-          scroll-snap-stop: always;
           position: relative;
+          scroll-snap-align: center; /* centers snap */
+          scroll-snap-stop: always; /* ensures that the scroll stops at each element */
           display: grid;
-          grid-template-areas:
-            'img'
-            'title'
-            'desc'
-            'price'
-            'promo';
+          grid-template-areas: 'img' 'title' 'desc' 'price' 'promo';
           text-align: center;
           cursor: pointer;
+          padding: 0;
+          margin: 0;
           transition: all 300ms ease-in-out;
           container-type: inline-size;
           container-name: card;
+          
+          /* scroll to this item on load */
+          &.scroll-start {
+            scroll-margin-inline: auto;
+          }
         }
 
-        /* Active item styling */
-        .carousel-item.active .carousel-img {
-          scale: 1;
-          opacity: 1;
+        /* item title/name */
+        .carousel-title {
+          grid-area: title;
+          margin: 1rem 0 0 0;
+          font-size: 1.3rem;
+          white-space: nowrap;
+          transition: all 300ms ease-in-out;
         }
 
-        .carousel-item.active .carousel-title {
-          scale: 1;
-          opacity: 1;
-          transform: translateY(0);
-        }
-
-        .carousel-item.active .carousel-desc {
-          scale: 1;
-          opacity: 1;
-        }
-
-        .carousel-item.active .carousel-price {
-          scale: 1;
-          opacity: 1;
-        }
-
-        /* Inactive item styling - scale down */
-        .carousel-item:not(.active) .carousel-img {
-          scale: 0.5;
-          opacity: 0.5;
-        }
-
-        .carousel-item:not(.active) .carousel-title {
-          scale: 0.5;
-          opacity: 0.5;
-          transform: translateY(-100px);
-        }
-
-        .carousel-item:not(.active) .carousel-desc {
-          scale: 0.5;
-          opacity: 0;
-        }
-
-        .carousel-item:not(.active) .carousel-price {
-          scale: 0.5;
-          opacity: 0;
-        }
-
-        .carousel-item:not(.active) .promo-expiry {
-          opacity: 0;
-        }
-
-        .carousel-item:not(.active) .badge {
-          opacity: 0.5;
+        .carousel-desc {
+          grid-area: desc;
+          margin: 0;
+          white-space: nowrap;
+          transition: all 300ms ease-in-out;
         }
 
         .carousel-img {
@@ -380,22 +368,51 @@ export default function SpecialitaCarousel({
           transform-origin: center center;
           position: relative;
           overflow: hidden;
-          border-radius: 1.25rem;
-          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
-          margin-bottom: 1rem;
         }
 
         .carousel-img img {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          transition: transform 300ms ease;
+          border-radius: 20px;
+          box-shadow: 0 10px 20px rgba(0 0 0 / 0.25);
         }
 
-        .carousel-item:hover .carousel-img img {
-          transform: scale(1.05);
+        .carousel-price {
+          grid-area: price;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          margin-top: 0.25rem;
         }
 
+        .price-current {
+          font-size: 1.25rem;
+          font-weight: bold;
+          color: hsl(var(--primary));
+        }
+
+        .price-original {
+          font-size: 1rem;
+          color: rgb(156, 163, 175);
+          text-decoration: line-through;
+        }
+
+        .price-normal {
+          font-size: 1.25rem;
+          font-weight: bold;
+          color: rgb(15, 23, 43);
+        }
+
+        .promo-expiry {
+          grid-area: promo;
+          font-size: 0.75rem;
+          color: rgb(107, 114, 128);
+          margin-top: 0.25rem;
+        }
+
+        /* Badges */
         .badge {
           position: absolute;
           top: 0.75rem;
@@ -407,7 +424,6 @@ export default function SpecialitaCarousel({
           display: flex;
           align-items: center;
           gap: 0.25rem;
-          transition: opacity 300ms ease-in-out;
         }
 
         .badge-best {
@@ -436,61 +452,13 @@ export default function SpecialitaCarousel({
           gap: 0.25rem;
         }
 
-        .carousel-title {
-          grid-area: title;
-          margin: 1rem 0 0.25rem 0;
-          font-size: 1.3rem;
-          font-weight: bold;
-          color: rgb(15, 23, 43);
-          white-space: nowrap;
-          transition: all 300ms ease-in-out;
-        }
-
-        .carousel-desc {
-          grid-area: desc;
-          margin: 0 0 0.5rem 0;
-          font-size: 0.875rem;
-          color: rgb(75, 85, 99);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          transition: all 300ms ease-in-out;
-        }
-
-        .carousel-price {
-          grid-area: price;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          transition: all 300ms ease-in-out;
-        }
-
-        .price-current {
-          font-size: 1.25rem;
-          font-weight: bold;
-          color: hsl(var(--primary));
-        }
-
-        .price-original {
-          font-size: 1rem;
-          color: rgb(156, 163, 175);
-          text-decoration: line-through;
-        }
-
-        .price-normal {
-          font-size: 1.25rem;
-          font-weight: bold;
-          color: rgb(15, 23, 43);
-        }
-
         /* Navigation Buttons */
         .nav-btn {
           position: absolute;
-          width: 40px;
+          width: var(--nav-btn-size);
           aspect-ratio: 1/1;
           font: inherit;
-          background-color: rgb(15, 23, 43);
+          background-color: var(--nav-btn-bg);
           display: grid;
           place-content: center;
           color: white;
@@ -507,11 +475,11 @@ export default function SpecialitaCarousel({
         }
 
         .nav-btn-prev {
-          left: calc(40px * -0.5);
+          left: calc(var(--nav-btn-size) * -0.5);
         }
 
         .nav-btn-next {
-          right: calc(40px * -0.5);
+          right: calc(var(--nav-btn-size) * -0.5);
         }
 
         .nav-btn:hover,
@@ -521,13 +489,8 @@ export default function SpecialitaCarousel({
         }
 
         .nav-btn:focus-visible {
-          outline: 1px dashed rgb(15, 23, 43);
+          outline: 1px dashed var(--nav-btn-bg);
           outline-offset: 4px;
-        }
-
-        .nav-btn:disabled {
-          opacity: 0.25;
-          cursor: unset;
         }
 
         /* Markers */
@@ -542,12 +505,14 @@ export default function SpecialitaCarousel({
           left: calc(50% - min(45%, 200px));
           right: calc(50% - min(45%, 200px));
           bottom: 0;
+          z-index: 10;
         }
 
         .carousel-marker {
-          width: 20px;
+          content: ' ';
+          height: 20px;
           aspect-ratio: 1;
-          background-color: rgb(15, 23, 43);
+          background-color: var(--nav-marker-bg);
           border-radius: 50%;
           transition: 150ms ease-in-out;
           cursor: pointer;
@@ -557,28 +522,23 @@ export default function SpecialitaCarousel({
           scale: 0.75;
         }
 
-        .carousel-marker.active {
-          opacity: 1;
-          scale: 1;
-        }
-
         .carousel-marker:hover {
           opacity: 1;
         }
 
         .carousel-marker:focus-visible {
-          outline: 1px dashed rgb(15, 23, 43);
+          outline: 1px dashed var(--nav-marker-bg);
           outline-offset: 4px;
         }
 
         /* Responsive - Mobile */
         @media (max-width: 640px) {
-          .carousel-spacer {
-            min-width: calc(50% - 75px);
+          .carousel {
+            grid-auto-columns: 180px !important;
           }
 
-          .carousel-item {
-            width: 150px;
+          .carousel-spacer {
+            min-width: calc(50% - 90px) !important;
           }
 
           .carousel-title {
@@ -611,19 +571,12 @@ export default function SpecialitaCarousel({
 
         /* Responsive - Tablet */
         @media (min-width: 641px) and (max-width: 1023px) {
-          .carousel-item {
-            width: 220px;
+          .carousel {
+            grid-auto-columns: 220px !important;
           }
 
           .carousel-spacer {
-            min-width: calc(50% - 110px);
-          }
-        }
-
-        /* Responsive - Desktop */
-        @media (min-width: 1024px) {
-          .carousel-item {
-            width: 250px;
+            min-width: calc(50% - 110px) !important;
           }
         }
 
