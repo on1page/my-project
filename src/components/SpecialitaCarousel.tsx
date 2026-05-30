@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -22,6 +23,7 @@ interface Articolo {
 }
 
 export default function SpecialitaCarousel() {
+  const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [articoli, setArticoli] = useState<Articolo[]>([]);
@@ -90,6 +92,10 @@ export default function SpecialitaCarousel() {
 
   const ePromo = (articolo: Articolo) => {
     return !!(articolo.prezzoPromozionale && articolo.scadenzaPromo && new Date(articolo.scadenzaPromo) > new Date());
+  };
+
+  const handleArticoloClick = (articoloId: string) => {
+    router.push(`/menu#${articoloId}`);
   };
 
   return (
@@ -184,6 +190,11 @@ export default function SpecialitaCarousel() {
           overflow: hidden;
           box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
           transition: all 0.5s ease;
+          cursor: pointer;
+        }
+
+        .card-content:hover {
+          transform: translateY(-5px);
         }
 
         .step-content-item.active .card-content {
@@ -395,7 +406,7 @@ export default function SpecialitaCarousel() {
       `}</style>
 
       <h2 className="carousel-title">Le Nostre Specialità</h2>
-      <p className="carousel-subtitle">Scopri i piatti più amati dal nostro menu</p>
+      <p className="carousel-subtitle">Clicca su un piatto per vedere i dettagli nel menu</p>
 
       {loading ? (
         <div className="carousel-container">
@@ -419,6 +430,7 @@ export default function SpecialitaCarousel() {
                 <div
                   key={articolo.id}
                   className={`step-content-item ${getItemClass(index)}`}
+                  onClick={() => handleArticoloClick(articolo.id)}
                 >
                   <div className="card-content">
                     <div className="card-image">
