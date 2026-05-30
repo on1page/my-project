@@ -23,7 +23,7 @@ export default function Header({ siteName, logoUrl, onAdminClick, isLoggedIn, on
     { name: 'Home', href: '#home' },
     { name: 'Chi Siamo', href: '#chi-siamo' },
     { name: 'Menu', href: '/menu' },
-    { name: 'Eventi', href: '/eventi' },
+    { name: 'Eventi', href: '#eventi' },
     { name: 'Specialità', href: '#specialita' },
     { name: 'Contatti', href: '#contatti' }
   ]
