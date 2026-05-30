@@ -9,14 +9,16 @@ interface Articolo {
   nome: string;
   descrizione: string | null;
   prezzo: number;
-  immagine: string;
-  categoria: string | null;
-  bestChoice: boolean;
-  promo: boolean;
+  prezzoPromozionale: number | null;
+  scadenzaPromo: Date | null;
+  eSurgelato: boolean;
+  eBestChoice: boolean;
   attivo: boolean;
-  ordine: number;
+  immagineUrl: string | null;
+  immagineAiGenerata: boolean;
   createdAt: Date;
   updatedAt: Date;
+  categoriaId?: string;
 }
 
 export default function SpecialitaCarousel() {
@@ -52,20 +54,21 @@ export default function SpecialitaCarousel() {
   };
 
   const goToNext = () => {
-    if (isAnimating) return;
+    if (isAnimating || articoli.length === 0) return;
     setIsAnimating(true);
     setActiveIndex((prev) => (prev === articoli.length - 1 ? 0 : prev + 1));
     setTimeout(() => setIsAnimating(false), 500);
   };
 
   const goToSlide = (index: number) => {
-    if (isAnimating) return;
+    if (isAnimating || articoli.length === 0) return;
     setIsAnimating(true);
     setActiveIndex(index);
     setTimeout(() => setIsAnimating(false), 500);
   };
 
   const getItemClass = (index: number) => {
+    if (articoli.length === 0) return 'before-all';
     const diff = (index - activeIndex + articoli.length) % articoli.length;
 
     if (diff === 0) return 'active';
@@ -73,6 +76,20 @@ export default function SpecialitaCarousel() {
     if (diff === articoli.length - 1) return 'before';
     if (diff === 2 || (activeIndex >= articoli.length - 2 && index <= 1)) return 'after-all';
     return 'before-all';
+  };
+
+  const prezzoDaMostrare = (articolo: Articolo) => {
+    if (articolo.prezzoPromozionale && articolo.scadenzaPromo) {
+      const scadenza = new Date(articolo.scadenzaPromo);
+      if (scadenza > new Date()) {
+        return articolo.prezzoPromozionale;
+      }
+    }
+    return articolo.prezzo;
+  };
+
+  const ePromo = (articolo: Articolo) => {
+    return !!(articolo.prezzoPromozionale && articolo.scadenzaPromo && new Date(articolo.scadenzaPromo) > new Date());
   };
 
   return (
@@ -405,18 +422,18 @@ export default function SpecialitaCarousel() {
                 >
                   <div className="card-content">
                     <div className="card-image">
-                      {articolo.bestChoice && (
+                      {articolo.eBestChoice && (
                         <div className="badges">
                           <span className="badge badge-best-choice">Best Choice</span>
                         </div>
                       )}
-                      {articolo.promo && (
+                      {ePromo(articolo) && (
                         <div className="badges">
                           <span className="badge badge-promo">Promo</span>
                         </div>
                       )}
                       <Image
-                        src={articolo.immagine}
+                        src={articolo.immagineUrl || 'https://images.unsplash.com/photo-1544025162-d76690b67f01?w=800&h=600&fit=crop'}
                         alt={articolo.nome}
                         fill
                         sizes="(max-width: 768px) 260px, 320px"
@@ -429,7 +446,7 @@ export default function SpecialitaCarousel() {
                         <p className="card-description">{articolo.descrizione}</p>
                       </div>
                       <div className="card-footer">
-                        <span className="card-price">€{articolo.prezzo.toFixed(2)}</span>
+                        <span className="card-price">€{prezzoDaMostrare(articolo).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
