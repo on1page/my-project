@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Star, Wand2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Star, Wand2 } from 'lucide-react'
 
 interface Articolo {
   id: string
@@ -34,9 +34,6 @@ export default function SpecialitaCarousel({
   const [loading, setLoading] = useState(true)
   const [activeIndex, setActiveIndex] = useState(0)
   const carouselRef = useRef<HTMLDivElement>(null)
-  const isDragging = useRef(false)
-  const startPos = useRef(0)
-  const scrollPos = useRef(0)
 
   useEffect(() => {
     async function fetchArticoli() {
@@ -88,47 +85,6 @@ export default function SpecialitaCarousel({
     return () => carousel.removeEventListener('scroll', handleScroll)
   }, [articoli])
 
-  // Touch/drag handling for better mobile experience
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!carouselRef.current) return
-    isDragging.current = true
-    startPos.current = e.pageX - carouselRef.current.offsetLeft
-    scrollPos.current = carouselRef.current.scrollLeft
-    carouselRef.current.style.cursor = 'grabbing'
-  }
-
-  const handleMouseUp = () => {
-    if (!carouselRef.current) return
-    isDragging.current = false
-    carouselRef.current.style.cursor = 'grab'
-  }
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging.current || !carouselRef.current) return
-    e.preventDefault()
-    const x = e.pageX - carouselRef.current.offsetLeft
-    const walk = (x - startPos.current) * 2
-    carouselRef.current.scrollLeft = scrollPos.current - walk
-  }
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!carouselRef.current) return
-    isDragging.current = true
-    startPos.current = e.touches[0].pageX - carouselRef.current.offsetLeft
-    scrollPos.current = carouselRef.current.scrollLeft
-  }
-
-  const handleTouchEnd = () => {
-    isDragging.current = false
-  }
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging.current || !carouselRef.current) return
-    const x = e.touches[0].pageX - carouselRef.current.offsetLeft
-    const walk = (x - startPos.current) * 2
-    carouselRef.current.scrollLeft = scrollPos.current - walk
-  }
-
   const isPromoValid = (scadenza: string | null) => {
     if (!scadenza) return false
     return new Date(scadenza) > new Date()
@@ -136,7 +92,7 @@ export default function SpecialitaCarousel({
 
   const scrollNext = () => {
     if (!carouselRef.current) return
-    const itemWidth = carouselRef.current.querySelector('.carousel-item')?.getBoundingClientRect().width || 220
+    const itemWidth = carouselRef.current.querySelector('.carousel-item')?.getBoundingClientRect().width || 250
     carouselRef.current.scrollBy({
       left: itemWidth,
       behavior: 'smooth'
@@ -145,7 +101,7 @@ export default function SpecialitaCarousel({
 
   const scrollPrev = () => {
     if (!carouselRef.current) return
-    const itemWidth = carouselRef.current.querySelector('.carousel-item')?.getBoundingClientRect().width || 220
+    const itemWidth = carouselRef.current.querySelector('.carousel-item')?.getBoundingClientRect().width || 250
     carouselRef.current.scrollBy({
       left: -itemWidth,
       behavior: 'smooth'
@@ -203,26 +159,26 @@ export default function SpecialitaCarousel({
         </div>
 
         {/* Carousel */}
-        <div className="relative">
-          {/* Navigation - Desktop */}
+        <div className="carousel-wrapper relative max-w-[min(calc(100%-2rem),700px)] mx-auto">
+          {/* Navigation Buttons */}
           {articoli.length > 1 && (
             <>
               {/* Previous Button */}
               <button
                 onClick={scrollPrev}
-                className="absolute left-0 md:left-2 lg:left-4 top-1/2 -translate-y-1/2 z-30 bg-slate-900/90 hover:bg-slate-800 text-white rounded-full p-2 md:p-3 shadow-lg transition-all duration-200 hover:scale-110 opacity-80 hover:opacity-100 -ml-4 md:ml-0"
+                className="nav-btn nav-btn-prev"
                 aria-label="Precedente"
               >
-                <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+                ❮
               </button>
 
               {/* Next Button */}
               <button
                 onClick={scrollNext}
-                className="absolute right-0 md:right-2 lg:right-4 top-1/2 -translate-y-1/2 z-30 bg-slate-900/90 hover:bg-slate-800 text-white rounded-full p-2 md:p-3 shadow-lg transition-all duration-200 hover:scale-110 opacity-80 hover:opacity-100 -mr-4 md:mr-0"
+                className="nav-btn nav-btn-next"
                 aria-label="Successivo"
               >
-                <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
+                ❯
               </button>
             </>
           )}
@@ -230,16 +186,9 @@ export default function SpecialitaCarousel({
           {/* Carousel Container */}
           <div
             ref={carouselRef}
-            className="carousel-container"
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-            onMouseMove={handleMouseMove}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-            onTouchMove={handleTouchMove}
+            className="carousel"
           >
-            {/* Left spacer for center snap */}
+            {/* Left Spacer */}
             <div className="carousel-spacer" aria-hidden="true" />
 
             {/* Items */}
@@ -260,19 +209,19 @@ export default function SpecialitaCarousel({
                   />
                   {articolo.eBestChoice && (
                     <div className="badge badge-best">
-                      <Star size={12} className="md:w-3 md:h-3 lg:w-4 lg:h-4" />
-                      <span className="text-xs md:text-sm lg:text-base">Best Choice</span>
+                      <Star size={14} />
+                      <span>Best Choice</span>
                     </div>
                   )}
                   {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) && (
-                    <div className="badge badge-promo text-xs md:text-sm font-bold">
+                    <div className="badge badge-promo font-bold">
                       -{Math.round((1 - articolo.prezzoPromozionale / articolo.prezzo) * 100)}%
                     </div>
                   )}
                   {articolo.immagineAiGenerata && (
                     <div className="ai-badge">
-                      <Wand2 className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                      <span className="text-[10px] md:text-xs">Immagine generata con IA</span>
+                      <Wand2 className="w-3.5 h-3.5" />
+                      <span className="text-xs">Immagine generata con IA</span>
                     </div>
                   )}
                 </div>
@@ -298,18 +247,18 @@ export default function SpecialitaCarousel({
                 </div>
 
                 {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) && (
-                  <p className="promo-expiry text-xs">
+                  <p className="promo-expiry text-xs text-gray-500 mt-1">
                     Promo valida fino al {new Date(articolo.scadenzaPromo!).toLocaleDateString('it-IT')}
                   </p>
                 )}
               </article>
             ))}
 
-            {/* Right spacer for center snap */}
+            {/* Right Spacer */}
             <div className="carousel-spacer" aria-hidden="true" />
           </div>
 
-          {/* Markers/Dots */}
+          {/* Markers */}
           {articoli.length > 1 && (
             <div className="carousel-markers">
               {articoli.map((_, index) => (
@@ -326,53 +275,37 @@ export default function SpecialitaCarousel({
       </div>
 
       <style jsx>{`
-        .carousel-container {
+        .carousel-wrapper {
+          padding-block: 2rem;
+        }
+
+        .carousel {
           display: flex;
-          align-items: center;
+          gap: 0;
           overflow-x: auto;
           overflow-y: hidden;
           scroll-snap-type: x mandatory;
+          overscroll-behavior-x: contain;
           scroll-behavior: smooth;
           scrollbar-width: none;
           -ms-overflow-style: none;
-          cursor: grab;
-          padding: 1.5rem 0;
-          gap: 0;
-          touch-action: pan-x;
         }
 
-        .carousel-container::-webkit-scrollbar {
+        .carousel::-webkit-scrollbar {
           display: none;
         }
 
         .carousel-spacer {
           flex: 0 0 1px;
-          min-width: min(calc(50% - 100px), calc(50% - 140px));
-        }
-
-        @media (min-width: 640px) {
-          .carousel-spacer {
-            min-width: calc(50% - 130px);
-          }
-        }
-
-        @media (min-width: 768px) {
-          .carousel-spacer {
-            min-width: calc(50% - 140px);
-          }
-        }
-
-        @media (min-width: 1024px) {
-          .carousel-spacer {
-            min-width: calc(50% - 160px);
-          }
+          min-width: calc(50% - 125px);
         }
 
         .carousel-item {
           flex: 0 0 auto;
-          width: 200px;
+          width: 250px;
           scroll-snap-align: center;
           scroll-snap-stop: always;
+          position: relative;
           display: grid;
           grid-template-areas:
             'img'
@@ -382,36 +315,61 @@ export default function SpecialitaCarousel({
             'promo';
           text-align: center;
           cursor: pointer;
-          padding: 0.5rem;
           transition: all 300ms ease-in-out;
+          container-type: inline-size;
+          container-name: card;
         }
 
-        @media (min-width: 640px) {
-          .carousel-item {
-            width: 260px;
-            padding: 0.75rem;
-          }
-        }
-
-        @media (min-width: 768px) {
-          .carousel-item {
-            width: 220px;
-          }
-        }
-
-        @media (min-width: 1024px) {
-          .carousel-item {
-            width: 260px;
-          }
-        }
-
+        /* Active item styling */
         .carousel-item.active .carousel-img {
-          transform: scale(1.05);
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+          scale: 1;
+          opacity: 1;
         }
 
         .carousel-item.active .carousel-title {
-          transform: scale(1.02);
+          scale: 1;
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        .carousel-item.active .carousel-desc {
+          scale: 1;
+          opacity: 1;
+        }
+
+        .carousel-item.active .carousel-price {
+          scale: 1;
+          opacity: 1;
+        }
+
+        /* Inactive item styling - scale down */
+        .carousel-item:not(.active) .carousel-img {
+          scale: 0.5;
+          opacity: 0.5;
+        }
+
+        .carousel-item:not(.active) .carousel-title {
+          scale: 0.5;
+          opacity: 0.5;
+          transform: translateY(-100px);
+        }
+
+        .carousel-item:not(.active) .carousel-desc {
+          scale: 0.5;
+          opacity: 0;
+        }
+
+        .carousel-item:not(.active) .carousel-price {
+          scale: 0.5;
+          opacity: 0;
+        }
+
+        .carousel-item:not(.active) .promo-expiry {
+          opacity: 0;
+        }
+
+        .carousel-item:not(.active) .badge {
+          opacity: 0.5;
         }
 
         .carousel-img {
@@ -422,9 +380,9 @@ export default function SpecialitaCarousel({
           transform-origin: center center;
           position: relative;
           overflow: hidden;
-          border-radius: 1rem;
+          border-radius: 1.25rem;
           box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
-          margin-bottom: 0.75rem;
+          margin-bottom: 1rem;
         }
 
         .carousel-img img {
@@ -435,50 +393,33 @@ export default function SpecialitaCarousel({
         }
 
         .carousel-item:hover .carousel-img img {
-          transform: scale(1.1);
+          transform: scale(1.05);
         }
 
         .badge {
           position: absolute;
-          top: 0.5rem;
-          padding: 0.25rem 0.5rem md:px-3 md:py-1;
+          top: 0.75rem;
+          padding: 0.25rem 0.75rem;
           border-radius: 9999px;
+          font-size: 0.875rem;
           font-weight: 500;
           z-index: 10;
           display: flex;
           align-items: center;
           gap: 0.25rem;
-        }
-
-        @media (min-width: 768px) {
-          .badge {
-            top: 0.75rem;
-            padding: 0.25rem 0.75rem;
-          }
+          transition: opacity 300ms ease-in-out;
         }
 
         .badge-best {
-          left: 0.5rem;
+          left: 0.75rem;
           background-color: hsl(var(--primary));
           color: hsl(var(--primary-foreground));
         }
 
-        @media (min-width: 768px) {
-          .badge-best {
-            left: 0.75rem;
-          }
-        }
-
         .badge-promo {
-          right: 0.5rem;
+          right: 0.75rem;
           background-color: rgb(220, 38, 38);
           color: white;
-        }
-
-        @media (min-width: 768px) {
-          .badge-promo {
-            right: 0.75rem;
-          }
         }
 
         .ai-badge {
@@ -497,51 +438,23 @@ export default function SpecialitaCarousel({
 
         .carousel-title {
           grid-area: title;
-          margin: 0.5rem 0 0.25rem 0;
-          font-size: 1rem;
+          margin: 1rem 0 0.25rem 0;
+          font-size: 1.3rem;
           font-weight: bold;
           color: rgb(15, 23, 43);
-          line-height: 1.2;
+          white-space: nowrap;
           transition: all 300ms ease-in-out;
-        }
-
-        @media (min-width: 640px) {
-          .carousel-title {
-            font-size: 1.125rem;
-            margin: 0.75rem 0 0.25rem 0;
-          }
-        }
-
-        @media (min-width: 768px) {
-          .carousel-title {
-            font-size: 1.25rem;
-            margin: 1rem 0 0.25rem 0;
-          }
         }
 
         .carousel-desc {
           grid-area: desc;
           margin: 0 0 0.5rem 0;
-          font-size: 0.75rem;
+          font-size: 0.875rem;
           color: rgb(75, 85, 99);
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
+          white-space: nowrap;
           overflow: hidden;
-          line-height: 1.4;
-        }
-
-        @media (min-width: 640px) {
-          .carousel-desc {
-            font-size: 0.875rem;
-          }
-        }
-
-        @media (min-width: 768px) {
-          .carousel-desc {
-            white-space: nowrap;
-            -webkit-line-clamp: 1;
-          }
+          text-overflow: ellipsis;
+          transition: all 300ms ease-in-out;
         }
 
         .carousel-price {
@@ -550,146 +463,173 @@ export default function SpecialitaCarousel({
           align-items: center;
           justify-content: center;
           gap: 0.5rem;
-          margin-top: 0.25rem;
+          transition: all 300ms ease-in-out;
         }
 
         .price-current {
-          font-size: 1.125rem;
+          font-size: 1.25rem;
           font-weight: bold;
           color: hsl(var(--primary));
         }
 
-        @media (min-width: 640px) {
-          .price-current {
-            font-size: 1.25rem;
-          }
-        }
-
-        @media (min-width: 768px) {
-          .price-current {
-            font-size: 1.5rem;
-          }
-        }
-
         .price-original {
-          font-size: 0.875rem;
+          font-size: 1rem;
           color: rgb(156, 163, 175);
           text-decoration: line-through;
         }
 
-        @media (min-width: 640px) {
-          .price-original {
-            font-size: 1rem;
-          }
-        }
-
-        @media (min-width: 768px) {
-          .price-original {
-            font-size: 1.125rem;
-          }
-        }
-
         .price-normal {
-          font-size: 1.125rem;
+          font-size: 1.25rem;
           font-weight: bold;
           color: rgb(15, 23, 43);
         }
 
-        @media (min-width: 640px) {
-          .price-normal {
-            font-size: 1.25rem;
-          }
+        /* Navigation Buttons */
+        .nav-btn {
+          position: absolute;
+          width: 40px;
+          aspect-ratio: 1/1;
+          font: inherit;
+          background-color: rgb(15, 23, 43);
+          display: grid;
+          place-content: center;
+          color: white;
+          border: none;
+          border-radius: 50%;
+          opacity: 0.7;
+          cursor: pointer;
+          transition: all 150ms ease-in-out;
+          outline: 1px dashed transparent;
+          outline-offset: 0px;
+          z-index: 20;
+          top: 50%;
+          transform: translateY(-50%);
         }
 
-        @media (min-width: 768px) {
-          .price-normal {
-            font-size: 1.5rem;
-          }
+        .nav-btn-prev {
+          left: calc(40px * -0.5);
         }
 
-        .promo-expiry {
-          grid-area: promo;
-          font-size: 0.6875rem;
-          color: rgb(107, 114, 128);
-          margin-top: 0.25rem;
+        .nav-btn-next {
+          right: calc(40px * -0.5);
         }
 
-        @media (min-width: 640px) {
-          .promo-expiry {
-            font-size: 0.75rem;
-          }
+        .nav-btn:hover,
+        .nav-btn:focus-visible {
+          opacity: 1;
+          scale: 1.1;
+        }
+
+        .nav-btn:focus-visible {
+          outline: 1px dashed rgb(15, 23, 43);
+          outline-offset: 4px;
+        }
+
+        .nav-btn:disabled {
+          opacity: 0.25;
+          cursor: unset;
         }
 
         /* Markers */
         .carousel-markers {
           position: absolute;
-          bottom: 0;
-          left: 50%;
-          transform: translateX(-50%);
+          width: min(90%, 400px);
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 0.5rem;
-          padding: 1rem 0;
-          z-index: 20;
+          gap: 0.25rem;
+          padding-block-start: 1rem;
+          left: calc(50% - min(45%, 200px));
+          right: calc(50% - min(45%, 200px));
+          bottom: 0;
         }
 
         .carousel-marker {
-          width: 8px;
-          height: 8px;
-          background-color: var(--nav-marker-bg, rgb(15, 23, 43));
+          width: 20px;
+          aspect-ratio: 1;
+          background-color: rgb(15, 23, 43);
           border-radius: 50%;
-          transition: all 200ms ease-in-out;
+          transition: 150ms ease-in-out;
           cursor: pointer;
           border: none;
           padding: 0;
-          opacity: 0.3;
-        }
-
-        @media (min-width: 640px) {
-          .carousel-marker {
-            width: 10px;
-            height: 10px;
-          }
+          opacity: 0.25;
+          scale: 0.75;
         }
 
         .carousel-marker.active {
-          width: 24px;
           opacity: 1;
-          border-radius: 9999px;
-        }
-
-        @media (min-width: 640px) {
-          .carousel-marker.active {
-            width: 28px;
-          }
-        }
-
-        @media (min-width: 768px) {
-          .carousel-marker.active {
-            width: 32px;
-          }
+          scale: 1;
         }
 
         .carousel-marker:hover {
           opacity: 1;
-          width: 20px;
-        }
-
-        @media (min-width: 640px) {
-          .carousel-marker:hover {
-            width: 24px;
-          }
         }
 
         .carousel-marker:focus-visible {
-          outline: 2px solid rgb(15, 23, 43);
-          outline-offset: 2px;
+          outline: 1px dashed rgb(15, 23, 43);
+          outline-offset: 4px;
         }
 
-        /* Improve touch scrolling on mobile */
+        /* Responsive - Mobile */
+        @media (max-width: 640px) {
+          .carousel-spacer {
+            min-width: calc(50% - 75px);
+          }
+
+          .carousel-item {
+            width: 150px;
+          }
+
+          .carousel-title {
+            font-size: 1rem;
+          }
+
+          .carousel-desc {
+            font-size: 0.75rem;
+          }
+
+          .price-current,
+          .price-normal {
+            font-size: 1rem;
+          }
+
+          .price-original {
+            font-size: 0.875rem;
+          }
+
+          .badge {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+          }
+
+          /* Hide nav buttons on mobile to prevent overlap */
+          .nav-btn {
+            display: none;
+          }
+        }
+
+        /* Responsive - Tablet */
+        @media (min-width: 641px) and (max-width: 1023px) {
+          .carousel-item {
+            width: 220px;
+          }
+
+          .carousel-spacer {
+            min-width: calc(50% - 110px);
+          }
+        }
+
+        /* Responsive - Desktop */
+        @media (min-width: 1024px) {
+          .carousel-item {
+            width: 250px;
+          }
+        }
+
+        /* Touch device improvements */
         @media (hover: none) and (pointer: coarse) {
-          .carousel-container {
+          .carousel {
             scroll-behavior: auto;
             -webkit-overflow-scrolling: touch;
           }
