@@ -61,7 +61,9 @@ export default function AdBanner({ pagina = 'eventi', posizione = 'top', tipo }:
 
       // 2. Verifica se gli script sono abilitati dal backend
       const response = await fetch('/api/admin/company-data');
-      const companyData = await response.json();
+      const result = await response.json();
+      // Supporta entrambi i formati: { data: {...} } o direttamente i dati
+      const companyData = result.data || result;
       const scriptsEnabled = companyData.thirdPartyScriptsEnabled ?? false;
 
       // Mostra se ha consenso marketing OPPURE se abilitato dal backend

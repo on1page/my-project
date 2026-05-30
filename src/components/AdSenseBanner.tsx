@@ -48,9 +48,9 @@ export default function AdSenseBanner({ adSlot, adFormat = 'auto', className = '
       try {
         const response = await fetch('/api/admin/company-data');
         if (response.ok) {
-          const data = await response.json();
-          setBackendToggle(data.data?.['Abilita Script di terze Parti'] || false);
-          setAdSenseId(data.data?.['adSenseId'] || null);
+          const result = await response.json();
+          setBackendToggle(result.data?.thirdPartyScriptsEnabled || false);
+          setAdSenseId(result.data?.adSenseId || null);
         }
       } catch (error) {
         console.error('Error fetching AdSense data:', error);

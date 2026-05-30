@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import CookieScriptLoader from './CookieScriptLoader';
-import { createGoogleAnalyticsConfig, createFacebookPixelConfig, executeInitScript } from '@/lib/cookie-scripts';
+import CookieScriptLoader, { executeInitScript } from './CookieScriptLoader';
 
 interface CompanyData {
   thirdPartyScriptsEnabled?: boolean;
   googleAnalyticsId?: string | null;
   facebookPixelId?: string | null;
   amazonTagId?: string | null;
+  adSenseId?: string | null;
 }
 
 export default function ThirdPartyScripts() {
@@ -19,7 +19,9 @@ export default function ThirdPartyScripts() {
     try {
       const response = await fetch('/api/admin/company-data');
       if (response.ok) {
-        const data = await response.json();
+        const result = await response.json();
+        // Supporta entrambi i formati: { data: {...} } o direttamente i dati
+        const data = result.data || result;
         setTimeout(() => setCompanyData(data), 0);
       }
     } catch (error) {
@@ -70,7 +72,6 @@ export default function ThirdPartyScripts() {
         <CookieScriptLoader
           cookieType="marketing"
           id="facebook-pixel-fbq"
-          options={{}}
           onConsentChange={(allowed) => {
             if (allowed && companyData.facebookPixelId) {
               // Inizializza Facebook Pixel quando il consenso viene dato
@@ -97,11 +98,7 @@ export default function ThirdPartyScripts() {
       {companyData.amazonTagId && (
         <CookieScriptLoader
           cookieType="marketing"
-          src={`https://script.ameba.io/${companyData.amazonTagId}`}
           id="amazon-pixel-tag"
-          options={{
-            async: true,
-          }}
           onConsentChange={(allowed) => {
             if (allowed && companyData.amazonTagId) {
               // Inizializza Amazon Pixel quando il consenso viene dato
@@ -116,6 +113,25 @@ export default function ThirdPartyScripts() {
                 })(document, 'script');
               `;
               executeInitScript(amazonScript, 'amazon-pixel-init');
+            }
+          }}
+          debug={process.env.NODE_ENV === 'development'}
+        />
+      )}
+
+      {/* Google AdSense - Cookie Marketing */}
+      {companyData.adSenseId && (
+        <CookieScriptLoader
+          cookieType="marketing"
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-${companyData.adSenseId}`}
+          id="google-adsense-script"
+          options={{
+            async: true,
+            crossOrigin: 'anonymous',
+          }}
+          onConsentChange={(allowed) => {
+            if (allowed && process.env.NODE_ENV === 'development') {
+              console.log('[ThirdPartyScripts] AdSense script caricato con ID:', companyData.adSenseId);
             }
           }}
           debug={process.env.NODE_ENV === 'development'}
