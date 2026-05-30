@@ -587,10 +587,10 @@ export default function AdminCompanyData() {
                         Inserisci il tuo GA4 Measurement ID (es: G-XXXXXXXXXX)
                       </p>
                       <Input
-                        id="googleAnalyticsId"
-                        value={companyData.googleAnalyticsId || ''}
-                        onChange={(e) => setCompanyData({ ...companyData, googleAnalyticsId: e.target.value })}
-                        placeholder="G-XXXXXXXXXX"
+                        id="adSenseId"
+                        value={companyData.adSenseId || ''}
+                        onChange={(e) => setCompanyData({ ...companyData, adSenseId: e.target.value })}
+                        placeholder="(pub-)XXXXXXXXXX"
                         className="font-mono"
                       />
                     </div>
