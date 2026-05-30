@@ -1,597 +1,463 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useRef } from 'react'
-import { Star, Wand2 } from 'lucide-react'
+import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import Image from 'next/image';
 
 interface Articolo {
-  id: string
-  nome: string
-  descrizione: string | null
-  prezzo: number
-  prezzoPromozionale: number | null
-  scadenzaPromo: string | null
-  eBestChoice: boolean
-  immagineUrl: string | null
-  immagineAiGenerata: boolean
+  id: string;
+  nome: string;
+  descrizione: string | null;
+  prezzo: number;
+  immagine: string;
+  categoria: string | null;
+  bestChoice: boolean;
+  promo: boolean;
+  attivo: boolean;
+  ordine: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-interface SpecialitaCarouselProps {
-  showBestChoice?: boolean
-  showPromo?: boolean
-  limit?: number
-  title?: string
-  subtitle?: string
-}
-
-export default function SpecialitaCarousel({
-  showBestChoice = true,
-  showPromo = true,
-  limit = 6,
-  title = "Le Nostre Specialità",
-  subtitle = "Scopri i piatti più amati dai nostri clienti e le offerte speciali del momento"
-}: SpecialitaCarouselProps) {
-  const [articoli, setArticoli] = useState<Articolo[]>([])
-  const [loading, setLoading] = useState(true)
-  const carouselRef = useRef<HTMLUListElement>(null)
+export default function SpecialitaCarousel() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [articoli, setArticoli] = useState<Articolo[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchArticoli() {
-      try {
-        const params = new URLSearchParams()
-        if (showBestChoice) params.append('bestChoice', 'true')
-        if (showPromo) params.append('inPromo', 'true')
+    fetchArticoli();
+  }, []);
 
-        const response = await fetch(`/api/admin/articoli?${params.toString()}`)
-        if (response.ok) {
-          const data = await response.json()
-          setArticoli(data.slice(0, limit))
-        }
-      } catch (error) {
-        console.error('Errore nel recupero articoli:', error)
-      } finally {
-        setLoading(false)
+  const fetchArticoli = async () => {
+    try {
+      const response = await fetch('/api/articoli');
+      if (!response.ok) {
+        throw new Error('Errore nel caricamento degli articoli');
       }
+      const data = await response.json();
+      setArticoli(data);
+    } catch (error) {
+      console.error('Errore:', error);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    fetchArticoli()
-  }, [showBestChoice, showPromo, limit])
+  const goToPrevious = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setActiveIndex((prev) => (prev === 0 ? articoli.length - 1 : prev - 1));
+    setTimeout(() => setIsAnimating(false), 500);
+  };
 
-  const isPromoValid = (scadenza: string | null) => {
-    if (!scadenza) return false
-    return new Date(scadenza) > new Date()
-  }
-
-  const scrollNext = () => {
-    if (!carouselRef.current) return
-    const items = carouselRef.current.querySelectorAll('.carousel-item')
-    const center = carouselRef.current.scrollLeft + carouselRef.current.offsetWidth / 2
-
-    let currentIndex = 0
-    let closestDistance = Infinity
-
-    items.forEach((item, index) => {
-      const itemCenter = item.getBoundingClientRect().left + item.getBoundingClientRect().width / 2
-      const distance = Math.abs(center - itemCenter)
-      if (distance < closestDistance) {
-        closestDistance = distance
-        currentIndex = index
-      }
-    })
-
-    const nextItem = items[Math.min(currentIndex + 1, items.length - 1)]
-    if (nextItem) {
-      nextItem.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'center'
-      })
-    }
-  }
-
-  const scrollPrev = () => {
-    if (!carouselRef.current) return
-    const items = carouselRef.current.querySelectorAll('.carousel-item')
-    const center = carouselRef.current.scrollLeft + carouselRef.current.offsetWidth / 2
-
-    let currentIndex = 0
-    let closestDistance = Infinity
-
-    items.forEach((item, index) => {
-      const itemCenter = item.getBoundingClientRect().left + item.getBoundingClientRect().width / 2
-      const distance = Math.abs(center - itemCenter)
-      if (distance < closestDistance) {
-        closestDistance = distance
-        currentIndex = index
-      }
-    })
-
-    const prevItem = items[Math.max(currentIndex - 1, 0)]
-    if (prevItem) {
-      prevItem.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'center'
-      })
-    }
-  }
+  const goToNext = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setActiveIndex((prev) => (prev === articoli.length - 1 ? 0 : prev + 1));
+    setTimeout(() => setIsAnimating(false), 500);
+  };
 
   const goToSlide = (index: number) => {
-    if (!carouselRef.current) return
-    const item = carouselRef.current.querySelectorAll('.carousel-item')[index]
-    if (item) {
-      item.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'center'
-      })
-    }
-  }
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setActiveIndex(index);
+    setTimeout(() => setIsAnimating(false), 500);
+  };
 
-  if (loading) {
-    return (
-      <section id="specialita" className="py-12 md:py-20 lg:py-24 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <div className="animate-pulse h-8 bg-gray-300 rounded w-64 mx-auto mb-4"></div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mt-12">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="animate-pulse bg-white rounded-xl p-4">
-                  <div className="aspect-[3/4] bg-gray-300 rounded-lg mb-4"></div>
-                  <div className="h-6 bg-gray-300 rounded mb-2"></div>
-                  <div className="h-4 bg-gray-300 rounded"></div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-    )
-  }
+  const getItemClass = (index: number) => {
+    const diff = (index - activeIndex + articoli.length) % articoli.length;
 
-  if (articoli.length === 0) {
-    return null
-  }
+    if (diff === 0) return 'active';
+    if (diff === 1 || (activeIndex === articoli.length - 1 && index === 0)) return 'after';
+    if (diff === articoli.length - 1) return 'before';
+    if (diff === 2 || (activeIndex >= articoli.length - 2 && index <= 1)) return 'after-all';
+    return 'before-all';
+  };
 
   return (
-    <section id="specialita" className="py-12 md:py-20 lg:py-24 bg-gray-50">
-      <div className="container mx-auto px-4">
-        {/* Title */}
-        <div className="text-center mb-8 md:mb-12">
-          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 md:mb-4">
-            {title}
-          </h2>
-          <p className="text-gray-600 text-base md:text-lg max-w-2xl mx-auto px-4">
-            {subtitle}
-          </p>
-        </div>
-
-        {/* Carousel */}
-        <div className="carousel-wrapper relative mx-auto" style={{ width: 'min(calc(100% - 2rem), 700px)' }}>
-          {/* Navigation Buttons */}
-          {articoli.length > 1 && (
-            <>
-              {/* Previous Button */}
-              <button
-                onClick={scrollPrev}
-                className="nav-btn nav-btn-prev"
-                aria-label="Precedente"
-              >
-                ❮
-              </button>
-
-              {/* Next Button */}
-              <button
-                onClick={scrollNext}
-                className="nav-btn nav-btn-next"
-                aria-label="Successivo"
-              >
-                ❯
-              </button>
-            </>
-          )}
-
-          {/* Carousel Container */}
-          <ul
-            ref={carouselRef}
-            className="carousel"
-          >
-            {/* Empty pseudo elements - represented as invisible li */}
-            <li className="carousel-spacer" aria-hidden="true"></li>
-
-            {articoli.map((articolo, index) => (
-              <li
-                key={articolo.id}
-                className={`carousel-item ${index === 0 ? 'scroll-start' : ''}`}
-                onClick={() => {
-                  window.location.href = `/menu?articolo=${articolo.id}`
-                }}
-              >
-                {/* Immagine */}
-                <div className="carousel-img">
-                  <img
-                    src={articolo.immagineUrl || '/images/pasta.jpg'}
-                    alt={articolo.nome}
-                    loading={index > 2 ? 'lazy' : 'eager'}
-                  />
-                  {articolo.eBestChoice && (
-                    <div className="badge badge-best">
-                      <Star size={14} />
-                      <span>Best Choice</span>
-                    </div>
-                  )}
-                  {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) && (
-                    <div className="badge badge-promo font-bold">
-                      -{Math.round((1 - articolo.prezzoPromozionale / articolo.prezzo) * 100)}%
-                    </div>
-                  )}
-                  {articolo.immagineAiGenerata && (
-                    <div className="ai-badge">
-                      <Wand2 className="w-3.5 h-3.5" />
-                      <span className="text-xs">Immagine generata con IA</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Titolo */}
-                <h2 className="carousel-title">{articolo.nome}</h2>
-
-                {/* Descrizione */}
-                {articolo.descrizione && (
-                  <p className="carousel-desc">{articolo.descrizione}</p>
-                )}
-
-                {/* Prezzo */}
-                <div className="carousel-price">
-                  {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) ? (
-                    <>
-                      <span className="price-current">€{articolo.prezzoPromozionale.toFixed(2)}</span>
-                      <span className="price-original">€{articolo.prezzo.toFixed(2)}</span>
-                    </>
-                  ) : (
-                    <span className="price-normal">€{articolo.prezzo.toFixed(2)}</span>
-                  )}
-                </div>
-
-                {articolo.prezzoPromozionale && isPromoValid(articolo.scadenzaPromo) && (
-                  <p className="promo-expiry text-xs text-gray-500 mt-1">
-                    Promo valida fino al {new Date(articolo.scadenzaPromo!).toLocaleDateString('it-IT')}
-                  </p>
-                )}
-              </li>
-            ))}
-
-            {/* Empty pseudo element at the end */}
-            <li className="carousel-spacer" aria-hidden="true"></li>
-          </ul>
-
-          {/* Markers */}
-          {articoli.length > 1 && (
-            <div className="carousel-markers">
-              {articoli.map((_, index) => (
-                <button
-                  key={index}
-                  className="carousel-marker"
-                  onClick={() => goToSlide(index)}
-                  aria-label={`Vai alla slide ${index + 1}`}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
+    <div className="specialita-carousel w-full max-w-6xl mx-auto py-12 px-4">
       <style jsx>{`
-        .carousel-wrapper {
-          padding-block: 2rem;
-        }
-
-        .carousel {
-          /* prev & next buttons */
-          --nav-btn-size: 40px;
-          --nav-btn-bg: rgb(15, 23, 43);
-          --nav-btn-txt: white;
-          
-          /* item markers */
-          --nav-marker-bg: rgb(15, 23, 43);
-          
-          list-style: none;
-          display: grid;
-          grid-auto-flow: column;
-          grid-auto-columns: 250px; 
-          gap: 0;
-          
-          /* scroll behavior */
-          overflow-x: auto;
-          overflow-y: hidden;
-          scroll-snap-type: x mandatory;
-          overscroll-behavior-x: contain; 
-          scroll-behavior: smooth;
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-          padding: 0;
-          margin: 0;
+        .carousel-container {
           position: relative;
-          anchor-name: --carousel;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 500px;
+          overflow: hidden;
+          perspective: 1000px;
         }
 
-        .carousel::-webkit-scrollbar {
-          display: none;
-        }
-
-        .carousel-spacer {
-          flex: 0 0 1px;
-          min-width: calc(50% - 125px);
-        }
-
-        /* carousel item */
-        .carousel-item {
-          position: relative;
-          scroll-snap-align: center; /* centers snap */
-          scroll-snap-stop: always; /* ensures that the scroll stops at each element */
-          display: grid;
-          grid-template-areas: 'img' 'title' 'desc' 'price' 'promo';
-          text-align: center;
-          cursor: pointer;
-          padding: 0;
-          margin: 0;
-          transition: all 300ms ease-in-out;
-          container-type: inline-size;
-          container-name: card;
-          
-          /* scroll to this item on load */
-          &.scroll-start {
-            scroll-margin-inline: auto;
+        @media (max-width: 768px) {
+          .carousel-container {
+            height: 420px;
           }
         }
 
-        /* item title/name */
-        .carousel-title {
-          grid-area: title;
-          margin: 1rem 0 0 0;
-          font-size: 1.3rem;
-          white-space: nowrap;
-          transition: all 300ms ease-in-out;
+        @media (max-width: 480px) {
+          .carousel-container {
+            height: 380px;
+          }
         }
 
-        .carousel-desc {
-          grid-area: desc;
-          margin: 0;
-          white-space: nowrap;
-          transition: all 300ms ease-in-out;
-        }
-
-        .carousel-img {
-          grid-area: img;
-          width: 100%;
-          aspect-ratio: 3/4;
-          transition: all 300ms ease-in-out;
-          transform-origin: center center;
+        .carousel-content {
           position: relative;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .step-content-item {
+          position: absolute;
+          width: 320px;
+          height: 450px;
+          transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+          transform-style: preserve-3d;
+        }
+
+        @media (max-width: 768px) {
+          .step-content-item {
+            width: 260px;
+            height: 380px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .step-content-item {
+            width: 220px;
+            height: 340px;
+          }
+        }
+
+        .step-content-item.active {
+          z-index: 3;
+          transform: translateX(0) scale(1);
+          opacity: 1;
+        }
+
+        .step-content-item.before {
+          z-index: 2;
+          transform: translateX(-120%) scale(0.8);
+          opacity: 0.7;
+          filter: blur(2px);
+        }
+
+        .step-content-item.after {
+          z-index: 2;
+          transform: translateX(120%) scale(0.8);
+          opacity: 0.7;
+          filter: blur(2px);
+        }
+
+        .step-content-item.before-all,
+        .step-content-item.after-all {
+          z-index: 1;
+          transform: translateX(0) scale(0.6);
+          opacity: 0;
+          filter: blur(4px);
+        }
+
+        .card-content {
+          width: 100%;
+          height: 100%;
+          background: white;
+          border-radius: 20px;
+          overflow: hidden;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+          transition: all 0.5s ease;
+        }
+
+        .step-content-item.active .card-content {
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+        }
+
+        .card-image {
+          position: relative;
+          width: 100%;
+          height: 60%;
           overflow: hidden;
         }
 
-        .carousel-img img {
+        .card-image img {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          border-radius: 20px;
-          box-shadow: 0 10px 20px rgba(0 0 0 / 0.25);
+          transition: transform 0.5s ease;
         }
 
-        .carousel-price {
-          grid-area: price;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          margin-top: 0.25rem;
+        .step-content-item.active .card-image img {
+          transform: scale(1.1);
         }
 
-        .price-current {
-          font-size: 1.25rem;
-          font-weight: bold;
-          color: hsl(var(--primary));
-        }
-
-        .price-original {
-          font-size: 1rem;
-          color: rgb(156, 163, 175);
-          text-decoration: line-through;
-        }
-
-        .price-normal {
-          font-size: 1.25rem;
-          font-weight: bold;
-          color: rgb(15, 23, 43);
-        }
-
-        .promo-expiry {
-          grid-area: promo;
-          font-size: 0.75rem;
-          color: rgb(107, 114, 128);
-          margin-top: 0.25rem;
-        }
-
-        /* Badges */
-        .badge {
+        .badges {
           position: absolute;
-          top: 0.75rem;
-          padding: 0.25rem 0.75rem;
-          border-radius: 9999px;
-          font-size: 0.875rem;
-          font-weight: 500;
-          z-index: 10;
+          top: 12px;
+          left: 12px;
           display: flex;
-          align-items: center;
-          gap: 0.25rem;
+          flex-direction: column;
+          gap: 6px;
+          z-index: 2;
         }
 
-        .badge-best {
-          left: 0.75rem;
-          background-color: hsl(var(--primary));
-          color: hsl(var(--primary-foreground));
+        .badge {
+          padding: 4px 10px;
+          border-radius: 20px;
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .badge-best-choice {
+          background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+          color: white;
         }
 
         .badge-promo {
-          right: 0.75rem;
-          background-color: rgb(220, 38, 38);
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
           color: white;
         }
 
-        .ai-badge {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          background-color: rgba(0, 0, 0, 0.6);
-          backdrop-filter: blur(4px);
-          padding: 0.25rem 0.5rem;
+        .card-info {
+          padding: 16px;
+          height: 40%;
           display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.25rem;
+          flex-direction: column;
+          justify-content: space-between;
         }
 
-        /* Navigation Buttons */
-        .nav-btn {
+        .card-title {
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: #1a1a1a;
+          margin-bottom: 4px;
+          line-height: 1.3;
+        }
+
+        .card-description {
+          font-size: 0.85rem;
+          color: #666;
+          line-height: 1.4;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        .card-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: auto;
+        }
+
+        .card-price {
+          font-size: 1.5rem;
+          font-weight: 800;
+          color: #059669;
+        }
+
+        .nav-button {
           position: absolute;
-          width: var(--nav-btn-size);
-          aspect-ratio: 1/1;
-          font: inherit;
-          background-color: var(--nav-btn-bg);
-          display: grid;
-          place-content: center;
-          color: white;
-          border: none;
-          border-radius: 50%;
-          opacity: 0.7;
-          cursor: pointer;
-          transition: all 150ms ease-in-out;
-          outline: 1px dashed transparent;
-          outline-offset: 0px;
-          z-index: 20;
           top: 50%;
           transform: translateY(-50%);
-        }
-
-        .nav-btn-prev {
-          left: calc(var(--nav-btn-size) * -0.5);
-        }
-
-        .nav-btn-next {
-          right: calc(var(--nav-btn-size) * -0.5);
-        }
-
-        .nav-btn:hover,
-        .nav-btn:focus-visible {
-          opacity: 1;
-          scale: 1.1;
-        }
-
-        .nav-btn:focus-visible {
-          outline: 1px dashed var(--nav-btn-bg);
-          outline-offset: 4px;
-        }
-
-        /* Markers */
-        .carousel-markers {
-          position: absolute;
-          width: min(90%, 400px);
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          background: white;
+          border: none;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+          cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 0.25rem;
-          padding-block-start: 1rem;
-          left: calc(50% - min(45%, 200px));
-          right: calc(50% - min(45%, 200px));
-          bottom: 0;
+          transition: all 0.3s ease;
           z-index: 10;
         }
 
-        .carousel-marker {
-          content: ' ';
-          height: 20px;
-          aspect-ratio: 1;
-          background-color: var(--nav-marker-bg);
+        .nav-button:hover {
+          transform: translateY(-50%) scale(1.1);
+          box-shadow: 0 6px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-button:active {
+          transform: translateY(-50%) scale(0.95);
+        }
+
+        .nav-button-prev {
+          left: 20px;
+        }
+
+        .nav-button-next {
+          right: 20px;
+        }
+
+        @media (max-width: 768px) {
+          .nav-button-prev {
+            left: 10px;
+          }
+
+          .nav-button-next {
+            right: 10px;
+          }
+
+          .nav-button {
+            width: 42px;
+            height: 42px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .nav-button-prev {
+            left: 5px;
+          }
+
+          .nav-button-next {
+            right: 5px;
+          }
+
+          .nav-button {
+            width: 38px;
+            height: 38px;
+          }
+        }
+
+        .indicators {
+          display: flex;
+          justify-content: center;
+          gap: 10px;
+          margin-top: 24px;
+        }
+
+        .indicator {
+          width: 10px;
+          height: 10px;
           border-radius: 50%;
-          transition: 150ms ease-in-out;
-          cursor: pointer;
+          background: #d1d5db;
           border: none;
-          padding: 0;
-          opacity: 0.25;
-          scale: 0.75;
+          cursor: pointer;
+          transition: all 0.3s ease;
         }
 
-        .carousel-marker:hover {
-          opacity: 1;
+        .indicator:hover {
+          background: #9ca3af;
         }
 
-        .carousel-marker:focus-visible {
-          outline: 1px dashed var(--nav-marker-bg);
-          outline-offset: 4px;
+        .indicator.active {
+          width: 30px;
+          border-radius: 5px;
+          background: #059669;
         }
 
-        /* Responsive - Mobile */
-        @media (max-width: 640px) {
-          .carousel {
-            grid-auto-columns: 180px !important;
-          }
+        .carousel-title {
+          text-align: center;
+          font-size: 2rem;
+          font-weight: 800;
+          color: #1a1a1a;
+          margin-bottom: 8px;
+        }
 
-          .carousel-spacer {
-            min-width: calc(50% - 90px) !important;
-          }
+        .carousel-subtitle {
+          text-align: center;
+          font-size: 1rem;
+          color: #666;
+          margin-bottom: 32px;
+        }
 
+        @media (max-width: 768px) {
           .carousel-title {
-            font-size: 1rem;
+            font-size: 1.5rem;
           }
 
-          .carousel-desc {
-            font-size: 0.75rem;
-          }
-
-          .price-current,
-          .price-normal {
-            font-size: 1rem;
-          }
-
-          .price-original {
-            font-size: 0.875rem;
-          }
-
-          .badge {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.75rem;
-          }
-
-          /* Hide nav buttons on mobile to prevent overlap */
-          .nav-btn {
-            display: none;
-          }
-        }
-
-        /* Responsive - Tablet */
-        @media (min-width: 641px) and (max-width: 1023px) {
-          .carousel {
-            grid-auto-columns: 220px !important;
-          }
-
-          .carousel-spacer {
-            min-width: calc(50% - 110px) !important;
-          }
-        }
-
-        /* Touch device improvements */
-        @media (hover: none) and (pointer: coarse) {
-          .carousel {
-            scroll-behavior: auto;
-            -webkit-overflow-scrolling: touch;
-          }
-
-          .carousel-item {
-            scroll-snap-stop: normal;
+          .carousel-subtitle {
+            font-size: 0.9rem;
           }
         }
       `}</style>
-    </section>
-  )
+
+      <h2 className="carousel-title">Le Nostre Specialità</h2>
+      <p className="carousel-subtitle">Scopri i piatti più amati dal nostro menu</p>
+
+      {loading ? (
+        <div className="carousel-container">
+          <div className="flex items-center justify-center">
+            <Loader2 className="w-12 h-12 animate-spin text-amber-600" />
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="carousel-container">
+            <button
+              className="nav-button nav-button-prev"
+              onClick={goToPrevious}
+              aria-label="Precedente"
+            >
+              <ChevronLeft size={24} />
+            </button>
+
+            <div className="carousel-content">
+              {articoli.map((articolo, index) => (
+                <div
+                  key={articolo.id}
+                  className={`step-content-item ${getItemClass(index)}`}
+                >
+                  <div className="card-content">
+                    <div className="card-image">
+                      {articolo.bestChoice && (
+                        <div className="badges">
+                          <span className="badge badge-best-choice">Best Choice</span>
+                        </div>
+                      )}
+                      {articolo.promo && (
+                        <div className="badges">
+                          <span className="badge badge-promo">Promo</span>
+                        </div>
+                      )}
+                      <Image
+                        src={articolo.immagine}
+                        alt={articolo.nome}
+                        fill
+                        sizes="(max-width: 768px) 260px, 320px"
+                        priority={index === activeIndex}
+                      />
+                    </div>
+                    <div className="card-info">
+                      <div>
+                        <h3 className="card-title">{articolo.nome}</h3>
+                        <p className="card-description">{articolo.descrizione}</p>
+                      </div>
+                      <div className="card-footer">
+                        <span className="card-price">€{articolo.prezzo.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              className="nav-button nav-button-next"
+              onClick={goToNext}
+              aria-label="Successivo"
+            >
+              <ChevronRight size={24} />
+            </button>
+          </div>
+
+          <div className="indicators">
+            {articoli.map((_, index) => (
+              <button
+                key={index}
+                className={`indicator ${index === activeIndex ? 'active' : ''}`}
+                onClick={() => goToSlide(index)}
+                aria-label={`Vai alla slide ${index + 1}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
