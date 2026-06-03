@@ -49,81 +49,91 @@ export default function EventiPage() {
   const [eventForReservation, setEventForReservation] = useState<Evento | null>(null)
 
   useEffect(() => {
-    fetchEventi()
-  }, [])
+    let isMounted = true;
 
-  async function fetchEventi() {
-    setLoading(true)
-    try {
-      const response = await fetch('/api/eventi')
-      const result = await response.json()
-      setEventi(result.data || [])
-    } catch (error) {
-      console.error('Errore nel recupero eventi:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+    const fetchEventi = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch('/api/eventi');
+        const result = await response.json();
+        if (isMounted) {
+          setEventi(result.data || []);
+        }
+      } catch (error) {
+        console.error('Errore nel recupero eventi:', error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchEventi();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Funzione per ricaricare gli eventi e aggiornare l'evento selezionato
-  async function refreshEventi() {
+  const refreshEventi = useCallback(async () => {
     try {
-      const response = await fetch('/api/eventi')
-      const result = await response.json()
-      const nuoviEventi = result.data || []
-      setEventi(nuoviEventi)
+      const response = await fetch('/api/eventi');
+      const result = await response.json();
+      const nuoviEventi = result.data || [];
+      setEventi(nuoviEventi);
 
       // Aggiorna l'evento selezionato con i dati aggiornati
       if (selectedEvent) {
-        const eventoAggiornato = nuoviEventi.find((e: Evento) => e.id === selectedEvent.id)
+        const eventoAggiornato = nuoviEventi.find((e: Evento) => e.id === selectedEvent.id);
         if (eventoAggiornato) {
-          setSelectedEvent(eventoAggiornato)
+          setSelectedEvent(eventoAggiornato);
         }
       }
     } catch (error) {
-      console.error('Errore nel ricaricamento eventi:', error)
+      console.error('Errore nel ricaricamento eventi:', error);
     }
-  }
+  }, [selectedEvent]);
 
   function formatDate(dateStr: string) {
     return new Date(dateStr).toLocaleDateString('it-IT', {
       day: '2-digit',
       month: 'long',
       year: 'numeric'
-    })
+    });
   }
 
   function formatShortDate(dateStr: string) {
     return new Date(dateStr).toLocaleDateString('it-IT', {
       day: '2-digit',
       month: 'short'
-    })
+    });
   }
 
   function handlePrenota() {
-    if (!selectedEvent) return
+    if (!selectedEvent) return;
     // Salva l'evento per la prenotazione mantenendo selectedEvent
-    setEventForReservation(selectedEvent)
-    setReservationOpen(true)
+    setEventForReservation(selectedEvent);
+    setReservationOpen(true);
   }
 
   const handleShare = useCallback(async () => {
-    if (!selectedEvent) return
-    const text = `🎫 ${selectedEvent.titolo}\n📅 ${formatDate(selectedEvent.data)} ore ${selectedEvent.oraInizio}\n${selectedEvent.gratuito ? '🆓 Gratuito' : `💰 €${selectedEvent.prezzo}`}\n${selectedEvent.descrizioneBreve}`
-    const url = window.location.href
+    if (!selectedEvent) return;
+    const text = `🎫 ${selectedEvent.titolo}\n📅 ${formatDate(selectedEvent.data)} ore ${selectedEvent.oraInizio}\n${selectedEvent.gratuito ? '🆓 Gratuito' : `💰 €${selectedEvent.prezzo}`}\n${selectedEvent.descrizioneBreve}`;
+    const url = window.location.href;
 
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
-        await navigator.share({ title: selectedEvent.titolo, text, url })
-        return
+        await navigator.share({ title: selectedEvent.titolo, text, url });
+        return;
       } catch {
         // Utente ha annullato o errore, fallback WhatsApp
       }
     }
     // Fallback: WhatsApp
-    const encoded = encodeURIComponent(`${text}\n\n${url}`)
-    window.open(`https://wa.me/?text=${encoded}`, '_blank')
-  }, [selectedEvent, formatDate])
+    const encoded = encodeURIComponent(`${text}\n\n${url}`);
+    window.open(`https://wa.me/?text=${encoded}`, '_blank');
+  }, [selectedEvent, formatDate]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -460,8 +470,8 @@ export default function EventiPage() {
       {reservationOpen && eventForReservation && (
         <ReservationDialog
           onClose={() => {
-            setReservationOpen(false)
-            setEventForReservation(null)
+            setReservationOpen(false);
+            setEventForReservation(null);
           }}
           eventoId={eventForReservation.id}
           eventoData={eventForReservation.data.split('T')[0]}
@@ -471,5 +481,5 @@ export default function EventiPage() {
         />
       )}
     </div>
-  )
+  );
 }

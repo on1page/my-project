@@ -1,129 +1,157 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
 
 interface AdSenseBannerProps {
-  adSlot: string;
+  adSenseId?: string;
+  adSlotId?: string;
   adFormat?: 'auto' | 'rectangle' | 'horizontal' | 'vertical';
   className?: string;
 }
 
-export default function AdSenseBanner({ adSlot, adFormat = 'auto', className = '' }: AdSenseBannerProps) {
+declare global {
+  interface Window {
+    adsbygoogle: any[];
+  }
+}
+
+export default function AdSenseBanner({
+  adSenseId: propAdSenseId,
+  adSlotId: propAdSlotId,
+  adFormat = 'auto',
+  className = '',
+}: AdSenseBannerProps) {
   const [adSenseId, setAdSenseId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasConsent, setHasConsent] = useState(false);
-  const [backendToggle, setBackendToggle] = useState(false);
+  const [adSlotId, setAdSlotId] = useState<string | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
-  const [adElementId] = useState(() => `adsense-${Math.random().toString(36).substring(2, 9)}`);
   const [adInitialized, setAdInitialized] = useState(false);
+  const [hasConsent, setHasConsent] = useState(false);
+  const adElementId = `adsense-${Math.random().toString(36).substr(2, 9)}`;
 
-  // Get ad format class
-  const getAdFormatClass = () => {
-    switch (adFormat) {
-      case 'rectangle':
-        return 'w-[300px] h-[250px]';
-      case 'horizontal':
-        return 'w-[728px] h-[90px]';
-      case 'vertical':
-        return 'w-[160px] h-[600px]';
-      default:
-        return 'w-full h-[90px] md:h-[250px]';
-    }
-  };
-
+  // Verifica consenso cookie marketing
   useEffect(() => {
-    // Check cookie consent
     const checkConsent = () => {
-      const cookieConsent = localStorage.getItem('cookie-preferences');
-      const consent = cookieConsent ? JSON.parse(cookieConsent) : null;
-      const hasMarketingConsent = consent?.marketing === true;
-      setHasConsent(hasMarketingConsent);
+      const consent = localStorage.getItem('cookieConsent');
+      if (consent === 'all' || consent === 'marketing') {
+        setHasConsent(true);
+      } else {
+        setHasConsent(false);
+      }
     };
 
     checkConsent();
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'cookieConsent') {
+        checkConsent();
+      }
+    };
 
-    // Check backend toggle and get AdSense ID
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Fetch AdSense ID e Slot ID dal database
+  useEffect(() => {
     const fetchAdSenseData = async () => {
       try {
-        const response = await fetch('/api/admin/company-data');
-        if (response.ok) {
-          const result = await response.json();
-          setBackendToggle(result.data?.thirdPartyScriptsEnabled || false);
-          setAdSenseId(result.data?.adSenseId || null);
+        const response = await fetch('/api/company-data');
+        if (!response.ok) return;
+
+        const data = await response.json();
+        if (data.adSenseId) {
+          setAdSenseId(data.adSenseId);
+        }
+        if (propAdSlotId) {
+          setAdSlotId(propAdSlotId);
         }
       } catch (error) {
-        console.error('Error fetching AdSense data:', error);
-      } finally {
-        setIsLoading(false);
+        console.error('Errore nel fetch dei dati AdSense:', error);
       }
     };
 
     fetchAdSenseData();
-  }, []);
+  }, [propAdSlotId]);
 
+  // Carica script AdSense
   useEffect(() => {
-    // Load AdSense script if conditions are met and script not already loaded
-    if (hasConsent && backendToggle && adSenseId && !scriptLoaded) {
-      // Check if script already exists
-      if ((window as any).adsbygoogle) {
-        setScriptLoaded(true);
-        return;
+    if (!adSenseId || !hasConsent || scriptLoaded) return;
+
+    const script = document.createElement('script');
+    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adSenseId}`;
+    script.async = true;
+    script.crossOrigin = 'anonymous';
+
+    script.onload = () => {
+      setScriptLoaded(true);
+      console.log('[AdSense] Script caricato con successo:', adSenseId);
+    };
+
+    script.onerror = () => {
+      console.error('[AdSense] Errore nel caricamento dello script');
+    };
+
+    document.head.appendChild(script);
+
+    return () => {
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
       }
+    };
+  }, [adSenseId, hasConsent, scriptLoaded]);
 
-      const script = document.createElement('script');
-      script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-${adSenseId}`;
-      script.async = true;
-      script.crossOrigin = 'anonymous';
-      script.onload = () => {
-        setScriptLoaded(true);
-      };
-      document.head.appendChild(script);
-    }
-  }, [hasConsent, backendToggle, adSenseId, scriptLoaded]);
-
+  // Inizializza annuncio
   useEffect(() => {
-    // Push ad to Google when script is loaded and DOM is ready
-    if (scriptLoaded && !adInitialized && adSenseId) {
-      const adElement = document.getElementById(adElementId);
-      if (adElement && (window as any).adsbygoogle) {
-        try {
-          ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
-          setAdInitialized(true);
-        } catch (error) {
-          console.error('AdSense push error:', error);
-        }
-      }
-    }
-  }, [scriptLoaded, adInitialized, adElementId, adSenseId]);
+    if (!scriptLoaded || adInitialized || !adSenseId || !adSlotId) return;
 
-  // Don't render anything if conditions not met
-  if (isLoading || (!hasConsent && !backendToggle)) {
+    const initializeAd = () => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          try {
+            (window.adsbygoogle = window.adsbygoogle || []).push({
+              google_ad_client: adSenseId,
+              enable_page_level_ads: false,
+            });
+            setAdInitialized(true);
+            console.log('[AdSense] Annuncio inizializzato con successo:', adSlotId);
+          } catch (error) {
+            console.error('[AdSense] Errore nell\'inizializzazione:', error);
+          }
+        });
+      });
+    };
+
+    initializeAd();
+  }, [scriptLoaded, adInitialized, adElementId, adSenseId, adSlotId]);
+
+  if (!hasConsent || !adSenseId || !adSlotId) {
     return null;
   }
 
-  // Don't render if no AdSense ID configured
-  if (!adSenseId) {
-    return null;
-  }
+  const formatStyle = {
+    auto: {},
+    rectangle: { width: '300px', height: '250px' },
+    horizontal: { width: '728px', height: '90px' },
+    vertical: { width: '160px', height: '600px' },
+  };
+
+  const adStyle = adFormat !== 'auto' ? formatStyle[adFormat] : {};
 
   return (
-    <div className={`flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden ${className}`}>
-      {scriptLoaded ? (
+    <div className={`w-full flex justify-center my-4 ${className}`}>
+      <div style={{ minWidth: '300px', minHeight: '100px' }}>
         <ins
           id={adElementId}
           className="adsbygoogle block"
-          style={{ display: 'block' }}
-          data-ad-client={`ca-pub-${adSenseId}`}
-          data-ad-slot={adSlot}
-          data-ad-format={adFormat === 'auto' ? 'auto' : 'rectangle'}
-          data-full-width-responsive="true"
+          style={{
+            display: 'inline-block',
+            ...adStyle,
+          }}
+          data-ad-client={adSenseId}
+          data-ad-slot={adSlotId}
+          data-ad-format={adFormat === 'auto' ? 'auto' : undefined}
+          data-full-width-responsive={adFormat === 'auto' ? 'true' : undefined}
         />
-      ) : (
-        <div className={`flex items-center justify-center ${getAdFormatClass()}`}>
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-        </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import AdSenseBanner from './AdSenseBanner';
 
-export default function AdSenseRectangle() {
+export default function AdSenseTop() {
   const [slotId, setSlotId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -14,9 +14,9 @@ export default function AdSenseRectangle() {
         if (!response.ok) return;
 
         const data = await response.json();
-        setSlotId(data.adSenseSlotRectangle);
+        setSlotId(data.adSenseSlotTop);
       } catch (error) {
-        console.error('Errore nel fetch dello slot rettangolo:', error);
+        console.error('Errore nel fetch dello slot top:', error);
       } finally {
         setLoading(false);
       }
@@ -26,12 +26,12 @@ export default function AdSenseRectangle() {
   }, []);
 
   if (loading) {
-    return <div className="w-[300px] h-[250px] flex items-center justify-center bg-gray-100 animate-pulse" />;
+    return <div className="w-full h-[100px] flex items-center justify-center bg-gray-100 animate-pulse" />;
   }
 
   if (!slotId) {
     return null;
   }
 
-  return <AdSenseBanner adSlotId={slotId} adFormat="rectangle" />;
+  return <AdSenseBanner adSlotId={slotId} adFormat="auto" />;
 }
