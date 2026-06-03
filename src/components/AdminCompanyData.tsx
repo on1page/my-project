@@ -49,6 +49,10 @@ interface CompanyData {
   facebookPixelId?: string | null
   amazonTagId?: string | null
   adSenseId?: string | null
+  adSenseSlotHorizontal?: string | null
+  adSenseSlotRectangle?: string | null
+  adSenseSlotTop?: string | null
+  adSenseSlotInline?: string | null
 }
 
 export default function AdminCompanyData() {
@@ -87,53 +91,83 @@ export default function AdminCompanyData() {
     googleAnalyticsId: '',
     facebookPixelId: '',
     amazonTagId: '',
-    adSenseId: ''
+    adSenseId: '',
+    adSenseSlotHorizontal: '',
+    adSenseSlotRectangle: '',
+    adSenseSlotTop: '',
+    adSenseSlotInline: ''
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('azienda')
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    let isMounted = true;
 
-  async function fetchData() {
-    setLoading(true)
-    try {
-      const response = await fetch('/api/admin/company-data')
-      if (response.ok) {
-        const result = await response.json()
-        // Supporta entrambi i formati: { data: {...} } o direttamente i dati
-        const data = result.data || result
-        setCompanyData(data)
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const response = await fetch('/api/admin/company-data');
+        if (response.ok) {
+          const result = await response.json();
+          // Supporta entrambi i formati: { data: {...} } o direttamente i dati
+          const data = result.data || result;
+          if (isMounted) {
+            setCompanyData(data);
+          }
+        }
+      } catch (error) {
+        console.error('Errore nel recupero dati aziendali:', error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-    } catch (error) {
-      console.error('Errore nel recupero dati aziendali:', error)
-    } finally {
-      setLoading(false)
     }
-  }
+
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   async function handleSave() {
-    setSaving(true)
+    setSaving(true);
     try {
       const response = await fetch('/api/admin/company-data', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(companyData)
-      })
+      });
 
       if (response.ok) {
-        alert('Dati aziendali salvati con successo!')
-        fetchData() // Ricarica i dati aggiornati
+        alert('Dati aziendali salvati con successo!');
+        fetchData(); // Ricarica i dati aggiornati
       } else {
-        alert('Errore nel salvataggio')
+        alert('Errore nel salvataggio');
       }
     } catch (error) {
-      console.error('Errore salvataggio:', error)
-      alert('Errore di connessione')
+      console.error('Errore salvataggio:', error);
+      alert('Errore di connessione');
     } finally {
-      setSaving(false)
+      setSaving(false);
+    }
+  }
+
+  async function fetchData() {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/admin/company-data');
+      if (response.ok) {
+        const result = await response.json();
+        const data = result.data || result;
+        setCompanyData(data);
+      }
+    } catch (error) {
+      console.error('Errore nel recupero dati aziendali:', error);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -145,7 +179,7 @@ export default function AdminCompanyData() {
           <p className="text-gray-600">Caricamento dati...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -633,24 +667,91 @@ export default function AdminCompanyData() {
                       />
                     </div>
 
-                    <div>
+                    <div className="pt-4 border-t">
                       <Label htmlFor="adSenseId" className="flex items-center gap-2">
-                        <span className="font-semibold">💰 Google AdSense</span>
+                        <span className="font-semibold">💰 Google AdSense - Publisher ID</span>
                         <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Cookie Marketing</span>
                       </Label>
                       <p className="text-sm text-gray-500 mb-2">
-                        Inserisci il tuo Publisher ID di Google AdSense (solo numeri, senza pub-)
+                        Inserisci il tuo Publisher ID di Google AdSense (formato completo: ca-pub-XXXXXXXXXXXXXXXX)
                       </p>
                       <Input
                         id="adSenseId"
                         value={companyData.adSenseId || ''}
                         onChange={(e) => setCompanyData({ ...companyData, adSenseId: e.target.value })}
-                        placeholder="1234567890123456"
+                        placeholder="ca-pub-1234567890123456"
                         className="font-mono"
                       />
                       <p className="text-xs text-gray-400 mt-2">
-                        Esempio: Se il tuo ID è <code className="bg-gray-100 px-1 rounded">pub-1234567890123456</code>, inserisci solo <code className="bg-gray-100 px-1 rounded">1234567890123456</code>
+                        Esempio: <code className="bg-gray-100 px-1 rounded">ca-pub-1234567890123456</code>
                       </p>
+                    </div>
+
+                    <div className="pt-4 border-t bg-green-50 rounded-lg p-4">
+                      <Label className="flex items-center gap-2 mb-4">
+                        <span className="font-semibold">📦 AdSense Slot IDs</span>
+                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Banner Pubblicitari</span>
+                      </Label>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Inserisci gli ID Slot creati nel tuo account AdSense per ciascun tipo di banner. 
+                        Questi ID si trovano nella dashboard AdSense under "Unità pubblicitarie".
+                      </p>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="adSenseSlotHorizontal" className="text-sm font-medium">Slot Banner Orizzontale</Label>
+                          <p className="text-xs text-gray-500 mb-2">Per banner a tutta larghezza (es: 728x90px)</p>
+                          <Input
+                            id="adSenseSlotHorizontal"
+                            value={companyData.adSenseSlotHorizontal || ''}
+                            onChange={(e) => setCompanyData({ ...companyData, adSenseSlotHorizontal: e.target.value })}
+                            placeholder="1234567890"
+                            className="font-mono text-sm"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="adSenseSlotRectangle" className="text-sm font-medium">Slot Banner Rettangolare</Label>
+                          <p className="text-xs text-gray-500 mb-2">Per banner quadrati o rettangolari (es: 300x250px)</p>
+                          <Input
+                            id="adSenseSlotRectangle"
+                            value={companyData.adSenseSlotRectangle || ''}
+                            onChange={(e) => setCompanyData({ ...companyData, adSenseSlotRectangle: e.target.value })}
+                            placeholder="1234567890"
+                            className="font-mono text-sm"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="adSenseSlotTop" className="text-sm font-medium">Slot Banner Top</Label>
+                          <p className="text-xs text-gray-500 mb-2">Per banner in alto alla pagina</p>
+                          <Input
+                            id="adSenseSlotTop"
+                            value={companyData.adSenseSlotTop || ''}
+                            onChange={(e) => setCompanyData({ ...companyData, adSenseSlotTop: e.target.value })}
+                            placeholder="1234567890"
+                            className="font-mono text-sm"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="adSenseSlotInline" className="text-sm font-medium">Slot Banner Inline</Label>
+                          <p className="text-xs text-gray-500 mb-2">Per banner inseriti nel contenuto della pagina</p>
+                          <Input
+                            id="adSenseSlotInline"
+                            value={companyData.adSenseSlotInline || ''}
+                            onChange={(e) => setCompanyData({ ...companyData, adSenseSlotInline: e.target.value })}
+                            placeholder="1234567890"
+                            className="font-mono text-sm"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mt-4 bg-white rounded p-3 border border-green-200">
+                        <p className="text-xs text-gray-600">
+                          <strong>Dove trovo gli Slot IDs?</strong> Vai su <a href="https://adsense.google.com" target="_blank" rel="noopener noreferrer" className="text-green-600 underline">Google AdSense</a> → Contenuti → Unità pubblicitarie → clicca sull'unità desiderata → copia il "ID dati" che inizia con un numero.
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -664,7 +765,7 @@ export default function AdminCompanyData() {
                             <li>Inserisci gli ID/Tag nei campi sopra</li>
                             <li>Clicca "Salva Dati"</li>
                             <li>Resetta il consenso cookie dal tab "Impostazioni"</li>
-                            <li>Dai il consenso appropriato nel banner</li>
+                            <li>Dai il consenso appropriato nel banner (Marketing per AdSense)</li>
                             <li>Apri la console (F12) per vedere i log di caricamento</li>
                           </ol>
                         </div>
@@ -809,5 +910,5 @@ export default function AdminCompanyData() {
         </ScrollArea>
       </Tabs>
     </div>
-  )
+  );
 }
