@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ExternalLink, X } from 'lucide-react';
 
 interface Banner {
@@ -27,99 +27,127 @@ interface AdBannerProps {
   tipo?: 'horizontal' | 'vertical';
 }
 
+// Funzione helper - definita fuori dal componente
+function checkMarketingConsent(consent: string | null, preferences: string | null): boolean {
+  if (!consent) return false;
+
+  if (consent === 'accepted') return true;
+
+  if (consent === 'custom' && preferences) {
+    try {
+      const prefs = JSON.parse(preferences);
+      return prefs.marketing === true;
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+}
+
 export default function AdBanner({ pagina = 'eventi', posizione = 'top', tipo }: AdBannerProps) {
+  // Inizializza dismissedBanners leggendo direttamente da localStorage
+  const getInitialDismissed = (): Set<string> => {
+    if (typeof window === 'undefined') return new Set();
+    try {
+      const dismissed = localStorage.getItem('dismissed-banners');
+      return dismissed ? new Set(JSON.parse(dismissed)) : new Set();
+    } catch {
+      return new Set();
+    }
+  };
+
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [canShow, setCanShow] = useState(false);
-  const [dismissedBanners, setDismissedBanners] = useState<Set<string>>(new Set());
+  const [dismissedBanners, setDismissedBanners] = useState<Set<string>>(getInitialDismissed());
+  
+  const isMountedRef = useRef(true);
+
+  // Helper per setState sicuro
+  const safeSetState = <T,>(setter: (value: T) => void, value: T) => {
+    if (isMountedRef.current) {
+      setter(value);
+    }
+  };
 
   useEffect(() => {
-    // Recupera i banner rimossi dall'utente
-    const dismissed = localStorage.getItem('dismissed-banners');
-    if (dismissed) {
-      setDismissedBanners(new Set(JSON.parse(dismissed)));
-    }
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
-    // Verifica se può mostrare i banner
+  // Effect per controllare se può mostrare i banner
+  useEffect(() => {
+    const checkCanShow = async () => {
+      try {
+        const cookieConsent = localStorage.getItem('cookie-consent');
+        const cookiePreferences = localStorage.getItem('cookie-preferences');
+        const hasMarketingConsent = checkMarketingConsent(cookieConsent, cookiePreferences);
+
+        const response = await fetch('/api/company-data');
+        if (!response.ok) {
+          safeSetState(setCanShow, hasMarketingConsent);
+          return;
+        }
+
+        const result = await response.json();
+        const companyData = result;
+        const scriptsEnabled = companyData.thirdPartyScriptsEnabled ?? false;
+
+        safeSetState(setCanShow, hasMarketingConsent || scriptsEnabled);
+      } catch (error) {
+        console.error('[AdBanner] Errore nel controllo permessi banner:', error);
+        const cookieConsent = localStorage.getItem('cookie-consent');
+        const cookiePreferences = localStorage.getItem('cookie-preferences');
+        const hasMarketingConsent = checkMarketingConsent(cookieConsent, cookiePreferences);
+        safeSetState(setCanShow, hasMarketingConsent);
+      }
+    };
+
     checkCanShow();
   }, []);
 
+  // Effect per fetch banners
   useEffect(() => {
-    if (canShow) {
-      fetchBanners();
-    } else {
-      setLoading(false);
+    if (!canShow) {
+      safeSetState(setLoading, false);
+      return;
     }
-  }, [canShow, pagina, posizione, tipo]);
 
-  const checkCanShow = async () => {
-    try {
-      // 1. Verifica consenso dell'utente per cookie marketing
-      const cookieConsent = localStorage.getItem('cookie-consent');
-      const cookiePreferences = localStorage.getItem('cookie-preferences');
-      const hasMarketingConsent = checkMarketingConsent(cookieConsent, cookiePreferences);
-
-      // 2. Verifica se gli script sono abilitati dal backend
-      const response = await fetch('/api/admin/company-data');
-      const result = await response.json();
-      // Supporta entrambi i formati: { data: {...} } o direttamente i dati
-      const companyData = result.data || result;
-      const scriptsEnabled = companyData.thirdPartyScriptsEnabled ?? false;
-
-      // Mostra se ha consenso marketing OPPURE se abilitato dal backend
-      setCanShow(hasMarketingConsent || scriptsEnabled);
-    } catch (error) {
-      console.error('Errore nel controllo permessi banner:', error);
-      // In caso di errore, non mostrare i banner per sicurezza
-      setCanShow(false);
-    }
-  };
-
-  const checkMarketingConsent = (consent: string | null, preferences: string | null): boolean => {
-    if (!consent) return false;
-
-    // Se ha accettato tutti, ha consenso marketing
-    if (consent === 'accepted') return true;
-
-    // Se ha scelto preferenze personalizzate, controlla
-    if (consent === 'custom' && preferences) {
+    const fetchBanners = async () => {
       try {
-        const prefs = JSON.parse(preferences);
-        return prefs.marketing === true;
-      } catch {
-        return false;
+        const params = new URLSearchParams({ pagina });
+        if (tipo) params.append('tipo', tipo);
+        if (posizione) params.append('posizione', posizione);
+
+        const response = await fetch(`/api/banners?${params.toString()}`);
+        if (response.ok && isMountedRef.current) {
+          const result = await response.json();
+          safeSetState(setBanners, result.data || []);
+        }
+      } catch (error) {
+        console.error('Errore nel recupero banner:', error);
+      } finally {
+        if (isMountedRef.current) {
+          safeSetState(setLoading, false);
+        }
       }
-    }
+    };
 
-    // Altri casi (necessary-only, declined) = no consenso marketing
-    return false;
-  };
-
-  const fetchBanners = async () => {
-    try {
-      const params = new URLSearchParams({ pagina });
-      if (tipo) params.append('tipo', tipo);
-      if (posizione) params.append('posizione', posizione);
-
-      const response = await fetch(`/api/banners?${params.toString()}`);
-      if (response.ok) {
-        const result = await response.json();
-        setBanners(result.data || []);
-      }
-    } catch (error) {
-      console.error('Errore nel recupero banner:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchBanners();
+  }, [canShow, pagina, tipo, posizione]);
 
   const handleDismiss = (bannerId: string) => {
     const newDismissed = new Set(dismissedBanners);
     newDismissed.add(bannerId);
     setDismissedBanners(newDismissed);
-    localStorage.setItem('dismissed-banners', JSON.stringify([...newDismissed]));
+    
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('dismissed-banners', JSON.stringify([...newDismissed]));
+    }
 
-    // Rimuovi il banner dallo stato
     setBanners(prev => prev.filter(b => b.id !== bannerId));
   };
 
@@ -127,7 +155,6 @@ export default function AdBanner({ pagina = 'eventi', posizione = 'top', tipo }:
     return null;
   }
 
-  // Filtra i banner non rimossi
   const visibleBanners = banners.filter(b => !dismissedBanners.has(b.id));
 
   if (visibleBanners.length === 0) {
@@ -162,7 +189,6 @@ function AdBannerItem({ banner, onDismiss }: AdBannerItemProps) {
       }`}
       style={{ backgroundColor: banner.coloreSfondo || '#f9fafb' }}
     >
-      {/* Pulsante chiudi */}
       <button
         onClick={onDismiss}
         className="absolute top-2 right-2 z-10 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-sm transition-colors"
@@ -171,17 +197,11 @@ function AdBannerItem({ banner, onDismiss }: AdBannerItemProps) {
         <X className="w-4 h-4 text-gray-600" />
       </button>
 
-      {/* Contenuto banner */}
-      <div
-        className={`${isHorizontal ? 'flex md:flex-row' : 'flex flex-col'} items-stretch`}
-      >
-        {/* Immagine o Logo */}
+      <div className={`${isHorizontal ? 'flex md:flex-row' : 'flex flex-col'} items-stretch`}>
         {banner.immagineUrl || banner.sponsorLogo ? (
-          <div
-            className={`relative ${
-              isHorizontal ? 'w-1/3 md:w-1/4 min-h-[150px] md:min-h-[200px]' : 'w-full h-40'
-            }`}
-          >
+          <div className={`relative ${
+            isHorizontal ? 'w-1/3 md:w-1/4 min-h-[150px] md:min-h-[200px]' : 'w-full h-40'
+          }`}>
             <a
               href={banner.sponsorUrl}
               target="_blank"
@@ -197,14 +217,10 @@ function AdBannerItem({ banner, onDismiss }: AdBannerItemProps) {
           </div>
         ) : null}
 
-        {/* Contenuto testuale */}
-        <div
-          className={`flex-1 p-4 md:p-6 flex flex-col justify-between ${
-            banner.immagineUrl || banner.sponsorLogo ? '' : 'p-4 md:p-6'
-          }`}
-        >
+        <div className={`flex-1 p-4 md:p-6 flex flex-col justify-between ${
+          banner.immagineUrl || banner.sponsorLogo ? '' : 'p-4 md:p-6'
+        }`}>
           <div>
-            {/* Sponsor */}
             {banner.sponsorLogo && !banner.immagineUrl ? (
               <a
                 href={banner.sponsorUrl}
@@ -225,14 +241,12 @@ function AdBannerItem({ banner, onDismiss }: AdBannerItemProps) {
               </span>
             )}
 
-            {/* Titolo */}
             {banner.titolo && (
               <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">
                 {banner.titolo}
               </h3>
             )}
 
-            {/* Descrizione */}
             {banner.descrizione && (
               <p className="text-sm md:text-base text-gray-700 mb-4 line-clamp-2">
                 {banner.descrizione}
@@ -240,7 +254,6 @@ function AdBannerItem({ banner, onDismiss }: AdBannerItemProps) {
             )}
           </div>
 
-          {/* CTA */}
           {(banner.ctaTesto && banner.ctaUrl) ? (
             <a
               href={banner.ctaUrl}
