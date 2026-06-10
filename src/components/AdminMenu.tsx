@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Plus, Pencil, Trash2, Save, X, Check, Upload, Move, ZoomIn, ZoomOut, RotateCcw, Loader2, Wand2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Save, X, Check, Upload, Move, ZoomIn, ZoomOut, RotateCcw, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -81,7 +81,6 @@ export default function AdminMenu() {
 
   // Image upload state
   const [uploading, setUploading] = useState(false)
-  const [generating, setGenerating] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Image editor state
@@ -164,46 +163,6 @@ export default function AdminMenu() {
   function removeImage() {
     setArticoloForm(prev => ({ ...prev, immagineUrl: '', immagineAiGenerata: false }))
     resetImageEditor()
-  }
-
-  async function handleGenerateImage() {
-    if (!articoloForm.nome.trim()) {
-      alert('Inserisci il nome del piatto prima di generare l\'immagine')
-      return
-    }
-
-    setGenerating(true)
-    try {
-      console.log('🚀 Inizio generazione immagine per:', articoloForm.nome)
-
-      const response = await fetch('/api/admin/generate-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome: articoloForm.nome,
-          descrizione: articoloForm.descrizione
-        })
-      })
-
-      console.log('📡 Risposta ricevuta, status:', response.status)
-
-      if (response.ok) {
-        const result = await response.json()
-        console.log('✅ Immagine generata con successo:', result.service)
-        setArticoloForm(prev => ({ ...prev, immagineUrl: result.url, immagineAiGenerata: true }))
-        resetImageEditor()
-        setImageEditorOpen(true)
-      } else {
-        const err = await response.json()
-        console.error('❌ Errore generazione:', err)
-        alert(`Errore: ${err.error}${err.details ? `\nDettagli: ${err.details}` : ''}`)
-      }
-    } catch (error) {
-      console.error('💥 Errore fetch:', error)
-      alert('Errore di connessione al server di generazione immagini. Controlla la console per dettagli.')
-    } finally {
-      setGenerating(false)
-    }
   }
 
   function openImageEditor() {
@@ -722,20 +681,14 @@ export default function AdminMenu() {
                           <Move className="w-3.5 h-3.5" />
                           Regola posizione e zoom
                         </Button>
-                        {articoloForm.immagineAiGenerata && (
-                          <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-center gap-1.5">
-                            <Wand2 className="w-3 h-3 flex-shrink-0" />
-                            Immagine generata con intelligenza artificiale
-                          </p>
-                        )}
                       </div>
                     ) : (
                       <div className="space-y-3">
                         <button
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
-                          disabled={generating}
-                          className={`w-full h-28 border-2 border-dashed ${generating ? 'border-gray-200 opacity-50' : 'border-gray-300 hover:border-orange-400'} rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-orange-500 transition-colors cursor-pointer disabled:cursor-not-allowed`}
+                          disabled={uploading}
+                          className={`w-full h-28 border-2 border-dashed ${uploading ? 'border-gray-200 opacity-50' : 'border-gray-300 hover:border-orange-400'} rounded-xl flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-orange-500 transition-colors cursor-pointer disabled:cursor-not-allowed`}
                         >
                           {uploading ? (
                             <Loader2 className="w-6 h-6 animate-spin" />
@@ -746,28 +699,6 @@ export default function AdminMenu() {
                             </>
                           )}
                         </button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className={`w-full gap-2 ${generating ? 'opacity-70' : ''}`}
-                          onClick={handleGenerateImage}
-                          disabled={generating || !articoloForm.nome.trim()}
-                        >
-                          {generating ? (
-                            <>
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              Generazione in corso... (può richiedere qualche secondo)
-                            </>
-                          ) : (
-                            <>
-                              <Wand2 className="w-4 h-4" />
-                              Genera immagine con AI
-                            </>
-                          )}
-                        </Button>
-                        {!articoloForm.nome.trim() && (
-                          <p className="text-xs text-gray-400 text-center">Inserisci prima il nome del piatto per abilitare la generazione</p>
-                        )}
                       </div>
                     )}
                     <input
@@ -910,11 +841,11 @@ export default function AdminMenu() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button onClick={saveArticolo} disabled={imageEditorOpen || generating}>
+                    <Button onClick={saveArticolo} disabled={imageEditorOpen || uploading}>
                       <Save className="w-4 h-4 mr-2" />
                       Salva
                     </Button>
-                    <Button variant="outline" onClick={() => { if (!imageEditorOpen) setShowArticoloDialog(false) }} disabled={imageEditorOpen || generating}>
+                    <Button variant="outline" onClick={() => { if (!imageEditorOpen) setShowArticoloDialog(false) }} disabled={imageEditorOpen || uploading}>
                       Annulla
                     </Button>
                   </div>
@@ -942,14 +873,7 @@ export default function AdminMenu() {
                   <TableRow key={art.id}>
                     <TableCell>
                       {art.immagineUrl ? (
-                        <div className="relative">
-                          <img src={art.immagineUrl} alt={art.nome} className="w-12 h-12 object-cover rounded-lg" />
-                          {(art as any).immagineAiGenerata && (
-                            <div className="absolute -bottom-0.5 -right-0.5 bg-amber-500 rounded-full p-0.5" title="Immagine AI">
-                              <Wand2 className="w-2.5 h-2.5 text-white" />
-                            </div>
-                          )}
-                        </div>
+                        <img src={art.immagineUrl} alt={art.nome} className="w-12 h-12 object-cover rounded-lg" />
                       ) : (
                         <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-xs">Nessuna</div>
                       )}
