@@ -157,14 +157,18 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
       {/* Mobile Overlay for Sidebar */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm lg:hidden"
+          style={{ zIndex: 60 }}
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Mobile Sidebar */}
       {sidebarOpen && (
-        <div className="lg:hidden fixed inset-y-0 left-0 z-[70] w-80 max-w-[85vw] bg-gray-900 text-white flex flex-col shadow-2xl">
+        <div
+          className="lg:hidden fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] bg-gray-900 text-white flex flex-col shadow-2xl"
+          style={{ zIndex: 70 }}
+        >
           <div className="p-6 border-b border-gray-800 flex justify-between items-center">
             <h1 className="text-xl font-bold">Menu Admin</h1>
             <Button
@@ -233,7 +237,7 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
       )}
 
       {/* Main Panel */}
-      <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+      <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[95vh] overflow-hidden flex flex-col">
           {/* Header Mobile */}
           <div className="lg:hidden bg-gray-900 text-white px-4 py-4 flex justify-between items-center">
