@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
 
 // Validazione delle estensioni dei file
 const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
@@ -35,32 +33,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Genera nome file unico con timestamp
-    const timestamp = Date.now();
-    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const fileName = `${timestamp}-${safeName}`;
-    const filePath = path.join(process.cwd(), 'public', 'uploads', fileName);
-
-    // Assicura che la directory esista
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-    try {
-      await mkdir(uploadDir, { recursive: true });
-    } catch (error) {
-      // Directory già esistente, continua
-    }
-
-    // Converti il file in Buffer e salvalo
+    // Converti il file in Buffer e poi in base64
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
+    const base64 = buffer.toString('base64');
+    const mimeType = file.type;
 
-    // Restituisci l'URL del file
-    const fileUrl = `/uploads/${fileName}`;
+    // Restituisci l'URL base64
+    const fileUrl = `data:${mimeType};base64,${base64}`;
 
     return NextResponse.json({
       success: true,
       url: fileUrl,
-      fileName: fileName
+      fileName: file.name
     });
 
   } catch (error) {
