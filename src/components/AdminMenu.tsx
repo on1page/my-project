@@ -174,6 +174,8 @@ export default function AdminMenu() {
 
     setGenerating(true)
     try {
+      console.log('🚀 Inizio generazione immagine per:', articoloForm.nome)
+
       const response = await fetch('/api/admin/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -183,18 +185,22 @@ export default function AdminMenu() {
         })
       })
 
+      console.log('📡 Risposta ricevuta, status:', response.status)
+
       if (response.ok) {
         const result = await response.json()
+        console.log('✅ Immagine generata con successo:', result.service)
         setArticoloForm(prev => ({ ...prev, immagineUrl: result.url, immagineAiGenerata: true }))
         resetImageEditor()
         setImageEditorOpen(true)
       } else {
         const err = await response.json()
-        alert(err.error || 'Errore durante la generazione')
+        console.error('❌ Errore generazione:', err)
+        alert(`Errore: ${err.error}${err.details ? `\nDettagli: ${err.details}` : ''}`)
       }
     } catch (error) {
-      console.error('Errore generazione:', error)
-      alert('Errore durante la generazione dell\'immagine')
+      console.error('💥 Errore fetch:', error)
+      alert('Errore di connessione al server di generazione immagini. Controlla la console per dettagli.')
     } finally {
       setGenerating(false)
     }
