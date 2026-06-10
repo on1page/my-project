@@ -81,11 +81,16 @@ async function retryWithBackoff<T>(
 }
 
 export async function POST(request: NextRequest) {
+  console.log('🎯 API generate-image chiamata')
+
   try {
     const body = await request.json()
+    console.log('📦 Body ricevuto:', JSON.stringify(body, null, 2))
+
     const { nome, descrizione } = body
 
     if (!nome) {
+      console.error('❌ Nome mancante nel body')
       return NextResponse.json(
         { error: 'Il nome del piatto è obbligatorio' },
         { status: 400 }
@@ -93,6 +98,8 @@ export async function POST(request: NextRequest) {
     }
 
     const prompt = buildFoodPrompt(nome, descrizione)
+    console.log('📝 Prompt generato:', prompt)
+
     let lastError: Error | null = null
 
     console.log(`🎨 Inizio generazione immagine per: ${nome}`)
@@ -101,6 +108,7 @@ export async function POST(request: NextRequest) {
     for (const service of SERVICES) {
       try {
         console.log(`🔄 Tentativo con servizio: ${service.name}`)
+        const startTime = Date.now()
 
         let imageBuffer: ArrayBuffer
         if (service.type === 'pollinations') {
@@ -109,10 +117,13 @@ export async function POST(request: NextRequest) {
           imageBuffer = await retryWithBackoff(() => generateWithHuggingFace(prompt, service.name), 1, 5000)
         }
 
+        const duration = Date.now() - startTime
+        console.log(`⏱️ Tempo impiegato: ${duration}ms`)
+
         const base64 = Buffer.from(imageBuffer).toString('base64')
         const dataUrl = `data:image/png;base64,${base64}`
 
-        console.log(`✅ Successo! Immagine generata con: ${service.name}`)
+        console.log(`✅ Successo! Immagine generata con: ${service.name}, dimensione: ${imageBuffer.byteLength} bytes`)
 
         return NextResponse.json({
           success: true,
@@ -122,16 +133,22 @@ export async function POST(request: NextRequest) {
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error))
         console.error(`❌ Errore con ${service.name}:`, lastError.message)
+        console.error(`Stack trace:`, lastError.stack)
         continue
       }
     }
 
+    console.error('💥 Tutti i servizi falliti, ultimo errore:', lastError?.message)
     throw lastError || new Error('Tutti i servizi di generazione immagini non sono disponibili')
   } catch (error: unknown) {
     console.error('💥 Errore generazione immagine:', error)
+    if (error instanceof Error) {
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+    }
     const message = error instanceof Error ? error.message : 'Errore nella generazione dell\'immagine'
     return NextResponse.json(
-      { error: message },
+      { error: message, details: String(error) },
       { status: 500 }
     )
   }
